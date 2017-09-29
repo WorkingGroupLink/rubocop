@@ -66,14 +66,14 @@ aligned.
 
 ```ruby
 # bad
-a = [1, 2, 3
+a = [1, 2, 3,
   4, 5, 6]
 array = ['run',
      'forrest',
      'run']
 
 # good
-a = [1, 2, 3
+a = [1, 2, 3,
      4, 5, 6]
 a = ['run',
      'forrest',
@@ -448,30 +448,29 @@ be aligned with an if/unless/while/until/begin/def keyword, but there
 are special cases when they should follow the same rules as the
 alignment of end.
 
- else
-    code
-  end
-
-  # bad
-  if something
-    code
- elsif something
-    code
-  end
-
-  # good
-  if something
-    code
-  else
-    code
-  end
-
 ### Example
 
 ```ruby
 # bad
 if something
   code
+ else
+  code
+end
+
+# bad
+if something
+  code
+ elsif something
+  code
+end
+
+# good
+if something
+  code
+else
+  code
+end
 ```
 
 ## Layout/EmptyLineAfterMagicComment
@@ -2063,6 +2062,7 @@ Attribute | Value
 --- | ---
 EnforcedStyle | space
 SupportedStyles | space, no_space
+SupportedStylesForEmptyBraces | space, no_space
 
 ## Layout/SpaceBeforeComma
 

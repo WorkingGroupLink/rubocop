@@ -201,6 +201,10 @@ Enabled | Yes
 This cop looks for delegations that could have been created
 automatically with the `delegate` method.
 
+Safe navigation `&.` is ignored because Rails' `allow_nil`
+option checks not just for nil but also delegates if nil
+responds to the delegated method.
+
 The `EnforceForPrefixed` option (defaulted to `true`) means that
 using the target object as a prefix of the method name
 without using the `delegate` method will be a violation.
@@ -216,6 +220,11 @@ end
 
 # good
 delegate :bar, to: :foo
+
+# good
+def bar
+  foo&.bar
+end
 
 # good
 private
@@ -465,6 +474,43 @@ Include | app/models/\*\*/\*.rb
 
 * [https://github.com/bbatsov/rails-style-guide#has-many-through](https://github.com/bbatsov/rails-style-guide#has-many-through)
 
+## Rails/HasManyOrHasOneDependent
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | No
+
+This cop looks for `has_many` or `has_one` associations that don't
+specify a `:dependent` option.
+It doesn't register an offense if `:through` option was specified.
+
+### Example
+
+```ruby
+# bad
+class User < ActiveRecord::Base
+  has_many :comments
+  has_one :avatar
+end
+
+# good
+class User < ActiveRecord::Base
+  has_many :comments, dependent: :restrict_with_exception
+  has_one :avatar, dependent: :destroy
+  has_many :patients, through: :appointments
+end
+```
+
+### Important attributes
+
+Attribute | Value
+--- | ---
+Include | app/models/\*\*/\*.rb
+
+### References
+
+* [https://github.com/bbatsov/rails-style-guide#has_many-has_one-dependent-option](https://github.com/bbatsov/rails-style-guide#has_many-has_one-dependent-option)
+
 ## Rails/HttpPositionalArguments
 
 Enabled by default | Supports autocorrection
@@ -474,7 +520,7 @@ Enabled | Yes
 This cop is used to identify usages of http methods like `get`, `post`,
 `put`, `patch` without the usage of keyword arguments in your tests and
 change them to use keyword args.  This cop only applies to Rails >= 5 .
-If you are not running Rails < 5 you should disable # the
+If you are running Rails < 5 you should disable the
 Rails/HttpPositionalArguments cop or set your TargetRailsVersion in your
 .rubocop.yml file to 4.0, etc.
 

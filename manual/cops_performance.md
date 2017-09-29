@@ -15,10 +15,14 @@ can be replaced by `caller(n..n).first`.
 # bad
 caller[1]
 caller.first
+caller_locations[1]
+caller_locations.first
 
 # good
 caller(2..2).first
 caller(1..1).first
+caller_locations(2..2).first
+caller_locations(1..1).first
 ```
 
 ## Performance/CaseWhenSplat
@@ -334,7 +338,11 @@ Enabled by default | Supports autocorrection
 --- | ---
 Enabled | Yes
 
-This cop checks for uses of `each_key` & `each_value` Hash methods.
+This cop checks for uses of `each_key` and `each_value` Hash methods.
+
+Note: If you have an array of two-element arrays, you can put
+  parentheses around the block arguments to indicate that you're not
+  working with a hash, and supress RuboCop offenses.
 
 ### Example
 
@@ -745,4 +753,59 @@ end
 Array.new(9) do |i|
   i.to_s
 end
+```
+
+### Important attributes
+
+Attribute | Value
+--- | ---
+AutoCorrect | false
+
+## Performance/UnfreezeString
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | No
+
+In Ruby 2.3 or later, use unary plus operator to unfreeze a string
+literal instead of `String#dup` and `String.new`.
+Unary plus operator is faster than `String#dup`.
+
+Note: `String.new` (without operator) is not exactly the same as `+''`.
+These differ in encoding. `String.new.encoding` is always `ASCII-8BIT`.
+However, `(+'').encoding` is the same as script encoding(e.g. `UTF-8`).
+So, if you expect `ASCII-8BIT` encoding, disable this cop.
+
+### Example
+
+```ruby
+# bad
+''.dup
+"something".dup
+String.new
+String.new('')
+String.new('something')
+
+# good
++'something'
++''
+```
+
+## Performance/UriDefaultParser
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop identifies places where `URI::Parser.new`
+can be replaced by `URI::DEFAULT_PARSER`.
+
+### Example
+
+```ruby
+# bad
+URI::Parser.new
+
+# good
+URI::DEFAULT_PARSER
 ```

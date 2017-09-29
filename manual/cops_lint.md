@@ -192,6 +192,32 @@ Attribute | Value
 EnforcedStyleAlignWith | either
 SupportedStylesAlignWith | either, start_of_block, start_of_line
 
+## Lint/BooleanSymbol
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | No
+
+This cop checks for `:true` and `:false` symbols.
+In most cases it would be a typo.
+
+### Example
+
+```ruby
+# bad
+:true
+
+# good
+true
+```
+```ruby
+# bad
+:false
+
+# good
+false
+```
+
 ## Lint/CircularArgumentReference
 
 Enabled by default | Supports autocorrection
@@ -998,30 +1024,25 @@ Attribute | Value
 EnforcedStyle | runtime_error
 SupportedStyles | runtime_error, standard_error
 
-## Lint/InvalidCharacterLiteral
+## Lint/InterpolationCheck
 
 Enabled by default | Supports autocorrection
 --- | ---
 Enabled | No
 
-This cop checks for invalid character literals with a non-escaped
-whitespace character (e.g. `? `).
-However, currently it's unclear whether there's a way to emit this
-warning without syntax errors.
-
-    $ ruby -w
-    p(? )
-    -:1: warning: invalid character syntax; use ?\s
-    -:1: syntax error, unexpected '?', expecting ')'
-    p(? )
-       ^
+This cop checks for interpolation in a single quoted string.
 
 ### Example
 
 ```ruby
 # bad
 
-p(? )
+foo = 'something with #{interpolation} inside'
+```
+```ruby
+# good
+
+foo = "something with #{interpolation} inside"
 ```
 
 ## Lint/LiteralInCondition
@@ -1384,6 +1405,38 @@ rand(-1.0)
 0 # just use 0 instead
 ```
 
+## Lint/RedundantWithIndex
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks for redundant `with_index`.
+
+### Example
+
+```ruby
+# bad
+ary.each_with_index do |v|
+  v
+end
+
+# good
+ary.each do |v|
+  v
+end
+
+# bad
+ary.each.with_index do |v|
+  v
+end
+
+# good
+ary.each do |v|
+  v
+end
+```
+
 ## Lint/RequireParentheses
 
 Enabled by default | Supports autocorrection
@@ -1488,6 +1541,36 @@ rescue NameError
 end
 ```
 
+## Lint/RescueWithoutErrorClass
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | No
+
+This cop checks for uses of `rescue` with no error class specified.
+
+### Example
+
+```ruby
+# good
+begin
+  foo
+rescue BarError
+  bar
+end
+
+# bad
+begin
+  foo
+rescue
+  bar
+end
+```
+
+### References
+
+* [https://github.com/bbatsov/ruby-style-guide#no-blind-rescues](https://github.com/bbatsov/ruby-style-guide#no-blind-rescues)
+
 ## Lint/ReturnInVoidContext
 
 Enabled by default | Supports autocorrection
@@ -1562,7 +1645,7 @@ Whitelist | present?, blank?, presence, try
 
 Enabled by default | Supports autocorrection
 --- | ---
-Enabled | No
+Enabled | Yes
 
 This cop checks if a file which has a shebang line as
 its first line is granted execute permission.
@@ -1817,6 +1900,17 @@ def some_method
   return
   do_something
 end
+
+# bad
+
+def some_method
+  if cond
+    return
+  else
+    return
+  end
+  do_something
+end
 ```
 ```ruby
 # good
@@ -1913,6 +2007,60 @@ IgnoreEmptyMethods | true
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#underscore-unused-vars](https://github.com/bbatsov/ruby-style-guide#underscore-unused-vars)
+
+## Lint/UriEscapeUnescape
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | No
+
+This cop identifies places where `URI.escape` can be replaced by
+`CGI.escape`, `URI.encode_www_form` or `URI.encode_www_form_component`
+depending on your specific use case.
+Also this cop identifies places where `URI.unescape` can be replaced by
+`CGI.unescape`, `URI.decode_www_form` or `URI.decode_www_form_component`
+depending on your specific use case.
+
+### Example
+
+```ruby
+# bad
+URI.escape('http://example.com')
+URI.encode('http://example.com')
+
+# good
+CGI.escape('http://example.com')
+URI.encode_www_form('http://example.com')
+URI.encode_www_form_component('http://example.com')
+
+# bad
+URI.unescape(enc_uri)
+URI.decode(enc_uri)
+
+# good
+CGI.unescape(enc_uri)
+URI.decode_www_form(enc_uri)
+URI.decode_www_form_component(enc_uri)
+```
+
+## Lint/UriRegexp
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop identifies places where `URI.regexp` is obsolete and should
+not be used. Instead, use `URI::DEFAULT_PARSER.make_regexp`.
+
+### Example
+
+```ruby
+# bad
+URI.regexp('http://example.com')
+
+# good
+URI::DEFAULT_PARSER.make_regexp('http://example.com')
+```
 
 ## Lint/UselessAccessModifier
 

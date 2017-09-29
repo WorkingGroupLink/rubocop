@@ -53,6 +53,7 @@ module RuboCop
           end
         end
 
+        # rubocop:disable Performance/HashEachMethods
         def autocorrect(node)
           lambda do |corrector|
             node.values.each do |value|
@@ -67,17 +68,7 @@ module RuboCop
             end
           end
         end
-
-        def scrub_string(string)
-          if string.respond_to?(:scrub)
-            string.scrub
-          else
-            string
-              .encode('UTF-16BE', 'UTF-8',
-                      invalid: :replace, undef: :replace, replace: '?')
-              .encode('UTF-8')
-          end
-        end
+        # rubocop:enable Performance/HashEachMethod
       end
     end
   end

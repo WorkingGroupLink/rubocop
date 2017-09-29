@@ -3,9 +3,13 @@
 require 'yard'
 require 'rubocop'
 
-desc 'Generate docs of all cops departments'
+YARD::Rake::YardocTask.new(:yard_for_generate_documentation) do |task|
+  task.files = ['lib/rubocop/cop/*/*.rb']
+  task.options = ['--no-output']
+end
 
-task generate_cops_documentation: :yard do
+desc 'Generate docs of all cops departments'
+task generate_cops_documentation: :yard_for_generate_documentation do
   def cops_of_department(cops, department)
     cops.with_department(department).sort!
   end
@@ -94,9 +98,10 @@ task generate_cops_documentation: :yard do
       content << print_cop_with_doc(cop, config)
     end
     file_name = "#{Dir.pwd}/manual/cops_#{department.downcase}.md"
-    file = File.open(file_name, 'w')
-    puts "* generated #{file_name}"
-    file.write(content.strip + "\n")
+    File.open(file_name, 'w') do |file|
+      puts "* generated #{file_name}"
+      file.write(content.strip + "\n")
+    end
   end
 
   def print_cop_with_doc(cop, config)

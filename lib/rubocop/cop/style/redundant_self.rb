@@ -30,6 +30,10 @@ module RuboCop
       #     self.bar # resolves name clash with local variable
       #   end
       #
+      #   %w[x y z].select do |bar|
+      #     self.bar == bar # resolves name clash with argument of a block
+      #   end
+      #
       # * Calling an attribute writer to prevent an local variable assignment
       #
       #   attr_writer :bar
@@ -57,7 +61,6 @@ module RuboCop
           lhs, _rhs = *node
           allow_self(lhs)
         end
-
         alias on_and_asgn on_or_asgn
 
         def on_op_asgn(node)
@@ -70,7 +73,6 @@ module RuboCop
         def on_def(node)
           add_scope(node)
         end
-
         alias on_defs on_def
 
         def on_args(node)
@@ -90,11 +92,16 @@ module RuboCop
           return unless node.self_receiver? && regular_method_call?(node)
           return if node.parent && node.parent.mlhs_type?
 
-          return if @allowed_send_nodes.include?(node) ||
-                    @local_variables_scopes[node].include?(node.method_name)
+          return if allowed_send_node?(node)
 
           add_offense(node)
         end
+
+        def on_block(node)
+          add_scope(node, @local_variables_scopes[node])
+        end
+
+        private
 
         def autocorrect(node)
           lambda do |corrector|
@@ -103,13 +110,15 @@ module RuboCop
           end
         end
 
-        private
-
-        def add_scope(node)
-          local_variables = []
+        def add_scope(node, local_variables = [])
           node.descendants.each do |child_node|
             @local_variables_scopes[child_node] = local_variables
           end
+        end
+
+        def allowed_send_node?(node)
+          @allowed_send_nodes.include?(node) ||
+            @local_variables_scopes[node].include?(node.method_name)
         end
 
         def regular_method_call?(node)

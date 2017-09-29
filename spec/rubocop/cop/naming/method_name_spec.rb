@@ -1,0 +1,216 @@
+# frozen_string_literal: true
+
+describe RuboCop::Cop::Naming::MethodName, :config do
+  subject(:cop) { described_class.new(config) }
+
+  shared_examples 'never accepted' do
+    it 'registers an offense for mixed snake case and camel case' do
+      inspect_source(<<-RUBY.strip_indent)
+        def visit_Arel_Nodes_SelectStatement
+        end
+      RUBY
+      expect(cop.offenses.size).to eq(1)
+      expect(cop.highlights).to eq(['visit_Arel_Nodes_SelectStatement'])
+    end
+
+    it 'registers an offense for capitalized camel case' do
+      inspect_source(<<-RUBY.strip_indent)
+        class MyClass
+          def MyMethod
+          end
+        end
+      RUBY
+      expect(cop.offenses.size).to eq(1)
+      expect(cop.highlights).to eq(['MyMethod'])
+    end
+
+    it 'registers an offense for singleton upper case method without ' \
+       'corresponding class' do
+      inspect_source(<<-RUBY.strip_indent)
+        module Sequel
+          def self.Model(source)
+          end
+        end
+      RUBY
+      expect(cop.highlights).to eq(['Model'])
+    end
+  end
+
+  shared_examples 'always accepted' do
+    it 'accepts one line methods' do
+      expect_no_offenses("def body; '' end")
+    end
+
+    it 'accepts operator definitions' do
+      expect_no_offenses(<<-RUBY.strip_indent)
+        def +(other)
+          # ...
+        end
+      RUBY
+    end
+
+    it 'accepts unary operator definitions' do
+      expect_no_offenses(<<-RUBY.strip_indent)
+        def ~@; end
+      RUBY
+
+      expect_no_offenses(<<-RUBY.strip_indent)
+        def !@; end
+      RUBY
+    end
+
+    %w[class module].each do |kind|
+      it "accepts class emitter method in a #{kind}" do
+        inspect_source(<<-RUBY.strip_indent)
+          #{kind} Sequel
+            def self.Model(source)
+            end
+
+            class Model
+            end
+          end
+        RUBY
+        expect(cop.offenses).to be_empty
+      end
+
+      it "accepts class emitter method in a #{kind}, even when it is " \
+         'defined inside another method' do
+        inspect_source(<<-RUBY.strip_indent)
+          module DPN
+            module Flow
+              module BaseFlow
+                class Start
+                end
+                def self.included(base)
+                  def base.Start(aws_env, *args)
+                  end
+                end
+              end
+            end
+          end
+        RUBY
+        expect(cop.offenses).to be_empty
+      end
+    end
+  end
+
+  context 'when configured for snake_case' do
+    let(:cop_config) { { 'EnforcedStyle' => 'snake_case' } }
+
+    it 'registers an offense for camel case in instance method name' do
+      inspect_source(<<-RUBY.strip_indent)
+        def myMethod
+          # ...
+        end
+      RUBY
+      expect(cop.offenses.size).to eq(1)
+      expect(cop.highlights).to eq(['myMethod'])
+      expect(cop.config_to_allow_offenses).to eq('EnforcedStyle' =>
+                                                 'camelCase')
+    end
+
+    it 'registers an offense for opposite + correct' do
+      inspect_source(<<-RUBY.strip_indent)
+        def my_method
+        end
+        def myMethod
+        end
+      RUBY
+      expect(cop.highlights).to eq(['myMethod'])
+      expect(cop.config_to_allow_offenses).to eq('Enabled' => false)
+    end
+
+    it 'registers an offense for camel case in singleton method name' do
+      expect_offense(<<-RUBY.strip_indent)
+        def self.myMethod
+                 ^^^^^^^^ Use snake_case for method names.
+          # ...
+        end
+      RUBY
+    end
+
+    it 'accepts snake case in names' do
+      expect_no_offenses(<<-RUBY.strip_indent)
+        def my_method
+        end
+      RUBY
+    end
+
+    it 'registers an offense for singleton camelCase method within class' do
+      expect_offense(<<-RUBY.strip_indent)
+        class Sequel
+          def self.fooBar
+                   ^^^^^^ Use snake_case for method names.
+          end
+        end
+      RUBY
+    end
+
+    include_examples 'never accepted'
+    include_examples 'always accepted'
+  end
+
+  context 'when configured for camelCase' do
+    let(:cop_config) { { 'EnforcedStyle' => 'camelCase' } }
+
+    it 'accepts camel case in instance method name' do
+      expect_no_offenses(<<-RUBY.strip_indent)
+        def myMethod
+          # ...
+        end
+      RUBY
+    end
+
+    it 'accepts camel case in singleton method name' do
+      expect_no_offenses(<<-RUBY.strip_indent)
+        def self.myMethod
+          # ...
+        end
+      RUBY
+    end
+
+    it 'registers an offense for snake case in names' do
+      inspect_source(<<-RUBY.strip_indent)
+        def my_method
+        end
+      RUBY
+      expect(cop.offenses.size).to eq(1)
+      expect(cop.highlights).to eq(['my_method'])
+      expect(cop.config_to_allow_offenses).to eq('EnforcedStyle' =>
+                                                 'snake_case')
+    end
+
+    it 'registers an offense for correct + opposite' do
+      inspect_source(<<-RUBY.strip_indent)
+        def my_method
+        end
+        def myMethod
+        end
+      RUBY
+      expect(cop.highlights).to eq(['my_method'])
+      expect(cop.config_to_allow_offenses).to eq('Enabled' => false)
+    end
+
+    it 'registers an offense for singleton snake_case method within class' do
+      expect_offense(<<-RUBY.strip_indent)
+        class Sequel
+          def self.foo_bar
+                   ^^^^^^^ Use camelCase for method names.
+          end
+        end
+      RUBY
+    end
+
+    include_examples 'always accepted'
+    include_examples 'never accepted'
+  end
+
+  context 'when configured with a bad value' do
+    let(:cop_config) { { 'EnforcedStyle' => 'other' } }
+
+    it 'fails' do
+      expect { inspect_source('end') }
+        .to raise_error(RuntimeError)
+    end
+  end
+end

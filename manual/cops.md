@@ -46,6 +46,11 @@ configuration parameter called `Max` and when running
 `rubocop --auto-gen-config`, this parameter will be set to the highest value
 found for the inspected code.
 
+### Naming
+
+Naming cops check for naming issue of your code, such as method name, constant
+name, file name, etc.
+
 ### Performance
 
 Performance cops catch Ruby idioms which are known to be slower than another,
@@ -84,6 +89,7 @@ In the following section you find all available cops:
 #### Department [Bundler](cops_bundler.md)
 
 * [Bundler/DuplicatedGem](cops_bundler.md#bundlerduplicatedgem)
+* [Bundler/InsecureProtocolSource](cops_bundler.md#bundlerinsecureprotocolsource)
 * [Bundler/OrderedGems](cops_bundler.md#bundlerorderedgems)
 
 #### Department [Layout](cops_layout.md)
@@ -166,6 +172,7 @@ In the following section you find all available cops:
 * [Lint/AmbiguousRegexpLiteral](cops_lint.md#lintambiguousregexpliteral)
 * [Lint/AssignmentInCondition](cops_lint.md#lintassignmentincondition)
 * [Lint/BlockAlignment](cops_lint.md#lintblockalignment)
+* [Lint/BooleanSymbol](cops_lint.md#lintbooleansymbol)
 * [Lint/CircularArgumentReference](cops_lint.md#lintcircularargumentreference)
 * [Lint/ConditionPosition](cops_lint.md#lintconditionposition)
 * [Lint/Debugger](cops_lint.md#lintdebugger)
@@ -189,7 +196,7 @@ In the following section you find all available cops:
 * [Lint/ImplicitStringConcatenation](cops_lint.md#lintimplicitstringconcatenation)
 * [Lint/IneffectiveAccessModifier](cops_lint.md#lintineffectiveaccessmodifier)
 * [Lint/InheritException](cops_lint.md#lintinheritexception)
-* [Lint/InvalidCharacterLiteral](cops_lint.md#lintinvalidcharacterliteral)
+* [Lint/InterpolationCheck](cops_lint.md#lintinterpolationcheck)
 * [Lint/LiteralInCondition](cops_lint.md#lintliteralincondition)
 * [Lint/LiteralInInterpolation](cops_lint.md#lintliteralininterpolation)
 * [Lint/Loop](cops_lint.md#lintloop)
@@ -201,9 +208,11 @@ In the following section you find all available cops:
 * [Lint/PercentStringArray](cops_lint.md#lintpercentstringarray)
 * [Lint/PercentSymbolArray](cops_lint.md#lintpercentsymbolarray)
 * [Lint/RandOne](cops_lint.md#lintrandone)
+* [Lint/RedundantWithIndex](cops_lint.md#lintredundantwithindex)
 * [Lint/RequireParentheses](cops_lint.md#lintrequireparentheses)
 * [Lint/RescueException](cops_lint.md#lintrescueexception)
 * [Lint/RescueType](cops_lint.md#lintrescuetype)
+* [Lint/RescueWithoutErrorClass](cops_lint.md#lintrescuewithouterrorclass)
 * [Lint/ReturnInVoidContext](cops_lint.md#lintreturninvoidcontext)
 * [Lint/SafeNavigationChain](cops_lint.md#lintsafenavigationchain)
 * [Lint/ScriptPermission](cops_lint.md#lintscriptpermission)
@@ -218,6 +227,8 @@ In the following section you find all available cops:
 * [Lint/UnreachableCode](cops_lint.md#lintunreachablecode)
 * [Lint/UnusedBlockArgument](cops_lint.md#lintunusedblockargument)
 * [Lint/UnusedMethodArgument](cops_lint.md#lintunusedmethodargument)
+* [Lint/UriEscapeUnescape](cops_lint.md#linturiescapeunescape)
+* [Lint/UriRegexp](cops_lint.md#linturiregexp)
 * [Lint/UselessAccessModifier](cops_lint.md#lintuselessaccessmodifier)
 * [Lint/UselessAssignment](cops_lint.md#lintuselessassignment)
 * [Lint/UselessComparison](cops_lint.md#lintuselesscomparison)
@@ -237,6 +248,21 @@ In the following section you find all available cops:
 * [Metrics/ModuleLength](cops_metrics.md#metricsmodulelength)
 * [Metrics/ParameterLists](cops_metrics.md#metricsparameterlists)
 * [Metrics/PerceivedComplexity](cops_metrics.md#metricsperceivedcomplexity)
+
+#### Department [Naming](cops_naming.md)
+
+* [Naming/AccessorMethodName](cops_naming.md#namingaccessormethodname)
+* [Naming/AsciiIdentifiers](cops_naming.md#namingasciiidentifiers)
+* [Naming/BinaryOperatorParameterName](cops_naming.md#namingbinaryoperatorparametername)
+* [Naming/ClassAndModuleCamelCase](cops_naming.md#namingclassandmodulecamelcase)
+* [Naming/ConstantName](cops_naming.md#namingconstantname)
+* [Naming/FileName](cops_naming.md#namingfilename)
+* [Naming/HeredocDelimiterCase](cops_naming.md#namingheredocdelimitercase)
+* [Naming/HeredocDelimiterNaming](cops_naming.md#namingheredocdelimiternaming)
+* [Naming/MethodName](cops_naming.md#namingmethodname)
+* [Naming/PredicateName](cops_naming.md#namingpredicatename)
+* [Naming/VariableName](cops_naming.md#namingvariablename)
+* [Naming/VariableNumber](cops_naming.md#namingvariablenumber)
 
 #### Department [Performance](cops_performance.md)
 
@@ -264,6 +290,8 @@ In the following section you find all available cops:
 * [Performance/StartWith](cops_performance.md#performancestartwith)
 * [Performance/StringReplacement](cops_performance.md#performancestringreplacement)
 * [Performance/TimesMap](cops_performance.md#performancetimesmap)
+* [Performance/UnfreezeString](cops_performance.md#performanceunfreezestring)
+* [Performance/UriDefaultParser](cops_performance.md#performanceuridefaultparser)
 
 #### Department [Rails](cops_rails.md)
 
@@ -282,6 +310,7 @@ In the following section you find all available cops:
 * [Rails/FindBy](cops_rails.md#railsfindby)
 * [Rails/FindEach](cops_rails.md#railsfindeach)
 * [Rails/HasAndBelongsToMany](cops_rails.md#railshasandbelongstomany)
+* [Rails/HasManyOrHasOneDependent](cops_rails.md#railshasmanyorhasonedependent)
 * [Rails/HttpPositionalArguments](cops_rails.md#railshttppositionalarguments)
 * [Rails/NotNullColumn](cops_rails.md#railsnotnullcolumn)
 * [Rails/Output](cops_rails.md#railsoutput)
@@ -309,12 +338,10 @@ In the following section you find all available cops:
 
 #### Department [Style](cops_style.md)
 
-* [Style/AccessorMethodName](cops_style.md#styleaccessormethodname)
 * [Style/Alias](cops_style.md#stylealias)
 * [Style/AndOr](cops_style.md#styleandor)
 * [Style/ArrayJoin](cops_style.md#stylearrayjoin)
 * [Style/AsciiComments](cops_style.md#styleasciicomments)
-* [Style/AsciiIdentifiers](cops_style.md#styleasciiidentifiers)
 * [Style/Attr](cops_style.md#styleattr)
 * [Style/AutoResourceCleanup](cops_style.md#styleautoresourcecleanup)
 * [Style/BarePercentLiterals](cops_style.md#stylebarepercentliterals)
@@ -324,7 +351,6 @@ In the following section you find all available cops:
 * [Style/BracesAroundHashParameters](cops_style.md#stylebracesaroundhashparameters)
 * [Style/CaseEquality](cops_style.md#stylecaseequality)
 * [Style/CharacterLiteral](cops_style.md#stylecharacterliteral)
-* [Style/ClassAndModuleCamelCase](cops_style.md#styleclassandmodulecamelcase)
 * [Style/ClassAndModuleChildren](cops_style.md#styleclassandmodulechildren)
 * [Style/ClassCheck](cops_style.md#styleclasscheck)
 * [Style/ClassMethods](cops_style.md#styleclassmethods)
@@ -334,9 +360,9 @@ In the following section you find all available cops:
 * [Style/CommandLiteral](cops_style.md#stylecommandliteral)
 * [Style/CommentAnnotation](cops_style.md#stylecommentannotation)
 * [Style/ConditionalAssignment](cops_style.md#styleconditionalassignment)
-* [Style/ConstantName](cops_style.md#styleconstantname)
 * [Style/Copyright](cops_style.md#stylecopyright)
 * [Style/DefWithParentheses](cops_style.md#styledefwithparentheses)
+* [Style/Dir](cops_style.md#styledir)
 * [Style/Documentation](cops_style.md#styledocumentation)
 * [Style/DocumentationMethod](cops_style.md#styledocumentationmethod)
 * [Style/DoubleNegation](cops_style.md#styledoublenegation)
@@ -349,7 +375,6 @@ In the following section you find all available cops:
 * [Style/Encoding](cops_style.md#styleencoding)
 * [Style/EndBlock](cops_style.md#styleendblock)
 * [Style/EvenOdd](cops_style.md#styleevenodd)
-* [Style/FileName](cops_style.md#stylefilename)
 * [Style/FlipFlop](cops_style.md#styleflipflop)
 * [Style/For](cops_style.md#stylefor)
 * [Style/FormatString](cops_style.md#styleformatstring)
@@ -358,7 +383,6 @@ In the following section you find all available cops:
 * [Style/GlobalVars](cops_style.md#styleglobalvars)
 * [Style/GuardClause](cops_style.md#styleguardclause)
 * [Style/HashSyntax](cops_style.md#stylehashsyntax)
-* [Style/HeredocDelimiters](cops_style.md#styleheredocdelimiters)
 * [Style/IdenticalConditionalBranches](cops_style.md#styleidenticalconditionalbranches)
 * [Style/IfInsideElse](cops_style.md#styleifinsideelse)
 * [Style/IfUnlessModifier](cops_style.md#styleifunlessmodifier)
@@ -376,7 +400,7 @@ In the following section you find all available cops:
 * [Style/MethodCalledOnDoEndBlock](cops_style.md#stylemethodcalledondoendblock)
 * [Style/MethodDefParentheses](cops_style.md#stylemethoddefparentheses)
 * [Style/MethodMissing](cops_style.md#stylemethodmissing)
-* [Style/MethodName](cops_style.md#stylemethodname)
+* [Style/MinMax](cops_style.md#styleminmax)
 * [Style/MissingElse](cops_style.md#stylemissingelse)
 * [Style/MixinGrouping](cops_style.md#stylemixingrouping)
 * [Style/ModuleFunction](cops_style.md#stylemodulefunction)
@@ -400,19 +424,19 @@ In the following section you find all available cops:
 * [Style/NumericLiterals](cops_style.md#stylenumericliterals)
 * [Style/NumericPredicate](cops_style.md#stylenumericpredicate)
 * [Style/OneLineConditional](cops_style.md#styleonelineconditional)
-* [Style/OpMethod](cops_style.md#styleopmethod)
 * [Style/OptionHash](cops_style.md#styleoptionhash)
 * [Style/OptionalArguments](cops_style.md#styleoptionalarguments)
+* [Style/OrAssignment](cops_style.md#styleorassignment)
 * [Style/ParallelAssignment](cops_style.md#styleparallelassignment)
 * [Style/ParenthesesAroundCondition](cops_style.md#styleparenthesesaroundcondition)
 * [Style/PercentLiteralDelimiters](cops_style.md#stylepercentliteraldelimiters)
 * [Style/PercentQLiterals](cops_style.md#stylepercentqliterals)
 * [Style/PerlBackrefs](cops_style.md#styleperlbackrefs)
-* [Style/PredicateName](cops_style.md#stylepredicatename)
 * [Style/PreferredHashMethods](cops_style.md#stylepreferredhashmethods)
 * [Style/Proc](cops_style.md#styleproc)
 * [Style/RaiseArgs](cops_style.md#styleraiseargs)
 * [Style/RedundantBegin](cops_style.md#styleredundantbegin)
+* [Style/RedundantConditional](cops_style.md#styleredundantconditional)
 * [Style/RedundantException](cops_style.md#styleredundantexception)
 * [Style/RedundantFreeze](cops_style.md#styleredundantfreeze)
 * [Style/RedundantParentheses](cops_style.md#styleredundantparentheses)
@@ -420,6 +444,7 @@ In the following section you find all available cops:
 * [Style/RedundantSelf](cops_style.md#styleredundantself)
 * [Style/RegexpLiteral](cops_style.md#styleregexpliteral)
 * [Style/RescueModifier](cops_style.md#stylerescuemodifier)
+* [Style/ReturnNil](cops_style.md#stylereturnnil)
 * [Style/SafeNavigation](cops_style.md#stylesafenavigation)
 * [Style/SelfAssignment](cops_style.md#styleselfassignment)
 * [Style/Semicolon](cops_style.md#stylesemicolon)
@@ -446,8 +471,6 @@ In the following section you find all available cops:
 * [Style/UnneededInterpolation](cops_style.md#styleunneededinterpolation)
 * [Style/UnneededPercentQ](cops_style.md#styleunneededpercentq)
 * [Style/VariableInterpolation](cops_style.md#stylevariableinterpolation)
-* [Style/VariableName](cops_style.md#stylevariablename)
-* [Style/VariableNumber](cops_style.md#stylevariablenumber)
 * [Style/WhenThen](cops_style.md#stylewhenthen)
 * [Style/WhileUntilDo](cops_style.md#stylewhileuntildo)
 * [Style/WhileUntilModifier](cops_style.md#stylewhileuntilmodifier)

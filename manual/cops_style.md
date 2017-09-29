@@ -1,33 +1,5 @@
 # Style
 
-## Style/AccessorMethodName
-
-Enabled by default | Supports autocorrection
---- | ---
-Enabled | No
-
-This cop makes sure that accessor methods are named properly.
-
-### Example
-
-```ruby
-# bad
-def set_attribute(value) ...
-
-# good
-def attribute=(value)
-
-# bad
-def get_attribute ...
-
-# good
-def attribute ...
-```
-
-### References
-
-* [https://github.com/bbatsov/ruby-style-guide#accessor_mutator_method_names](https://github.com/bbatsov/ruby-style-guide#accessor_mutator_method_names)
-
 ## Style/Alias
 
 Enabled by default | Supports autocorrection
@@ -146,18 +118,6 @@ in comments.
 
 * [https://github.com/bbatsov/ruby-style-guide#english-comments](https://github.com/bbatsov/ruby-style-guide#english-comments)
 
-## Style/AsciiIdentifiers
-
-Enabled by default | Supports autocorrection
---- | ---
-Enabled | No
-
-This cop checks for non-ascii characters in identifier names.
-
-### References
-
-* [https://github.com/bbatsov/ruby-style-guide#english-identifiers](https://github.com/bbatsov/ruby-style-guide#english-identifiers)
-
 ## Style/Attr
 
 Enabled by default | Supports autocorrection
@@ -187,7 +147,7 @@ resource cleanup.
 f = File.open('file')
 
 # good
-f = File.open('file') do
+File.open('file') do |f|
   ...
 end
 ```
@@ -334,19 +294,6 @@ Checks for uses of the character literal ?x.
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#no-character-literals](https://github.com/bbatsov/ruby-style-guide#no-character-literals)
-
-## Style/ClassAndModuleCamelCase
-
-Enabled by default | Supports autocorrection
---- | ---
-Enabled | No
-
-This cops checks for class and module names with
-an underscore in them.
-
-### References
-
-* [https://github.com/bbatsov/ruby-style-guide#camelcase-classes](https://github.com/bbatsov/ruby-style-guide#camelcase-classes)
 
 ## Style/ClassAndModuleChildren
 
@@ -654,22 +601,6 @@ SupportedStyles | assign_to_condition, assign_inside_condition
 SingleLineConditionsOnly | true
 IncludeTernaryExpressions | true
 
-## Style/ConstantName
-
-Enabled by default | Supports autocorrection
---- | ---
-Enabled | No
-
-This cop checks whether constant names are written using
-SCREAMING_SNAKE_CASE.
-
-To avoid false positives, it ignores cases in which we cannot know
-for certain the type of value that would be assigned to a constant.
-
-### References
-
-* [https://github.com/bbatsov/ruby-style-guide#screaming-snake-case](https://github.com/bbatsov/ruby-style-guide#screaming-snake-case)
-
 ## Style/Copyright
 
 Enabled by default | Supports autocorrection
@@ -708,6 +639,29 @@ class/singleton methods are checked.
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#method-parens](https://github.com/bbatsov/ruby-style-guide#method-parens)
+
+## Style/Dir
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks for places where the `#__dir__` method can replace more
+complex constructs to retrieve a canonicalized absolute path to the
+current file.
+
+### Example
+
+```ruby
+# bad
+path = File.expand_path(File.dirname(__FILE__))
+
+# bad
+path = File.dirname(File.realpath(__FILE__))
+
+# good
+path = __dir__
+```
 
 ## Style/Documentation
 
@@ -1042,7 +996,8 @@ def foo(bar)
 end
 
 def self.foo(bar); end
-
+```
+```ruby
 # EnforcedStyle: expanded
 
 # bad
@@ -1075,24 +1030,7 @@ Enabled by default | Supports autocorrection
 --- | ---
 Enabled | Yes
 
-This cop checks whether the source file has a utf-8 encoding
-comment or not.
-Setting this check to "always" and "when_needed" makes sense only
-for code that should support Ruby 1.9, since in 2.0+ utf-8 is the
-default source file encoding. There are three styles:
-
-when_needed - only enforce an encoding comment if there are non ASCII
-              characters, otherwise report an offense
-always - enforce encoding comment in all files
-never - enforce no encoding comment in all files
-
-### Important attributes
-
-Attribute | Value
---- | ---
-EnforcedStyle | never
-SupportedStyles | when_needed, always, never
-AutoCorrectEncodingComment | # encoding: utf-8
+This cop checks ensures source files have no utf-8 encoding comments.
 
 ### References
 
@@ -1132,30 +1070,6 @@ if x.even?
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#predicate-methods](https://github.com/bbatsov/ruby-style-guide#predicate-methods)
-
-## Style/FileName
-
-Enabled by default | Supports autocorrection
---- | ---
-Enabled | No
-
-This cop makes sure that Ruby source files have snake_case
-names. Ruby scripts (i.e. source files with a shebang in the
-first line) are ignored.
-
-### Important attributes
-
-Attribute | Value
---- | ---
-Exclude |
-ExpectMatchingDefinition | false
-Regex |
-IgnoreExecutableScripts | true
-AllowedAcronyms | CLI, DSL, ACL, API, ASCII, CPU, CSS, DNS, EOF, GUID, HTML, HTTP, HTTPS, ID, IP, JSON, LHS, QPS, RAM, RHS, RPC, SLA, SMTP, SQL, SSH, TCP, TLS, TTL, UDP, UI, UID, UUID, URI, URL, UTF8, VM, XML, XMPP, XSRF, XSS
-
-### References
-
-* [https://github.com/bbatsov/ruby-style-guide#snake-case-files](https://github.com/bbatsov/ruby-style-guide#snake-case-files)
 
 ## Style/FlipFlop
 
@@ -1434,40 +1348,6 @@ PreferHashRocketsForNonAlnumEndingSymbols | false
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#hash-literals](https://github.com/bbatsov/ruby-style-guide#hash-literals)
-
-## Style/HeredocDelimiters
-
-Enabled by default | Supports autocorrection
---- | ---
-Enabled | No
-
-This cop checks that your heredocs are using meaningful delimiters. By
-default it disallows `END`, and can be configured through blacklisting
-additional delimiters.
-
-### Example
-
-```ruby
-# good
-<<-SQL
-  SELECT * FROM foo
-SQL
-
-# bad
-<<-END
-  SELECT * FROM foo
-END
-```
-
-### Important attributes
-
-Attribute | Value
---- | ---
-Blacklist | END
-
-### References
-
-* [https://github.com/bbatsov/ruby-style-guide#heredoc-delimiters](https://github.com/bbatsov/ruby-style-guide#heredoc-delimiters)
 
 ## Style/IdenticalConditionalBranches
 
@@ -2018,26 +1898,25 @@ end
 
 * [https://github.com/bbatsov/ruby-style-guide#no-method-missing](https://github.com/bbatsov/ruby-style-guide#no-method-missing)
 
-## Style/MethodName
+## Style/MinMax
 
 Enabled by default | Supports autocorrection
 --- | ---
-Enabled | No
+Enabled | Yes
 
-This cop makes sure that all methods use the configured style,
-snake_case or camelCase, for their names. Some special arrangements
-have to be made for operator methods.
+This cop checks for potential uses of `Enumerable#minmax`.
 
-### Important attributes
+### Example
 
-Attribute | Value
---- | ---
-EnforcedStyle | snake_case
-SupportedStyles | snake_case, camelCase
+```ruby
+# bad
+bar = [foo.min, foo.max]
+return foo.min, foo.max
 
-### References
-
-* [https://github.com/bbatsov/ruby-style-guide#snake-case-symbols-methods-vars](https://github.com/bbatsov/ruby-style-guide#snake-case-symbols-methods-vars)
+# good
+bar = foo.minmax
+return foo.minmax
+```
 
 ## Style/MissingElse
 
@@ -2488,6 +2367,12 @@ method1(method2(arg), method3(arg))
 method1(method2 arg, method3, arg)
 ```
 
+### Important attributes
+
+Attribute | Value
+--- | ---
+Whitelist | be, be_a, be_an, be_between, be_falsey, be_kind_of, be_instance_of, be_truthy, be_within, eq, eql, end_with, include, match, raise_error, respond_to, start_with
+
 ## Style/NestedTernaryOperator
 
 Enabled by default | Supports autocorrection
@@ -2685,9 +2570,13 @@ This cop checks for usage of comparison operators (`==`,
 These can be replaced by their respective predicate methods.
 The cop can also be configured to do the reverse.
 
-The cop disregards `nonzero?` as it its value is truthy or falsey,
+The cop disregards `#nonzero?` as it its value is truthy or falsey,
 but not `true` and `false`, and thus not always interchangeable with
 `!= 0`.
+
+The cop ignores comparisons to global variables, since they are often
+populated with objects which can be compared with integers, but are
+not themselves `Interger` polymorphic.
 
 ### Example
 
@@ -2748,29 +2637,6 @@ Checks for uses of if/then/else/end on a single line.
 
 * [https://github.com/bbatsov/ruby-style-guide#ternary-operator](https://github.com/bbatsov/ruby-style-guide#ternary-operator)
 
-## Style/OpMethod
-
-Enabled by default | Supports autocorrection
---- | ---
-Enabled | No
-
-This cop makes sure that certain binary operator methods have their
-sole  parameter named `other`.
-
-### Example
-
-```ruby
-# bad
-def +(amount); end
-
-# good
-def +(other); end
-```
-
-### References
-
-* [https://github.com/bbatsov/ruby-style-guide#other-arg](https://github.com/bbatsov/ruby-style-guide#other-arg)
-
 ## Style/OptionHash
 
 Enabled by default | Supports autocorrection
@@ -2830,6 +2696,43 @@ end
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#optional-arguments](https://github.com/bbatsov/ruby-style-guide#optional-arguments)
+
+## Style/OrAssignment
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks for potential usage of the `||=` operator.
+
+### Example
+
+```ruby
+# bad
+name = name ? name : 'Bozhidar'
+
+# bad
+name = if name
+         name
+       else
+         'Bozhidar'
+       end
+
+# bad
+unless name
+  name = 'Bozhidar'
+end
+
+# bad
+name = 'Bozhidar' unless name
+
+# good - set name to 'Bozhidar', only if it's nil or false
+name ||= 'Bozhidar'
+```
+
+### References
+
+* [https://github.com/bbatsov/ruby-style-guide#double-pipe-for-uninit](https://github.com/bbatsov/ruby-style-guide#double-pipe-for-uninit)
 
 ## Style/ParallelAssignment
 
@@ -2948,43 +2851,6 @@ backreferences like $1, $2, etc.
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#no-perl-regexp-last-matchers](https://github.com/bbatsov/ruby-style-guide#no-perl-regexp-last-matchers)
-
-## Style/PredicateName
-
-Enabled by default | Supports autocorrection
---- | ---
-Enabled | No
-
-This cop makes sure that predicates are named properly.
-
-### Example
-
-```ruby
-# bad
-def is_even?(value) ...
-
-# good
-def even?(value)
-
-# bad
-def has_value? ...
-
-# good
-def value? ...
-```
-
-### Important attributes
-
-Attribute | Value
---- | ---
-NamePrefix | is_, has_, have_
-NamePrefixBlacklist | is_, has_, have_
-NameWhitelist | is_a?
-Exclude | spec/\*\*/\*
-
-### References
-
-* [https://github.com/bbatsov/ruby-style-guide#bool-methods-qmark](https://github.com/bbatsov/ruby-style-guide#bool-methods-qmark)
 
 ## Style/PreferredHashMethods
 
@@ -3134,6 +3000,37 @@ end
 
 * [https://github.com/bbatsov/ruby-style-guide#begin-implicit](https://github.com/bbatsov/ruby-style-guide#begin-implicit)
 
+## Style/RedundantConditional
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks for redundant returning of true/false in conditionals.
+
+### Example
+
+```ruby
+# bad
+x == y ? true : false
+
+# bad
+if x == y
+  true
+else
+  false
+end
+
+# good
+x == y
+
+# bad
+x == y ? false : true
+
+# good
+x != y
+```
+
 ## Style/RedundantException
 
 Enabled by default | Supports autocorrection
@@ -3266,6 +3163,10 @@ This cop checks for redundant uses of `self`.
     self.bar # resolves name clash with local variable
   end
 
+  %w[x y z].select do |bar|
+    self.bar == bar # resolves name clash with argument of a block
+  end
+
 * Calling an attribute writer to prevent an local variable assignment
 
   attr_writer :bar
@@ -3341,6 +3242,51 @@ This cop checks for uses of rescue in its modifier form.
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#no-rescue-modifiers](https://github.com/bbatsov/ruby-style-guide#no-rescue-modifiers)
+
+## Style/ReturnNil
+
+Enabled by default | Supports autocorrection
+--- | ---
+Disabled | Yes
+
+This cop enforces consistency between 'return nil' and 'return'.
+
+Supported styles are: return, return_nil.
+
+### Example
+
+```ruby
+# EnforcedStyle: return (default)
+
+# bad
+def foo(arg)
+  return nil if arg
+end
+
+# good
+def foo(arg)
+  return if arg
+end
+
+# EnforcedStyle: return_nil
+
+# bad
+def foo(arg)
+  return if arg
+end
+
+# good
+def foo(arg)
+  return nil if arg
+end
+```
+
+### Important attributes
+
+Attribute | Value
+--- | ---
+EnforcedStyle | return
+SupportedStyles | return, return_nil
 
 ## Style/SafeNavigation
 
@@ -3588,7 +3534,29 @@ Enabled by default | Supports autocorrection
 --- | ---
 Enabled | Yes
 
-Checks if uses of quotes match the configured preference.
+This cop checks that quotes inside the string interpolation
+match the configured preference.
+
+### Example
+
+```ruby
+# EnforcedStyle: single_quotes
+
+# bad
+result = "Tests #{success ? "PASS" : "FAIL"}"
+
+# good
+result = "Tests #{success ? 'PASS' : 'FAIL'}"
+```
+```ruby
+# EnforcedStyle: double_quotes
+
+# bad
+result = "Tests #{success ? 'PASS' : 'FAIL'}"
+
+# good
+result = "Tests #{success ? "PASS" : "FAIL"}"
+```
 
 ### Important attributes
 
@@ -3998,83 +3966,6 @@ This cop checks for variable interpolation (like "#@ivar").
 
 * [https://github.com/bbatsov/ruby-style-guide#curlies-interpolate](https://github.com/bbatsov/ruby-style-guide#curlies-interpolate)
 
-## Style/VariableName
-
-Enabled by default | Supports autocorrection
---- | ---
-Enabled | No
-
-This cop makes sure that all variables use the configured style,
-snake_case or camelCase, for their names.
-
-### Important attributes
-
-Attribute | Value
---- | ---
-EnforcedStyle | snake_case
-SupportedStyles | snake_case, camelCase
-
-### References
-
-* [https://github.com/bbatsov/ruby-style-guide#snake-case-symbols-methods-vars](https://github.com/bbatsov/ruby-style-guide#snake-case-symbols-methods-vars)
-
-## Style/VariableNumber
-
-Enabled by default | Supports autocorrection
---- | ---
-Enabled | No
-
-This cop makes sure that all numbered variables use the
-configured style, snake_case, normalcase or non_integer,
-for their numbering.
-
-### Example
-
-```ruby
-"EnforcedStyle => 'snake_case'"
-
-# bad
-
-variable1 = 1
-
-# good
-
-variable_1 = 1
-```
-```ruby
-"EnforcedStyle => 'normalcase'"
-
-# bad
-
-variable_1 = 1
-
-# good
-
-variable1 = 1
-```
-```ruby
-"EnforcedStyle => 'non_integer'"
-
-#bad
-
-variable1 = 1
-
-variable_1 = 1
-
-#good
-
-variableone = 1
-
-variable_one = 1
-```
-
-### Important attributes
-
-Attribute | Value
---- | ---
-EnforcedStyle | normalcase
-SupportedStyles | snake_case, normalcase, non_integer
-
 ## Style/WhenThen
 
 Enabled by default | Supports autocorrection
@@ -4183,17 +4074,38 @@ way as they would be ordered in spoken English.
 ### Example
 
 ```ruby
+# EnforcedStyle: all_comparison_operators
+
 # bad
 99 == foo
-"bar" == foo
+"bar" != foo
 42 >= foo
-```
-```ruby
+10 < bar
+
 # good
 foo == 99
 foo == "bar"
-for <= 42
+foo <= 42
+bar > 10
 ```
+```ruby
+# EnforcedStyle: equality_operators_only
+
+# bad
+99 == foo
+"bar" != foo
+
+# good
+99 >= foo
+3 < a && a < 5
+```
+
+### Important attributes
+
+Attribute | Value
+--- | ---
+EnforcedStyle | all_comparison_operators
+SupportedStyles | all_comparison_operators, equality_operators_only
 
 ### References
 

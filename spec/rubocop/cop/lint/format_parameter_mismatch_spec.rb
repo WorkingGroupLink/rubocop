@@ -82,7 +82,7 @@ describe RuboCop::Cop::Lint::FormatParameterMismatch do
   end
 
   it 'correctly ignores double percent' do
-    expect_no_offenses("format('%s %s %% %s %%%% %%%%%%', 1, 2, 3)")
+    expect_no_offenses("format('%s %s %% %s %%%% %%%%%% %%5B', 1, 2, 3)")
   end
 
   it 'constants do not register offenses' do
@@ -254,6 +254,24 @@ describe RuboCop::Cop::Lint::FormatParameterMismatch do
                ^^^^^^ Number of arguments (3) to `format` doesn't match the number of fields (1).
         RUBY
       end
+    end
+  end
+
+  context 'with wildcard' do
+    it 'does not register an offence for width' do
+      expect_no_offenses('format("%*d", 10, 3)')
+    end
+
+    it 'does not register an offence for precision' do
+      expect_no_offenses('format("%.*f", 2, 20.19)')
+    end
+
+    it 'does not register an offense for width and precision' do
+      expect_no_offenses('format("%*.*f", 10, 3, 20.19)')
+    end
+
+    it 'does not register an offense for multiple wildcards' do
+      expect_no_offenses('format("%*.*f %*.*f", 10, 2, 20.19, 5, 1, 11.22)')
     end
   end
 

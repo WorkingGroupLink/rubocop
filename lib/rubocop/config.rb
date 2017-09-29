@@ -17,7 +17,7 @@ module RuboCop
                        AutoCorrect StyleGuide Details].freeze
     # 2.1 is the oldest officially supported Ruby version.
     DEFAULT_RUBY_VERSION = 2.1
-    KNOWN_RUBIES = [1.9, 2.0, 2.1, 2.2, 2.3, 2.4].freeze
+    KNOWN_RUBIES = [2.0, 2.1, 2.2, 2.3, 2.4].freeze
     DEFAULT_RAILS_VERSION = 5.0
     OBSOLETE_COPS = {
       'Style/TrailingComma' =>
@@ -26,6 +26,9 @@ module RuboCop
         '`Style/TrailingCommaInArguments` instead.',
       'Rails/DefaultScope' =>
         'The `Rails/DefaultScope` cop no longer exists.',
+      'Lint/InvalidCharacterLiteral' =>
+        'The `Lint/InvalidCharacterLiteral` cop has been removed since it ' \
+        'was never being actually triggered.',
       'Style/SingleSpaceBeforeFirstArg' =>
         'The `Style/SingleSpaceBeforeFirstArg` cop has been renamed to ' \
         '`Layout/SpaceBeforeFirstArg`.',
@@ -52,7 +55,36 @@ module RuboCop
         'The `Lint/Eval` cop has been renamed to `Security/Eval`.',
       'Style/DeprecatedHashMethods' =>
         'The `Style/DeprecatedHashMethods` cop has been renamed to ' \
-          '`Style/PreferredHashMethods`.'
+          '`Style/PreferredHashMethods`.',
+      'Style/AccessorMethodName' =>
+        'The `Style/AccessorMethodName` cop has been moved to ' \
+          '`Naming/AccessorMethodName`.',
+      'Style/AsciiIdentifiers' =>
+        'The `Style/AsciiIdentifiers` cop has been moved to ' \
+          '`Naming/AccessorMethodName`.',
+      'Style/OpMethod' =>
+        'The `Style/OpMethod` cop has been renamed and moved to ' \
+          '`Naming/BinaryOperatorParameterName`.',
+      'Style/ClassAndModuleCamelCase' =>
+        'The `Style/ClassAndModuleCamelCase` cop has been renamed to ' \
+          '`Naming/ClassAndModuleCamelCase`.',
+      'Style/ConstantName' =>
+        'The `Style/ConstantName` cop has been renamed to ' \
+          '`Naming/ConstantName`.',
+      'Style/FileName' =>
+        'The `Style/FileName` cop has been renamed to `Naming/FileName`.',
+      'Style/MethodName' =>
+        'The `Style/MethodName` cop has been renamed to ' \
+          '`Naming/MethodName`.',
+      'Style/PredicateName' =>
+        'The `Style/PredicateName` cop has been renamed to ' \
+          '`Naming/PredicateName`.',
+      'Style/VariableName' =>
+        'The `Style/VariableName` cop has been renamed to ' \
+          '`Naming/VariableName`.',
+      'Style/VariableNumber' =>
+        'The `Style/VariableNumber` cop has been renamed to ' \
+          '`Naming/VariableNumber`.'
     }.freeze
 
     OBSOLETE_PARAMETERS = [
@@ -62,6 +94,24 @@ module RuboCop
         alternative: 'If your intention was to allow extra spaces ' \
                      'for alignment, please use AllowForAlignment: ' \
                      'true instead.'
+      },
+      {
+        cop: 'Style/Encoding',
+        parameter: 'EnforcedStyle',
+        alternative: 'Style/Encoding no longer supports styles. ' \
+                     'The "never" behavior is always assumed.'
+      },
+      {
+        cop: 'Style/Encoding',
+        parameter: 'SupportedStyles',
+        alternative: 'Style/Encoding no longer supports styles. ' \
+                     'The "never" behavior is always assumed.'
+      },
+      {
+        cop: 'Style/Encoding',
+        parameter: 'AutoCorrectEncodingComment',
+        alternative: 'Style/Encoding no longer supports styles. ' \
+                     'The "never" behavior is always assumed.'
       },
       {
         cop: 'Style/SpaceAroundOperators',
@@ -145,6 +195,10 @@ module RuboCop
       @hash.keys
     end
 
+    def each_key(&block)
+      @hash.each_key(&block)
+    end
+
     def map(&block)
       @hash.map(&block)
     end
@@ -166,7 +220,7 @@ module RuboCop
     end
 
     def make_excludes_absolute
-      each do |key, _|
+      each_key do |key|
         validate_section_presence(key)
         next unless self[key]['Exclude']
 

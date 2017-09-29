@@ -2,8 +2,9 @@
 
 require 'spec_helper'
 
-describe RuboCop::Cop::Style::YodaCondition do
-  subject(:cop) { described_class.new }
+describe RuboCop::Cop::Style::YodaCondition, :config do
+  let(:cop_config) { { 'EnforcedStyle' => 'all_comparison_operators' } }
+  subject(:cop) { described_class.new(config) }
   let(:error_message) { 'Reverse the order of the operands `%s`.' }
 
   # needed because of usage of safe navigation operator
@@ -51,6 +52,8 @@ describe RuboCop::Cop::Style::YodaCondition do
   it_behaves_like 'accepts', '[1, 2, 3] <=> [4, 5, 6]'
   it_behaves_like 'accepts', '!true'
   it_behaves_like 'accepts', 'not true'
+  it_behaves_like 'accepts', '0 <=> val'
+  it_behaves_like 'accepts', '"foo" === bar'
 
   it_behaves_like 'offense', '"foo" == bar'
   it_behaves_like 'offense', 'nil == bar'
@@ -82,9 +85,14 @@ describe RuboCop::Cop::Style::YodaCondition do
     it_behaves_like(
       'autocorrect', 'nil != foo ? bar : baz', 'foo != nil ? bar : baz'
     )
+  end
 
-    it_behaves_like(
-      'autocorrect', 'false === foo ? bar : baz', 'foo === false ? bar : baz'
-    )
+  context 'with EnforcedStyle: equality_operators_only' do
+    let(:cop_config) { { 'EnforcedStyle' => 'equality_operators_only' } }
+    it_behaves_like 'accepts', '42 < bar'
+    it_behaves_like 'accepts', 'nil >= baz'
+    it_behaves_like 'accepts', '3 < a && a < 5'
+    it_behaves_like 'offense', '42 != answer'
+    it_behaves_like 'offense', 'false == foo'
   end
 end

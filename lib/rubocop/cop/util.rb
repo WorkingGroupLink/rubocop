@@ -295,7 +295,7 @@ module RuboCop
       end
 
       def compatible_external_encoding_for?(src)
-        src = src.dup if RUBY_VERSION < '2.3'
+        src = src.dup if RUBY_VERSION < '2.3' || RUBY_ENGINE == 'jruby'
         src.force_encoding(Encoding.default_external).valid_encoding?
       end
 
@@ -303,6 +303,17 @@ module RuboCop
         enforced_style
           .sub(/^Enforced/, 'Supported')
           .sub('Style', 'Styles')
+      end
+
+      def scrub_string(string)
+        if string.respond_to?(:scrub)
+          string.scrub
+        else
+          string
+            .encode('UTF-16BE', 'UTF-8',
+                    invalid: :replace, undef: :replace, replace: '?')
+            .encode('UTF-8')
+        end
       end
     end
   end

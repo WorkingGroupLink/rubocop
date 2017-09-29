@@ -23,10 +23,17 @@ Lint/AmbiguousBlockAssociation:
   Exclude:
     - 'spec/**/*.rb'
 
+Lint/InterpolationCheck:
+  Exclude:
+    - 'spec/**/*.rb'
+
 Lint/UselessAccessModifier:
   MethodCreatingMethods:
     - 'def_matcher'
     - 'def_node_matcher'
+
+Lint/BooleanSymbol:
+  Enabled: false
 
 Metrics/BlockLength:
   Exclude:

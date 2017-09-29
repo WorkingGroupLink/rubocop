@@ -59,14 +59,16 @@ module RuboCop
         config
       end
 
+      # rubocop:disable Performance/HashEachMethods
       def add_missing_namespaces(path, hash)
-        hash.keys.each do |k|
-          q = Cop::Cop.qualified_cop_name(k, path)
-          next if q == k
+        hash.keys.each do |key|
+          q = Cop::Cop.qualified_cop_name(key, path)
+          next if q == key
 
-          hash[q] = hash.delete(k)
+          hash[q] = hash.delete(key)
         end
       end
+      # rubocop:enable Performance/HashEachMethods
 
       # Return a recursive merge of two hashes. That is, a normal hash merge,
       # with the addition that any value that is a hash, and occurs in both
@@ -83,7 +85,7 @@ module RuboCop
 
       def base_configs(path, inherit_from)
         configs = Array(inherit_from).compact.map do |f|
-          if f =~ /\A#{URI::Parser.new.make_regexp(%w[http https])}\z/
+          if f =~ /\A#{URI::DEFAULT_PARSER.make_regexp(%w[http https])}\z/
             f = RemoteConfig.new(f, File.dirname(path)).file
           else
             f = File.expand_path(f, File.dirname(path))

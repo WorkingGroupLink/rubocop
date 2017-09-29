@@ -34,7 +34,7 @@ module RuboCop
 
       callback_methods.each do |callback|
         next unless method_defined?(callback)
-        class_eval <<-EOS, __FILE__, __LINE__ + 1
+        class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{callback}(node)
             @callbacks[:"#{callback}"] ||= @cops.select do |cop|
               cop.respond_to?(:"#{callback}")
@@ -47,7 +47,7 @@ module RuboCop
 
             #{!no_child_callbacks.include?(callback) && 'super'}
           end
-        EOS
+        RUBY
       end
 
       def investigate(processed_source)
@@ -102,9 +102,12 @@ module RuboCop
         end
       end
 
+      # Allow blind rescues here, since we're absorbing and packaging or
+      # re-raising exceptions that can be raised from within the individual
+      # cops' `#investigate` methods.
       def with_cop_error_handling(cop, node = nil)
         yield
-      rescue => e
+      rescue StandardError => e
         raise e if @options[:raise_error]
         if node
           line = node.loc.line
