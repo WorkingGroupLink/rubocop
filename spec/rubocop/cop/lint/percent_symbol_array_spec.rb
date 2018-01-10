@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Lint::PercentSymbolArray do
+RSpec.describe RuboCop::Cop::Lint::PercentSymbolArray do
   subject(:cop) { described_class.new }
 
   let(:message) do
@@ -20,13 +20,13 @@ describe RuboCop::Cop::Lint::PercentSymbolArray do
       it 'accepts tokens without colons or commas' do
         inspect_source("%#{char}(foo bar baz)")
 
-        expect(cop.offenses).to be_empty
+        expect(cop.offenses.empty?).to be(true)
       end
 
       it 'accepts likely false positive $,' do
         inspect_source("%#{char}{$,}")
 
-        expect(cop.offenses).to be_empty
+        expect(cop.offenses.empty?).to be(true)
       end
 
       it 'adds an offense if symbols contain colons and are comma separated' do
@@ -57,7 +57,7 @@ describe RuboCop::Cop::Lint::PercentSymbolArray do
       CORRECTED_SOURCE
     end
 
-    it 'removes undesireable characters' do
+    it 'removes undesirable characters' do
       expect(autocorrect_source(source)).to eq(expected_corrected_source)
     end
   end

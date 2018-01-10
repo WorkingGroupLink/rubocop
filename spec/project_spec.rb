@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe 'RuboCop Project' do
+RSpec.describe 'RuboCop Project', type: :feature do
   let(:cop_names) do
     RuboCop::Cop::Cop
       .registry
@@ -27,12 +27,12 @@ describe 'RuboCop Project' do
     it 'has a nicely formatted description for all cops' do
       cop_names.each do |name|
         description = config[name]['Description']
-        expect(description).not_to be_nil
+        expect(description.nil?).to be(false)
         expect(description).not_to include("\n")
       end
     end
 
-    it 'has a SupportedStyles for all EnforcedStyle' \
+    it 'has a SupportedStyles for all EnforcedStyle ' \
       'and EnforcedStyle is valid' do
       errors = []
       cop_names.each do |name|
@@ -71,6 +71,10 @@ describe 'RuboCop Project' do
       expect(raw_configuration)
         .to all(match(hash_including('Enabled' => false)))
     end
+
+    it 'sorts configuration keys alphabetically' do
+      expect(configuration_keys).to eq configuration_keys.sort
+    end
   end
 
   describe 'config/enabled.yml' do
@@ -79,6 +83,10 @@ describe 'RuboCop Project' do
     it 'enables all cops in the file' do
       expect(raw_configuration)
         .to all(match(hash_including('Enabled' => true)))
+    end
+
+    it 'sorts configuration keys alphabetically' do
+      expect(configuration_keys).to eq configuration_keys.sort
     end
   end
 
@@ -97,12 +105,11 @@ describe 'RuboCop Project' do
 
     describe 'entry' do
       subject(:entries) { lines.grep(/^\*/).map(&:chomp) }
+
       let(:lines) { changelog.each_line }
 
       it 'has a whitespace between the * and the body' do
-        entries.each do |entry|
-          expect(entry).to match(/^\* \S/)
-        end
+        expect(entries).to all(match(/^\* \S/))
       end
 
       context 'after version 0.14.0' do
@@ -113,9 +120,7 @@ describe 'RuboCop Project' do
         end
 
         it 'has a link to the contributors at the end' do
-          entries.each do |entry|
-            expect(entry).to match(/\(\[@\S+\]\[\](?:, \[@\S+\]\[\])*\)$/)
-          end
+          expect(entries).to all(match(/\(\[@\S+\]\[\](?:, \[@\S+\]\[\])*\)$/))
         end
       end
 
@@ -145,9 +150,7 @@ describe 'RuboCop Project' do
             entry.match(/^\*\s*\[/)
           end
 
-          entries_including_issue_link.each do |entry|
-            expect(entry).to include('): ')
-          end
+          expect(entries_including_issue_link).to all(include('): '))
         end
       end
 
@@ -168,9 +171,7 @@ describe 'RuboCop Project' do
         end
 
         it 'ends with a punctuation' do
-          bodies.each do |body|
-            expect(body).to match(/[\.\!]$/)
-          end
+          expect(bodies).to all(match(/[\.\!]$/))
         end
       end
     end
@@ -184,7 +185,7 @@ describe 'RuboCop Project' do
                  .lines
                  .grep(%r{/lib/rubocop}) # ignore warnings from dependencies
                  .reject(&whitelisted)
-      expect(warnings).to be_empty
+      expect(warnings.empty?).to be(true)
     end
   end
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::RedundantParentheses do
+RSpec.describe RuboCop::Cop::Style::RedundantParentheses do
   subject(:cop) { described_class.new }
 
   shared_examples 'redundant' do |expr, correct, type, highlight = nil|
@@ -19,7 +19,7 @@ describe RuboCop::Cop::Style::RedundantParentheses do
   shared_examples 'plausible' do |expr|
     it 'accepts parentheses when arguments are unparenthesized' do
       inspect_source(expr)
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 
@@ -52,17 +52,17 @@ describe RuboCop::Cop::Style::RedundantParentheses do
   it_behaves_like 'redundant', '(/regexp/)', '/regexp/', 'a literal'
   it_behaves_like 'redundant', '("x"; "y")', '"x"; "y"', 'a literal'
   it_behaves_like 'redundant', '(1; 2)', '1; 2', 'a literal'
-  if RUBY_VERSION >= '2.1'
-    it_behaves_like 'redundant', '(1i)', '1i', 'a literal'
-    it_behaves_like 'redundant', '(1r)', '1r', 'a literal'
-  end
-
+  it_behaves_like 'redundant', '(1i)', '1i', 'a literal'
+  it_behaves_like 'redundant', '(1r)', '1r', 'a literal'
   it_behaves_like 'redundant', '(__FILE__)', '__FILE__', 'a keyword'
   it_behaves_like 'redundant', '(__LINE__)', '__LINE__', 'a keyword'
   it_behaves_like 'redundant', '(__ENCODING__)', '__ENCODING__', 'a keyword'
   it_behaves_like 'redundant', '(redo)', 'redo', 'a keyword'
   it_behaves_like 'redundant', '(retry)', 'retry', 'a keyword'
   it_behaves_like 'redundant', '(self)', 'self', 'a keyword'
+
+  it_behaves_like 'redundant', '(X) ? Y : N', 'X ? Y : N', 'a constant', '(X)'
+  it_behaves_like 'redundant', '(X)? Y : N', 'X ? Y : N', 'a constant', '(X)'
 
   it_behaves_like 'keyword with return value', 'break'
   it_behaves_like 'keyword with return value', 'next'
@@ -169,7 +169,7 @@ describe RuboCop::Cop::Style::RedundantParentheses do
   it 'accepts parentheses around a method call with unparenthesized ' \
      'arguments' do
     inspect_source('(a 1, 2) && (1 + 1)')
-    expect(cop.offenses).to be_empty
+    expect(cop.offenses.empty?).to be(true)
   end
 
   it 'accepts parentheses inside an irange' do

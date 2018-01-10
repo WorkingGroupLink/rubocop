@@ -31,10 +31,10 @@ module RuboCop
       #   end
       class ElseAlignment < Cop
         include EndKeywordAlignment
-        include AutocorrectAlignment
+        include Alignment
         include CheckAssignment
 
-        MSG = 'Align `%s` with `%s`.'.freeze
+        MSG = 'Align `%<else_range>s` with `%<base_range>s`.'.freeze
 
         def on_if(node, base = nil)
           return if ignored_node?(node)
@@ -64,6 +64,10 @@ module RuboCop
           return unless node.else?
 
           check_alignment(node.when_branches.last.loc.keyword, node.loc.else)
+        end
+
+        def autocorrect(node)
+          AlignmentCorrector.correct(processed_source, node, column_delta)
         end
 
         private
@@ -98,7 +102,7 @@ module RuboCop
           rhs = first_part_of_call_chain(rhs)
           return unless rhs
 
-          end_config = config.for_cop('Lint/EndAlignment')
+          end_config = config.for_cop('Layout/EndAlignment')
           style = end_config['EnforcedStyleAlignWith'] || 'keyword'
           base = variable_alignment?(node.loc, rhs, style.to_sym) ? node : rhs
 
@@ -112,9 +116,12 @@ module RuboCop
 
           @column_delta = effective_column(base_range) - else_range.column
           return if @column_delta.zero?
-
-          add_offense(else_range, else_range,
-                      format(MSG, else_range.source, base_range.source[/^\S*/]))
+          message = format(
+            MSG,
+            else_range: else_range.source,
+            base_range: base_range.source[/^\S*/]
+          )
+          add_offense(else_range, location: else_range, message: message)
         end
       end
     end

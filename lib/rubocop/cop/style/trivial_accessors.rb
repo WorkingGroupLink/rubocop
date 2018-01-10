@@ -5,8 +5,30 @@ module RuboCop
     module Style
       # This cop looks for trivial reader/writer methods, that could
       # have been created with the attr_* family of functions automatically.
+      #
+      # @example
+      #   # bad
+      #   def foo
+      #     @foo
+      #   end
+      #
+      #   def bar=(val)
+      #     @bar = val
+      #   end
+      #
+      #   def self.baz
+      #     @baz
+      #   end
+      #
+      #   # good
+      #   attr_reader :foo
+      #   attr_writer :bar
+      #
+      #   class << self
+      #     attr_reader :baz
+      #   end
       class TrivialAccessors < Cop
-        MSG = 'Use `attr_%s` to define trivial %s methods.'.freeze
+        MSG = 'Use `attr_%<kind>s` to define trivial %<kind>s methods.'.freeze
 
         def on_def(node)
           return if in_module_or_instance_eval?(node)
@@ -15,6 +37,14 @@ module RuboCop
           on_method_def(node)
         end
         alias on_defs on_def
+
+        def autocorrect(node)
+          if node.def_type?
+            autocorrect_instance(node)
+          elsif node.defs_type? && node.children.first.self_type?
+            autocorrect_class(node)
+          end
+        end
 
         private
 
@@ -40,7 +70,9 @@ module RuboCop
                  end
           return unless kind
 
-          add_offense(node, :keyword, format(MSG, kind, kind))
+          add_offense(node,
+                      location: :keyword,
+                      message: format(MSG, kind: kind))
         end
 
         def exact_name_match?
@@ -117,14 +149,6 @@ module RuboCop
 
         def accessor(kind, method_name)
           "attr_#{kind} :#{method_name.to_s.chomp('=')}"
-        end
-
-        def autocorrect(node)
-          if node.def_type?
-            autocorrect_instance(node)
-          elsif node.defs_type? && node.children.first.self_type?
-            autocorrect_class(node)
-          end
         end
 
         def autocorrect_instance(node)

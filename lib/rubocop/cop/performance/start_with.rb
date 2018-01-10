@@ -7,11 +7,11 @@ module RuboCop
       # `String#start_with?` would suffice.
       #
       # @example
-      #   @bad
+      #   # bad
       #   'abc' =~ /\Aab/
       #   'abc'.match(/\Aab/)
       #
-      #   @good
+      #   # good
       #   'abc'.start_with?('ab')
       class StartWith < Cop
         MSG = 'Use `String#start_with?` instead of a regex match anchored to ' \
@@ -19,7 +19,7 @@ module RuboCop
         SINGLE_QUOTE = "'".freeze
 
         def_node_matcher :redundant_regex?, <<-PATTERN
-          {(send $!nil {:match :=~} (regexp (str $#literal_at_start?) (regopt)))
+          {(send $!nil? {:match :=~} (regexp (str $#literal_at_start?) (regopt)))
            (send (regexp (str $#literal_at_start?) (regopt)) {:match :=~} $_)}
         PATTERN
 

@@ -5,26 +5,75 @@ module RuboCop
     module Style
       # This cop enforces using `` or %x around command literals.
       #
-      # @example
-      #   # Good if EnforcedStyle is backticks or mixed, bad if percent_x.
-      #   folders = `find . -type d`.split
-      #
-      #   # Good if EnforcedStyle is percent_x, bad if backticks or mixed.
+      # @example EnforcedStyle: backticks (default)
+      #   # bad
       #   folders = %x(find . -type d).split
       #
-      #   # Good if EnforcedStyle is backticks, bad if percent_x or mixed.
-      #   `
-      #     ln -s foo.example.yml foo.example
-      #     ln -s bar.example.yml bar.example
-      #   `
-      #
-      #   # Good if EnforcedStyle is percent_x or mixed, bad if backticks.
+      #   # bad
       #   %x(
       #     ln -s foo.example.yml foo.example
       #     ln -s bar.example.yml bar.example
       #   )
       #
-      #   # Bad unless AllowInnerBackticks is true.
+      #   # good
+      #   folders = `find . -type d`.split
+      #
+      #   # good
+      #   `
+      #     ln -s foo.example.yml foo.example
+      #     ln -s bar.example.yml bar.example
+      #   `
+      #
+      # @example EnforcedStyle: mixed
+      #   # bad
+      #   folders = %x(find . -type d).split
+      #
+      #   # bad
+      #   `
+      #     ln -s foo.example.yml foo.example
+      #     ln -s bar.example.yml bar.example
+      #   `
+      #
+      #   # good
+      #   folders = `find . -type d`.split
+      #
+      #   # good
+      #   %x(
+      #     ln -s foo.example.yml foo.example
+      #     ln -s bar.example.yml bar.example
+      #   )
+      #
+      # @example EnforcedStyle: percent_x
+      #   # bad
+      #   folders = `find . -type d`.split
+      #
+      #   # bad
+      #   `
+      #     ln -s foo.example.yml foo.example
+      #     ln -s bar.example.yml bar.example
+      #   `
+      #
+      #   # good
+      #   folders = %x(find . -type d).split
+      #
+      #   # good
+      #   %x(
+      #     ln -s foo.example.yml foo.example
+      #     ln -s bar.example.yml bar.example
+      #   )
+      #
+      # @example AllowInnerBackticks: false (default)
+      #   # If `false`, the cop will always recommend using `%x` if one or more
+      #   # backticks are found in the command string.
+      #
+      #   # bad
+      #   `echo \`ls\``
+      #
+      #   # good
+      #   %x(echo `ls`)
+      #
+      # @example AllowInnerBackticks: true
+      #   # good
       #   `echo \`ls\``
       class CommandLiteral < Cop
         include ConfigurableEnforcedStyle
@@ -39,6 +88,21 @@ module RuboCop
             check_backtick_literal(node)
           else
             check_percent_x_literal(node)
+          end
+        end
+
+        def autocorrect(node)
+          return if contains_backtick?(node)
+
+          replacement = if backtick_literal?(node)
+                          ['%x', ''].zip(preferred_delimiters).map(&:join)
+                        else
+                          %w[` `]
+                        end
+
+          lambda do |corrector|
+            corrector.replace(node.loc.begin, replacement.first)
+            corrector.replace(node.loc.end, replacement.last)
           end
         end
 
@@ -108,21 +172,6 @@ module RuboCop
         def preferred_delimiters
           config.for_cop('Style/PercentLiteralDelimiters') \
             ['PreferredDelimiters']['%x'].split(//)
-        end
-
-        def autocorrect(node)
-          return if contains_backtick?(node)
-
-          replacement = if backtick_literal?(node)
-                          ['%x', ''].zip(preferred_delimiters).map(&:join)
-                        else
-                          %w[` `]
-                        end
-
-          lambda do |corrector|
-            corrector.replace(node.loc.begin, replacement.first)
-            corrector.replace(node.loc.end, replacement.last)
-          end
         end
       end
     end

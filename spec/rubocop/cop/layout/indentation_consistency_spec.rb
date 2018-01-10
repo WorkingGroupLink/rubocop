@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::IndentationConsistency, :config do
+RSpec.describe RuboCop::Cop::Layout::IndentationConsistency, :config do
   subject(:cop) { described_class.new(config) }
 
   let(:cop_config) { { 'EnforcedStyle' => 'normal' } }
@@ -161,7 +161,7 @@ describe RuboCop::Cop::Layout::IndentationConsistency, :config do
           1
         end.abc.join("")
       RUBY
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'accepts an if/else in assignment with end aligned with variable ' \
@@ -173,7 +173,7 @@ describe RuboCop::Cop::Layout::IndentationConsistency, :config do
           1
         end.abc.tap {}
       RUBY
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'accepts an if in assignment with end aligned with if' do
@@ -204,7 +204,7 @@ describe RuboCop::Cop::Layout::IndentationConsistency, :config do
             1
           end
       RUBY
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'accepts an if/else branches with rescue clauses' do

@@ -5,24 +5,28 @@ module RuboCop
     module Naming
       # This cops checks for class and module names with
       # an underscore in them.
+      #
+      # @example
+      #   # bad
+      #   class My_Class
+      #   end
+      #   module My_Module
+      #   end
+      #
+      #   # good
+      #   class MyClass
+      #   end
+      #   module MyModule
+      #   end
       class ClassAndModuleCamelCase < Cop
         MSG = 'Use CamelCase for classes and modules.'.freeze
 
         def on_class(node)
-          check_name(node)
+          return unless node.loc.name.source =~ /_/
+
+          add_offense(node, location: :name)
         end
-
-        def on_module(node)
-          check_name(node)
-        end
-
-        private
-
-        def check_name(node)
-          name = node.loc.name.source
-
-          add_offense(node, :name) if name =~ /_/
-        end
+        alias on_module on_class
       end
     end
   end

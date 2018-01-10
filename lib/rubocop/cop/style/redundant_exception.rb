@@ -22,8 +22,8 @@ module RuboCop
                 'just the message.'.freeze
 
         def on_send(node)
-          exploded?(node) { return add_offense(node, :expression, MSG_1) }
-          compact?(node) { add_offense(node, :expression, MSG_2) }
+          exploded?(node) { return add_offense(node, message: MSG_1) }
+          compact?(node) { add_offense(node, message: MSG_2) }
         end
 
         # Switch `raise RuntimeError, 'message'` to `raise 'message'`, and
@@ -43,11 +43,11 @@ module RuboCop
         end
 
         def_node_matcher :exploded?, <<-PATTERN
-          (send nil ${:raise :fail} (const nil :RuntimeError) $_)
+          (send nil? ${:raise :fail} (const nil? :RuntimeError) $_)
         PATTERN
 
         def_node_matcher :compact?, <<-PATTERN
-          (send nil {:raise :fail} $(send (const nil :RuntimeError) :new $_))
+          (send nil? {:raise :fail} $(send (const nil? :RuntimeError) :new $_))
         PATTERN
       end
     end

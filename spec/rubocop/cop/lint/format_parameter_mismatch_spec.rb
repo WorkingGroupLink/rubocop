@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Style/FormatStringToken
-describe RuboCop::Cop::Lint::FormatParameterMismatch do
+RSpec.describe RuboCop::Cop::Lint::FormatParameterMismatch do
   subject(:cop) { described_class.new }
 
   shared_examples 'variables' do |variable|
@@ -11,7 +10,7 @@ describe RuboCop::Cop::Lint::FormatParameterMismatch do
         #{variable} % [foo]
       RUBY
 
-      expect(cop.messages).to be_empty
+      expect(cop.messages.empty?).to be(true)
     end
 
     it 'does not register an offense for format called on a variable' do
@@ -20,7 +19,7 @@ describe RuboCop::Cop::Lint::FormatParameterMismatch do
         format(#{variable}, foo)
       RUBY
 
-      expect(cop.messages).to be_empty
+      expect(cop.messages.empty?).to be(true)
     end
 
     it 'does not register an offense for format called on a variable' do
@@ -29,7 +28,7 @@ describe RuboCop::Cop::Lint::FormatParameterMismatch do
         sprintf(#{variable}, foo)
       RUBY
 
-      expect(cop.messages).to be_empty
+      expect(cop.messages.empty?).to be(true)
     end
   end
 
@@ -130,11 +129,11 @@ describe RuboCop::Cop::Lint::FormatParameterMismatch do
 
     it 'does register an offense when args count is more than expected' do
       inspect_source('puts "%s, %s, %s" % [1, 2, 3, 4, *arr]')
-      expect(cop.offenses).not_to be_empty
+      expect(cop.offenses.empty?).to be(false)
       inspect_source('format("%s, %s, %s", 1, 2, 3, 4, *arr)')
-      expect(cop.offenses).not_to be_empty
+      expect(cop.offenses.empty?).to be(false)
       inspect_source('sprintf("%s, %s, %s", 1, 2, 3, 4, *arr)')
-      expect(cop.offenses).not_to be_empty
+      expect(cop.offenses.empty?).to be(false)
     end
   end
 

@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Rails::Delegate do
+RSpec.describe RuboCop::Cop::Rails::Delegate do
   subject(:cop) { described_class.new(config) }
+
   let(:cop_config) { { 'EnforceForPrefixed' => true } }
   let(:config) do
     merged = RuboCop::ConfigLoader
@@ -92,6 +93,14 @@ describe RuboCop::Cop::Rails::Delegate do
     RUBY
   end
 
+  it 'ignores the method in the body with arguments' do
+    expect_no_offenses(<<-RUBY.strip_indent)
+      def fox
+        bar(42).fox
+      end
+    RUBY
+  end
+
   it 'ignores private delegations' do
     expect_no_offenses(<<-RUBY.strip_indent)
         private def fox # leading spaces are on purpose
@@ -133,6 +142,14 @@ describe RuboCop::Cop::Rails::Delegate do
       FOO = []
       def size
         FOO.size
+      end
+    RUBY
+  end
+
+  it 'ignores code with no receiver' do
+    expect_no_offenses(<<-RUBY.strip_indent)
+      def change
+        add_column :images, :size, :integer
       end
     RUBY
   end

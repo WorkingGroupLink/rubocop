@@ -6,34 +6,34 @@ module RuboCop
       # This cop checks the indentation of the method name part in method calls
       # that span more than one line.
       #
-      # @example
+      # @example EnforcedStyle: aligned (default)
       #   # bad
       #   while myvariable
       #   .b
       #     # do something
       #   end
       #
-      #   # good, EnforcedStyle: aligned
+      #   # good
       #   while myvariable
       #         .b
       #     # do something
       #   end
       #
-      #   # good, EnforcedStyle: aligned
+      #   # good
       #   Thing.a
       #        .b
       #        .c
       #
-      #   # good, EnforcedStyle:    indented,
-      #           IndentationWidth: 2
+      # @example EnforcedStyle: indented
+      #   # good
       #   while myvariable
       #     .b
       #
       #     # do something
       #   end
       #
-      #   # good, EnforcedStyle:    indented_relative_to_receiver,
-      #           IndentationWidth: 2
+      # @example EnforcedStyle: indented_relative_to_receiver
+      #   # good
       #   while myvariable
       #           .a
       #           .b
@@ -41,15 +41,14 @@ module RuboCop
       #     # do something
       #   end
       #
-      #   # good, EnforcedStyle:    indented_relative_to_receiver,
-      #           IndentationWidth: 2
+      #   # good
       #   myvariable = Thing
       #                  .a
       #                  .b
       #                  .c
       class MultilineMethodCallIndentation < Cop
         include ConfigurableEnforcedStyle
-        include AutocorrectAlignment
+        include Alignment
         include MultilineExpressionIndentation
 
         def validate_config
@@ -60,6 +59,10 @@ module RuboCop
                 ' cop only accepts an `IndentationWidth` ' \
                 'configuration parameter when ' \
                 '`EnforcedStyle` is `indented`.'
+        end
+
+        def autocorrect(node)
+          AlignmentCorrector.correct(processed_source, node, @column_delta)
         end
 
         private
@@ -167,7 +170,7 @@ module RuboCop
           return unless rhs.source.start_with?('.')
 
           node = semantic_alignment_node(node)
-          return unless node
+          return unless node && node.loc.selector
 
           node.loc.dot.join(node.loc.selector)
         end
@@ -192,7 +195,7 @@ module RuboCop
           node = node.parent
           node = node.parent until node.loc.dot
 
-          return if node.loc.dot.line != node.loc.line
+          return if node.loc.dot.line != node.first_line
           node
         end
 

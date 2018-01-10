@@ -8,13 +8,12 @@ module RuboCop
       # with an explicit array creation.
       #
       # @example
-      #
-      #   @bad
+      #   # bad
       #   9.times.map do |i|
       #     i.to_s
       #   end
       #
-      #   @good
+      #   # good
       #   Array.new(9) do |i|
       #     i.to_s
       #   end
@@ -31,11 +30,23 @@ module RuboCop
           check(node)
         end
 
+        def autocorrect(node)
+          map_or_collect, count = times_map_call(node)
+
+          replacement =
+            "Array.new(#{count.source}" \
+            "#{map_or_collect.arguments.map { |arg| ", #{arg.source}" }.join})"
+
+          lambda do |corrector|
+            corrector.replace(map_or_collect.loc.expression, replacement)
+          end
+        end
+
         private
 
         def check(node)
           times_map_call(node) do |map_or_collect, count|
-            add_offense(node, :expression, message(map_or_collect, count))
+            add_offense(node, message: message(map_or_collect, count))
           end
         end
 
@@ -51,21 +62,9 @@ module RuboCop
         end
 
         def_node_matcher :times_map_call, <<-PATTERN
-          {(block $(send (send $!nil :times) {:map :collect}) ...)
-           $(send (send $!nil :times) {:map :collect} (block_pass ...))}
+          {(block $(send (send $!nil? :times) {:map :collect}) ...)
+           $(send (send $!nil? :times) {:map :collect} (block_pass ...))}
         PATTERN
-
-        def autocorrect(node)
-          map_or_collect, count = times_map_call(node)
-
-          replacement =
-            "Array.new(#{count.source}" \
-            "#{map_or_collect.arguments.map { |arg| ", #{arg.source}" }.join})"
-
-          lambda do |corrector|
-            corrector.replace(map_or_collect.loc.expression, replacement)
-          end
-        end
       end
     end
   end

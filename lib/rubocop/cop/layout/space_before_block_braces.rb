@@ -6,7 +6,7 @@ module RuboCop
       # Checks that block braces have or don't have a space before the opening
       # brace depending on configuration.
       #
-      # @example
+      # @example EnforcedStyle: space (default)
       #   # bad
       #   foo.map{ |a|
       #     a.bar.to_s
@@ -16,8 +16,20 @@ module RuboCop
       #   foo.map { |a|
       #     a.bar.to_s
       #   }
+      #
+      # @example EnforcedStyle: no_space
+      #   # bad
+      #   foo.map { |a|
+      #     a.bar.to_s
+      #   }
+      #
+      #   # good
+      #   foo.map{ |a|
+      #     a.bar.to_s
+      #   }
       class SpaceBeforeBlockBraces < Cop
         include ConfigurableEnforcedStyle
+        include RangeHelp
 
         MISSING_MSG = 'Space missing to the left of {.'.freeze
         DETECTED_MSG = 'Space detected to the left of {.'.freeze
@@ -30,7 +42,7 @@ module RuboCop
           return if node.keywords?
 
           left_brace = node.loc.begin
-          space_plus_brace = range_with_surrounding_space(left_brace)
+          space_plus_brace = range_with_surrounding_space(range: left_brace)
           used_style =
             space_plus_brace.source.start_with?('{') ? :no_space : :space
 
@@ -38,6 +50,15 @@ module RuboCop
             check_empty(left_brace, space_plus_brace, used_style)
           else
             check_non_empty(left_brace, space_plus_brace, used_style)
+          end
+        end
+
+        def autocorrect(range)
+          lambda do |corrector|
+            case range.source
+            when /\s/ then corrector.remove(range)
+            else           corrector.insert_before(range, ' ')
+            end
           end
         end
 
@@ -50,11 +71,11 @@ module RuboCop
             used_style.to_s
 
           if style_for_empty_braces == :space
-            add_offense(left_brace, left_brace, MISSING_MSG)
+            add_offense(left_brace, location: left_brace, message: MISSING_MSG)
           else
             space = range_between(space_plus_brace.begin_pos,
                                   left_brace.begin_pos)
-            add_offense(space, space, DETECTED_MSG)
+            add_offense(space, location: space, message: DETECTED_MSG)
           end
         end
 
@@ -67,7 +88,7 @@ module RuboCop
         end
 
         def space_missing(left_brace)
-          add_offense(left_brace, left_brace, MISSING_MSG) do
+          add_offense(left_brace, location: left_brace, message: MISSING_MSG) do
             opposite_style_detected
           end
         end
@@ -75,7 +96,7 @@ module RuboCop
         def space_detected(left_brace, space_plus_brace)
           space = range_between(space_plus_brace.begin_pos,
                                 left_brace.begin_pos)
-          add_offense(space, space, DETECTED_MSG) do
+          add_offense(space, location: space, message: DETECTED_MSG) do
             opposite_style_detected
           end
         end
@@ -86,15 +107,6 @@ module RuboCop
           when 'no_space' then :no_space
           when nil then style
           else raise 'Unknown EnforcedStyleForEmptyBraces selected!'
-          end
-        end
-
-        def autocorrect(range)
-          lambda do |corrector|
-            case range.source
-            when /\s/ then corrector.remove(range)
-            else           corrector.insert_before(range, ' ')
-            end
           end
         end
 

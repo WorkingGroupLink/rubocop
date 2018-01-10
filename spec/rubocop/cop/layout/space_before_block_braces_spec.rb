@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::SpaceBeforeBlockBraces, :config do
+RSpec.describe RuboCop::Cop::Layout::SpaceBeforeBlockBraces, :config do
   subject(:cop) { described_class.new(config) }
+
   let(:cop_config) { { 'EnforcedStyle' => 'space' } }
 
   context 'when EnforcedStyle is space' do
@@ -38,8 +39,8 @@ describe RuboCop::Cop::Layout::SpaceBeforeBlockBraces, :config do
     end
 
     it 'auto-corrects missing space' do
-      new_source = autocorrect_source('each{}')
-      expect(new_source).to eq('each {}')
+      new_source = autocorrect_source('each{ puts }')
+      expect(new_source).to eq('each { puts }')
     end
   end
 
@@ -60,11 +61,6 @@ describe RuboCop::Cop::Layout::SpaceBeforeBlockBraces, :config do
       RUBY
       expect(cop.messages).to eq(['Space detected to the left of {.'])
       expect(cop.config_to_allow_offenses).to eq('Enabled' => false)
-    end
-
-    it 'auto-corrects unwanted space' do
-      new_source = autocorrect_source('each {}')
-      expect(new_source).to eq('each{}')
     end
 
     it 'accepts left brace without outer space' do

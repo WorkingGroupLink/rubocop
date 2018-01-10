@@ -8,21 +8,34 @@ module RuboCop
       # This cop makes sure that Ruby source files have snake_case
       # names. Ruby scripts (i.e. source files with a shebang in the
       # first line) are ignored.
+      #
+      # @example
+      #   # bad
+      #   lib/layoutManager.rb
+      #
+      #   anything/usingCamelCase
+      #
+      #   # good
+      #   lib/layout_manager.rb
+      #
+      #   anything/using_snake_case.rake
       class FileName < Cop
-        MSG_SNAKE_CASE = 'The name of this source file (`%s`) ' \
+        include RangeHelp
+
+        MSG_SNAKE_CASE = 'The name of this source file (`%<basename>s`) ' \
                          'should use snake_case.'.freeze
-        MSG_NO_DEFINITION = '%s should define a class or module ' \
-                            'called `%s`.'.freeze
-        MSG_REGEX = '`%s` should match `%s`.'.freeze
+        MSG_NO_DEFINITION = '%<basename>s should define a class or module ' \
+                            'called `%<namespace>s`.'.freeze
+        MSG_REGEX = '`%<basename>s` should match `%<regex>s`.'.freeze
 
         SNAKE_CASE = /^[\da-z_.?!]+$/
 
         def investigate(processed_source)
-          file_path = processed_source.buffer.name
+          file_path = processed_source.file_path
           return if config.file_to_include?(file_path)
 
           for_bad_filename(file_path) do |range, msg|
-            add_offense(nil, range, msg)
+            add_offense(nil, location: range, message: msg)
           end
         end
 
@@ -37,33 +50,26 @@ module RuboCop
 
                   no_definition_message(basename, file_path)
                 else
-                  return if ignore_executable_scripts? && shebang?(first_line)
+                  return if ignore_executable_scripts? &&
+                            processed_source.start_with?('#!')
                   other_message(basename)
                 end
 
           yield source_range(processed_source.buffer, 1, 0), msg
         end
 
-        def first_line
-          processed_source.lines.first
-        end
-
         def no_definition_message(basename, file_path)
           format(MSG_NO_DEFINITION,
-                 basename,
-                 to_namespace(file_path).join('::'))
+                 basename: basename,
+                 namespace: to_namespace(file_path).join('::'))
         end
 
         def other_message(basename)
           if regex
-            format(MSG_REGEX, basename, regex)
+            format(MSG_REGEX, basename: basename, regex: regex)
           else
-            format(MSG_SNAKE_CASE, basename)
+            format(MSG_SNAKE_CASE, basename: basename)
           end
-        end
-
-        def shebang?(line)
-          line && line.start_with?('#!')
         end
 
         def ignore_executable_scripts?

@@ -8,18 +8,30 @@ module RuboCop
       #
       # Supported styles are: module_function, extend_self.
       #
-      # @example
-      #
-      #   # Good if EnforcedStyle is module_function
-      #   module Test
-      #     module_function
-      #     ...
-      #   end
-      #
-      #   # Good if EnforcedStyle is extend_self
+      # @example EnforcedStyle: module_function (default)
+      #   # bad
       #   module Test
       #     extend self
-      #     ...
+      #     # ...
+      #   end
+      #
+      #   # good
+      #   module Test
+      #     module_function
+      #     # ...
+      #   end
+      #
+      # @example EnforcedStyle: extend_self
+      #   # bad
+      #   module Test
+      #     module_function
+      #     # ...
+      #   end
+      #
+      #   # good
+      #   module Test
+      #     extend self
+      #     # ...
       #   end
       #
       # These offenses are not auto-corrected since there are different
@@ -32,8 +44,8 @@ module RuboCop
         EXTEND_SELF_MSG =
           'Use `extend self` instead of `module_function`.'.freeze
 
-        def_node_matcher :module_function_node?, '(send nil :module_function)'
-        def_node_matcher :extend_self_node?, '(send nil :extend self)'
+        def_node_matcher :module_function_node?, '(send nil? :module_function)'
+        def_node_matcher :extend_self_node?, '(send nil? :extend self)'
 
         def on_module(node)
           _name, body = *node

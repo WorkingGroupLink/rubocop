@@ -10,12 +10,13 @@ module RuboCop
         SHEBANG = '#!'.freeze
 
         def investigate(processed_source)
+          return if @options.key?(:stdin)
           return if Platform.windows?
-          return unless start_with_shebang?(processed_source)
+          return unless processed_source.start_with?(SHEBANG)
           return if executable?(processed_source)
           comment = processed_source.comments[0]
           message = format_message_from(processed_source)
-          add_offense(comment, :expression, message)
+          add_offense(comment, message: message)
         end
 
         def autocorrect(node)
@@ -26,20 +27,15 @@ module RuboCop
 
         private
 
-        def start_with_shebang?(processed_source)
-          return false if processed_source[0].nil?
-          processed_source[0].start_with?(SHEBANG)
-        end
-
         def executable?(processed_source)
           # Returns true if stat is executable or if the operating system
           # doesn't distinguish executable files from nonexecutable files.
           # See at: https://github.com/ruby/ruby/blob/ruby_2_4/file.c#L5362
-          File.stat(processed_source.buffer.name).executable?
+          File.stat(processed_source.file_path).executable?
         end
 
         def format_message_from(processed_source)
-          basename = File.basename(processed_source.buffer.name)
+          basename = File.basename(processed_source.file_path)
           format(MSG, basename)
         end
       end

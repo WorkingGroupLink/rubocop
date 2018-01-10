@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Lint::RescueException do
+RSpec.describe RuboCop::Cop::Lint::RescueException do
   subject(:cop) { described_class.new }
 
   it 'registers an offense for rescue from Exception' do
@@ -121,6 +121,6 @@ describe RuboCop::Cop::Lint::RescueException do
       rescue adapter::ParseError
       end
     RUBY
-    expect(cop.offenses).to be_empty
+    expect(cop.offenses.empty?).to be(true)
   end
 end

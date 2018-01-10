@@ -4,6 +4,16 @@ module RuboCop
   module Cop
     module Style
       # This cop checks for usage of the %W() syntax when %w() would do.
+      #
+      # @example
+      #   # bad
+      #   %W(cat dog pig)
+      #   %W[door wall floor]
+      #
+      #   # good
+      #   %w/swim run bike/
+      #   %w[shirt pants shoes]
+      #   %W(apple #{fruit} grape)
       class UnneededCapitalW < Cop
         include PercentLiteral
 
@@ -12,6 +22,13 @@ module RuboCop
 
         def on_array(node)
           process(node, '%W')
+        end
+
+        def autocorrect(node)
+          lambda do |corrector|
+            src = node.loc.begin.source
+            corrector.replace(node.loc.begin, src.tr('W', 'w'))
+          end
         end
 
         private
@@ -26,13 +43,6 @@ module RuboCop
           node.child_nodes.any? do |string|
             string.dstr_type? ||
               double_quotes_required?(string.source)
-          end
-        end
-
-        def autocorrect(node)
-          lambda do |corrector|
-            src = node.loc.begin.source
-            corrector.replace(node.loc.begin, src.tr('W', 'w'))
           end
         end
       end

@@ -26,7 +26,7 @@ def sh!(command)
 end
 
 # Run main task(RSpec or RuboCop).
-if master? || !test? || jruby? || RUBY_VERSION < '2.1.0'
+if master? || !test? || jruby?
   sh!("bundle exec rake #{ENV['TASK']}")
 else
   sh!("bundle exec rake parallel:#{ENV['TASK']}")
@@ -36,7 +36,9 @@ end
 sh!('bundle exec codeclimate-test-reporter') if master? && test?
 
 # Running YARD under jruby crashes so skip checking manual under jruby
-sh!('bundle exec rake generate_cops_documentation') unless jruby?
+unless jruby?
+  sh!('bundle exec rake documentation_syntax_check generate_cops_documentation')
+end
 
 # Check requiring libraries successfully.
 # See https://github.com/bbatsov/rubocop/pull/4523#issuecomment-309136113

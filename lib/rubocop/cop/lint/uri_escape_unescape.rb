@@ -17,7 +17,8 @@ module RuboCop
       #
       #   # good
       #   CGI.escape('http://example.com')
-      #   URI.encode_www_form('http://example.com')
+      #   URI.encode_www_form([['example', 'param'], ['lang', 'en']])
+      #   URI.encode_www_form(page: 10, locale: 'en')
       #   URI.encode_www_form_component('http://example.com')
       #
       #   # bad
@@ -45,7 +46,7 @@ module RuboCop
 
         def_node_matcher :uri_escape_unescape?, <<-PATTERN
           (send
-            (const ${nil cbase} :URI) ${:escape :encode :unescape :decode}
+            (const ${nil? cbase} :URI) ${:escape :encode :unescape :decode}
             ...)
         PATTERN
 
@@ -65,7 +66,7 @@ module RuboCop
               *replacement_methods
             )
 
-            add_offense(node, :expression, message)
+            add_offense(node, message: message)
           end
         end
       end

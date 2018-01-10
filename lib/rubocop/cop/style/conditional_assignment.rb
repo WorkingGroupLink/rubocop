@@ -9,7 +9,7 @@ module RuboCop
         extend NodePattern::Macros
 
         EQUAL = '='.freeze
-        END_ALIGNMENT = 'Lint/EndAlignment'.freeze
+        END_ALIGNMENT = 'Layout/EndAlignment'.freeze
         ALIGN_WITH = 'EnforcedStyleAlignWith'.freeze
         KEYWORD = 'keyword'.freeze
 
@@ -108,9 +108,7 @@ module RuboCop
       # assignment to the same variable when using the return of the
       # condition can be used instead.
       #
-      # @example
-      #   EnforcedStyle: assign_to_condition
-      #
+      # @example EnforcedStyle: assign_to_condition (default)
       #   # bad
       #   if foo
       #     bar = 1
@@ -155,7 +153,7 @@ module RuboCop
       #            2
       #          end
       #
-      #   EnforcedStyle: assign_inside_condition
+      # @example EnforcedStyle: assign_inside_condition
       #   # bad
       #   bar = if foo
       #           1
@@ -268,6 +266,14 @@ module RuboCop
           check_node(node, branches)
         end
 
+        def autocorrect(node)
+          if assignment_type?(node)
+            move_assignment_inside_condition(node)
+          else
+            move_assignment_outside_condition(node)
+          end
+        end
+
         private
 
         def check_assignment_to_condition(node)
@@ -283,7 +289,7 @@ module RuboCop
           return unless else_branch
           return if allowed_single_line?([*branches, else_branch])
 
-          add_offense(node, :expression, ASSIGN_TO_CONDITION_MSG)
+          add_offense(node, message: ASSIGN_TO_CONDITION_MSG)
         end
 
         def candidate_node?(node)
@@ -298,14 +304,6 @@ module RuboCop
 
         def allowed_single_line?(branches)
           single_line_conditions_only? && branches.any?(&:begin_type?)
-        end
-
-        def autocorrect(node)
-          if assignment_type?(node)
-            move_assignment_inside_condition(node)
-          else
-            move_assignment_outside_condition(node)
-          end
         end
 
         def assignment_node(node)

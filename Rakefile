@@ -6,8 +6,8 @@ require 'bundler/gem_tasks'
 begin
   Bundler.setup(:default, :development)
 rescue Bundler::BundlerError => e
-  $stderr.puts e.message
-  $stderr.puts 'Run `bundle install` to install missing gems'
+  warn e.message
+  warn 'Run `bundle install` to install missing gems'
   exit e.status_code
 end
 require 'rake'
@@ -21,7 +21,11 @@ RSpec::Core::RakeTask.new(:spec) { |t| t.ruby_opts = '-E UTF-8' }
 RSpec::Core::RakeTask.new(:ascii_spec) { |t| t.ruby_opts = '-E ASCII' }
 
 desc 'Run test and RuboCop in parallel'
-task parallel: %i[parallel:spec parallel:ascii_spec internal_investigation]
+task parallel: %i[
+  documentation_syntax_check generate_cops_documentation
+  parallel:spec parallel:ascii_spec
+  internal_investigation
+]
 
 namespace :parallel do
   desc 'Run RSpec in parallel'
@@ -31,7 +35,7 @@ namespace :parallel do
 
   desc 'Run RSpec in parallel with ASCII encoding'
   task :ascii_spec do
-    sh('RUBYOPT="-E ASCII" rspec-queue spec/')
+    sh('RUBYOPT="$RUBYOPT -E ASCII" rspec-queue spec/')
   end
 end
 
@@ -49,7 +53,11 @@ RuboCop::RakeTask.new(:internal_investigation).tap do |task|
   end
 end
 
-task default: %i[spec ascii_spec internal_investigation]
+task default: %i[
+  documentation_syntax_check generate_cops_documentation
+  spec ascii_spec
+  internal_investigation
+]
 
 require 'yard'
 YARD::Rake::YardocTask.new
@@ -71,7 +79,7 @@ task :bench_cop, %i[cop srcpath times] do |_task, args|
 
   cop_name = args[:cop]
   src_path = args[:srcpath]
-  iterations = args[:times] ? args[:times].to_i : 1
+  iterations = args[:times] ? Integer(args[:times]) : 1
 
   cop_class = if cop_name.include?('/')
                 Cop::Cop.all.find { |klass| klass.cop_name == cop_name }
@@ -106,4 +114,38 @@ task :bench_cop, %i[cop srcpath times] do |_task, args|
       srcs.each { |src| commissioner.investigate(src) }
     end
   end)
+end
+
+desc 'Syntax check for the documentation comments'
+task documentation_syntax_check: :yard_for_generate_documentation do
+  require 'parser/ruby24'
+
+  ok = true
+  YARD::Registry.load!
+  cops = RuboCop::Cop::Cop.registry
+  cops.each do |cop|
+    # TODO: parser cannot parse the example, so skip it.
+    #       https://github.com/whitequark/parser/issues/407
+    next if cop == RuboCop::Cop::Layout::SpaceAroundKeyword
+    next if %i[RSpec Capybara FactoryBot].include?(cop.department)
+    examples = YARD::Registry.all(:class).find do |code_object|
+      next unless RuboCop::Cop::Badge.for(code_object.to_s) == cop.badge
+      break code_object.tags('example')
+    end
+
+    examples.each do |example|
+      begin
+        buffer = Parser::Source::Buffer.new('<code>', 1)
+        buffer.source = example.text
+        parser = Parser::Ruby24.new(RuboCop::AST::Builder.new)
+        parser.diagnostics.all_errors_are_fatal = true
+        parser.parse(buffer)
+      rescue Parser::SyntaxError => ex
+        path = example.object.file
+        puts "#{path}: Syntax Error in an example. #{ex}"
+        ok = false
+      end
+    end
+  end
+  abort unless ok
 end

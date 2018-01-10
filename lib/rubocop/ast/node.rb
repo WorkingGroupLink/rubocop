@@ -24,6 +24,7 @@ module RuboCop
 
       # <=> isn't included here, because it doesn't return a boolean.
       COMPARISON_OPERATORS = %i[== === != <= >= > <].freeze
+      ARITHMETIC_OPERATORS = %i[+ - * / % **].freeze
 
       TRUTHY_LITERALS = %i[str dstr xstr int float sym dsym array
                            hash regexp true irange erange complex
@@ -258,6 +259,27 @@ module RuboCop
         loc.expression
       end
 
+      def first_line
+        loc.line
+      end
+
+      def last_line
+        loc.last_line
+      end
+
+      def line_count
+        return 0 unless source_range
+        source_range.last_line - source_range.first_line + 1
+      end
+
+      def nonempty_line_count
+        source.lines.grep(/\S/).size
+      end
+
+      def source_length
+        source_range ? source_range.size : 0
+      end
+
       ## Destructuring
 
       def_node_matcher :receiver, <<-PATTERN
@@ -285,8 +307,8 @@ module RuboCop
       def_node_matcher :defined_module0, <<-PATTERN
         {(class (const $_ $_) ...)
          (module (const $_ $_) ...)
-         (casgn $_ $_        (send (const nil {:Class :Module}) :new ...))
-         (casgn $_ $_ (block (send (const nil {:Class :Module}) :new ...) ...))}
+         (casgn $_ $_        (send (const nil? {:Class :Module}) :new ...))
+         (casgn $_ $_ (block (send (const nil? {:Class :Module}) :new ...) ...))}
       PATTERN
       private :defined_module0
 
@@ -314,16 +336,24 @@ module RuboCop
       ## Predicates
 
       def multiline?
-        source_range && (source_range.first_line != source_range.last_line)
+        line_count > 1
       end
 
       def single_line?
-        !multiline?
+        line_count == 1
+      end
+
+      def empty_source?
+        source_length.zero?
       end
 
       def asgn_method_call?
         !COMPARISON_OPERATORS.include?(method_name) &&
           method_name.to_s.end_with?('='.freeze)
+      end
+
+      def arithmetic_operation?
+        ARITHMETIC_OPERATORS.include?(method_name)
       end
 
       def_node_matcher :equals_asgn?, <<-PATTERN
@@ -423,6 +453,10 @@ module RuboCop
           source_range.begin_pos != loc.selector.begin_pos
       end
 
+      def parenthesized_call?
+        loc.begin && loc.begin.is?('(')
+      end
+
       def chained?
         return false unless argument?
 
@@ -439,21 +473,21 @@ module RuboCop
       end
 
       def_node_matcher :guard_clause?, <<-PATTERN
-        [{(send nil {:raise :fail} ...) return break next} single_line?]
+        [{(send nil? {:raise :fail} ...) return break next} single_line?]
       PATTERN
 
       def_node_matcher :proc?, <<-PATTERN
-        {(block (send nil :proc) ...)
-         (block (send (const nil :Proc) :new) ...)
-         (send (const nil :Proc) :new)}
+        {(block (send nil? :proc) ...)
+         (block (send (const nil? :Proc) :new) ...)
+         (send (const nil? :Proc) :new)}
       PATTERN
 
-      def_node_matcher :lambda?, '(block (send nil :lambda) ...)'
+      def_node_matcher :lambda?, '(block (send nil? :lambda) ...)'
       def_node_matcher :lambda_or_proc?, '{lambda? proc?}'
 
       def_node_matcher :class_constructor?, <<-PATTERN
-        {       (send (const nil {:Class :Module}) :new ...)
-         (block (send (const nil {:Class :Module}) :new ...) ...)}
+        {       (send (const nil? {:Class :Module}) :new ...)
+         (block (send (const nil? {:Class :Module}) :new ...) ...)}
       PATTERN
 
       def_node_matcher :module_definition?, <<-PATTERN

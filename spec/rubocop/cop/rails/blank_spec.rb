@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Rails::Blank, :config do
+RSpec.describe RuboCop::Cop::Rails::Blank, :config do
   subject(:cop) { described_class.new(config) }
 
   shared_examples :offense do |source, correction, message|
@@ -42,6 +42,11 @@ describe RuboCop::Cop::Rails::Blank, :config do
 
     it 'does not break when LHS of `or` is a naked falsiness check' do
       expect_no_offenses('bar || foo.empty?')
+    end
+
+    # Bug: https://github.com/bbatsov/rubocop/issues/4814
+    it 'does not break when LHS of `or` is a send node with an arugment' do
+      expect_no_offenses('x(1) || something')
     end
 
     context 'nil or empty' do

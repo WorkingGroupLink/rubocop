@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::MethodCallWithArgsParentheses, :config do
+RSpec.describe RuboCop::Cop::Style::MethodCallWithArgsParentheses, :config do
   subject(:cop) { described_class.new(config) }
+
   let(:cop_config) do
     { 'IgnoredMethods' => %w[puts] }
   end
@@ -21,7 +22,7 @@ describe RuboCop::Cop::Style::MethodCallWithArgsParentheses, :config do
     RUBY
   end
 
-  it 'register an offense for non-reciever method call without parens' do
+  it 'register an offense for non-receiver method call without parens' do
     expect_offense(<<-RUBY.strip_indent)
       def foo
         test a, b
@@ -100,7 +101,7 @@ describe RuboCop::Cop::Style::MethodCallWithArgsParentheses, :config do
     RUBY
   end
 
-  it 'auto-corrects superclass call by adding needed braces' do
+  it 'auto-corrects yield by adding needed braces' do
     new_source = autocorrect_source(<<-RUBY.strip_indent)
       def foo
         yield a

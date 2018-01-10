@@ -7,26 +7,21 @@ module RuboCop
       # using the %i() syntax.
       #
       # Alternatively, it checks for symbol arrays using the %i() syntax on
-      # projects which do not want to use that syntax, perhaps because they
-      # support a version of Ruby lower than 2.0.
+      # projects which do not want to use that syntax.
       #
       # Configuration option: MinSize
       # If set, arrays with fewer elements than this value will not trigger the
       # cop. For example, a `MinSize of `3` will not enforce a style on an array
       # of 2 or fewer elements.
       #
-      # @example
-      #   EnforcedStyle: percent (default)
-      #
+      # @example EnforcedStyle: percent (default)
       #   # good
       #   %i[foo bar baz]
       #
       #   # bad
       #   [:foo, :bar, :baz]
       #
-      # @example
-      #   EnforcedStyle: brackets
-      #
+      # @example EnforcedStyle: brackets
       #   # good
       #   [:foo, :bar, :baz]
       #
@@ -38,9 +33,6 @@ module RuboCop
         include ConfigurableEnforcedStyle
         include PercentLiteral
         include PercentArray
-        extend TargetRubyVersion
-
-        minimum_target_ruby_version 2.0
 
         PERCENT_MSG = 'Use `%i` or `%I` for an array of symbols.'.freeze
         ARRAY_MSG = 'Use `[]` for an array of symbols.'.freeze
@@ -59,8 +51,6 @@ module RuboCop
           end
         end
 
-        private
-
         def autocorrect(node)
           if style == :percent
             correct_percent(node, 'i')
@@ -68,6 +58,8 @@ module RuboCop
             correct_bracketed(node)
           end
         end
+
+        private
 
         def symbols_contain_spaces?(node)
           node.children.any? do |sym|
@@ -77,11 +69,40 @@ module RuboCop
         end
 
         def correct_bracketed(node)
-          syms = node.children.map { |c| to_symbol_literal(c.children[0].to_s) }
+          syms = node.children.map { |c| to_symbol_literal(c.value.to_s) }
 
           lambda do |corrector|
             corrector.replace(node.source_range, "[#{syms.join(', ')}]")
           end
+        end
+
+        def to_symbol_literal(string)
+          if symbol_without_quote?(string)
+            ":#{string}"
+          else
+            ":#{to_string_literal(string)}"
+          end
+        end
+
+        def symbol_without_quote?(string)
+          special_gvars = %w[
+            $! $" $$ $& $' $* $+ $, $/ $; $: $. $< $= $> $? $@ $\\ $_ $` $~ $0
+            $-0 $-F $-I $-K $-W $-a $-d $-i $-l $-p $-v $-w
+          ]
+          redefinable_operators = %w(
+            | ^ & <=> == === =~ > >= < <= << >>
+            + - * / % ** ~ +@ -@ [] []= ` ! != !~
+          )
+
+          # method name
+          string =~ /\A[a-zA-Z_]\w*[!?]?\z/ ||
+            # instance / class variable
+            string =~ /\A\@\@?[a-zA-Z_]\w*\z/ ||
+            # global variable
+            string =~ /\A\$[1-9]\d*\z/ ||
+            string =~ /\A\$[a-zA-Z_]\w*\z/ ||
+            special_gvars.include?(string) ||
+            redefinable_operators.include?(string)
         end
       end
     end

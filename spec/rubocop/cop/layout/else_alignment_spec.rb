@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::ElseAlignment do
+RSpec.describe RuboCop::Cop::Layout::ElseAlignment do
   subject(:cop) { described_class.new(config) }
+
   let(:config) do
-    RuboCop::Config.new('Lint/EndAlignment' => end_alignment_config)
+    RuboCop::Config.new('Layout/EndAlignment' => end_alignment_config)
   end
   let(:end_alignment_config) do
     { 'Enabled' => true, 'EnforcedStyleAlignWith' => 'variable' }
@@ -46,7 +47,7 @@ describe RuboCop::Cop::Layout::ElseAlignment do
             "BBBB-BBBB-BBBB-BBBB"
           end
       RUBY
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     describe '#autocorrect' do
@@ -411,32 +412,30 @@ describe RuboCop::Cop::Layout::ElseAlignment do
       RUBY
     end
 
-    if RUBY_VERSION >= '2.1'
-      context 'when modifier and def are on the same line' do
-        it 'accepts a correctly aligned body' do
-          expect_no_offenses(<<-RUBY.strip_indent)
-            private def test
-              something
-            rescue
-              handling
-            else
-              something_else
-            end
-          RUBY
-        end
+    context 'when modifier and def are on the same line' do
+      it 'accepts a correctly aligned body' do
+        expect_no_offenses(<<-RUBY.strip_indent)
+          private def test
+            something
+          rescue
+            handling
+          else
+            something_else
+          end
+        RUBY
+      end
 
-        it 'registers an offense for else not aligned with private' do
-          expect_offense(<<-RUBY.strip_indent)
-            private def test
-                      something
-                    rescue
-                      handling
-                    else
-                    ^^^^ Align `else` with `private`.
-                      something_else
-                    end
-          RUBY
-        end
+      it 'registers an offense for else not aligned with private' do
+        expect_offense(<<-RUBY.strip_indent)
+          private def test
+                    something
+                  rescue
+                    handling
+                  else
+                  ^^^^ Align `else` with `private`.
+                    something_else
+                  end
+        RUBY
       end
     end
   end

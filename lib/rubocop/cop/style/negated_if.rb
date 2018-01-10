@@ -10,17 +10,9 @@ module RuboCop
       #   - prefix
       #   - postfix
       #
-      # @example
-      #
-      #   # EnforcedStyle: both
+      # @example EnforcedStyle: both (default)
       #   # enforces `unless` for `prefix` and `postfix` conditionals
       #
-      #   # good
-      #
-      #   unless foo
-      #     bar
-      #   end
-      #
       #   # bad
       #
       #   if !foo
@@ -29,23 +21,21 @@ module RuboCop
       #
       #   # good
       #
-      #   bar unless foo
+      #   unless foo
+      #     bar
+      #   end
       #
       #   # bad
       #
       #   bar if !foo
       #
-      # @example
+      #   # good
       #
-      #   # EnforcedStyle: prefix
+      #   bar unless foo
+      #
+      # @example EnforcedStyle: prefix
       #   # enforces `unless` for just `prefix` conditionals
       #
-      #   # good
-      #
-      #   unless foo
-      #     bar
-      #   end
-      #
       #   # bad
       #
       #   if !foo
@@ -54,20 +44,24 @@ module RuboCop
       #
       #   # good
       #
-      #   bar if !foo
-      #
-      # @example
-      #
-      #   # EnforcedStyle: postfix
-      #   # enforces `unless` for just `postfix` conditionals
+      #   unless foo
+      #     bar
+      #   end
       #
       #   # good
       #
-      #   bar unless foo
+      #   bar if !foo
+      #
+      # @example EnforcedStyle: postfix
+      #   # enforces `unless` for just `postfix` conditionals
       #
       #   # bad
       #
       #   bar if !foo
+      #
+      #   # good
+      #
+      #   bar unless foo
       #
       #   # good
       #
@@ -78,8 +72,6 @@ module RuboCop
         include ConfigurableEnforcedStyle
         include NegativeConditional
 
-        MSG = 'Favor `%s` over `%s` for negative conditions.'.freeze
-
         def on_if(node)
           return if node.elsif? || node.ternary?
           return if correct_style?(node)
@@ -87,14 +79,14 @@ module RuboCop
           check_negative_conditional(node)
         end
 
+        def autocorrect(node)
+          ConditionCorrector.correct_negative_condition(node)
+        end
+
         private
 
         def message(node)
-          format(MSG, node.inverse_keyword, node.keyword)
-        end
-
-        def autocorrect(node)
-          negative_conditional_corrector(node)
+          format(MSG, inverse: node.inverse_keyword, current: node.keyword)
         end
 
         def correct_style?(node)

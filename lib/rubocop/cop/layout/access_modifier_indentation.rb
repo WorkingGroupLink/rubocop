@@ -6,9 +6,7 @@ module RuboCop
       # Modifiers should be indented as deep as method definitions, or as deep
       # as the class/module keyword, depending on configuration.
       #
-      # @example
-      #   # EnforcedStyle: indent (default)
-      #
+      # @example EnforcedStyle: indent (default)
       #   # bad
       #   class Plumbus
       #   private
@@ -21,8 +19,7 @@ module RuboCop
       #     def smooth; end
       #   end
       #
-      #   # EnforcedStyle: outdent
-      #
+      # @example EnforcedStyle: outdent
       #   # bad
       #   class Plumbus
       #     private
@@ -35,10 +32,10 @@ module RuboCop
       #     def smooth; end
       #   end
       class AccessModifierIndentation < Cop
-        include AutocorrectAlignment
+        include Alignment
         include ConfigurableEnforcedStyle
 
-        MSG = '%s access modifiers like `%s`.'.freeze
+        MSG = '%<style>s access modifiers like `%<node>s`.'.freeze
 
         def on_class(node)
           _name, _base_class, body = *node
@@ -59,6 +56,10 @@ module RuboCop
           return unless node.class_constructor?
 
           check_body(node.body, node)
+        end
+
+        def autocorrect(node)
+          AlignmentCorrector.correct(processed_source, node, @column_delta)
         end
 
         private
@@ -91,7 +92,7 @@ module RuboCop
         end
 
         def message(node)
-          format(MSG, style.capitalize, node.loc.selector.source)
+          format(MSG, style: style.capitalize, node: node.loc.selector.source)
         end
 
         def expected_indent_offset

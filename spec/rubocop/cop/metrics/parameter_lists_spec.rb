@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Metrics::ParameterLists, :config do
+RSpec.describe RuboCop::Cop::Metrics::ParameterLists, :config do
   subject(:cop) { described_class.new(config) }
+
   let(:cop_config) do
     {
       'Max' => 4,
@@ -25,6 +26,18 @@ describe RuboCop::Cop::Metrics::ParameterLists, :config do
     expect_no_offenses(<<-RUBY.strip_indent)
       def meth(a, b, c, d)
       end
+    RUBY
+  end
+
+  it 'accepts a proc with more than 4 parameters' do
+    expect_no_offenses(<<-RUBY.strip_indent)
+      proc { |a, b, c, d, e| }
+    RUBY
+  end
+
+  it 'accepts a lambda with more than 4 parameters' do
+    expect_no_offenses(<<-RUBY.strip_indent)
+      ->(a, b, c, d, e) { }
     RUBY
   end
 
@@ -53,7 +66,7 @@ describe RuboCop::Cop::Metrics::ParameterLists, :config do
         def meth(a, b, c, d:, e:)
         end
       RUBY
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 end

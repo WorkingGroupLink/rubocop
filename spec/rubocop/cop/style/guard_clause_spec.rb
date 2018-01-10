@@ -1,32 +1,10 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::GuardClause, :config do
+RSpec.describe RuboCop::Cop::Style::GuardClause, :config do
   let(:cop) { described_class.new(config) }
   let(:cop_config) { {} }
 
   shared_examples 'reports offense' do |body|
-    it 'reports an offense if method body is if / unless without else' do
-      inspect_source(<<-RUBY.strip_indent)
-        def func
-          if something
-            #{body}
-          end
-        end
-
-        def func
-          unless something
-            #{body}
-          end
-        end
-      RUBY
-      expect(cop.offenses.size).to eq(2)
-      expect(cop.offenses.map(&:line).sort).to eq([2, 8])
-      expect(cop.messages)
-        .to eq(['Use a guard clause instead of wrapping ' \
-                'the code inside a conditional expression.'] * 2)
-      expect(cop.highlights).to eq(%w[if unless])
-    end
-
     it 'reports an offense if method body is if / unless without else' do
       inspect_source(<<-RUBY.strip_indent)
         def func
@@ -272,7 +250,7 @@ describe RuboCop::Cop::Style::GuardClause, :config do
           #{kw}
         end
       RUBY
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it "does not report an offense if #{kw} is inside if..elsif..else..end" do
@@ -285,7 +263,7 @@ describe RuboCop::Cop::Style::GuardClause, :config do
           #{kw}
         end
       RUBY
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it "doesn't register an error if control flow expr has multiple lines" do
@@ -295,7 +273,7 @@ describe RuboCop::Cop::Style::GuardClause, :config do
                       'else',
                       '  puts "hello"',
                       'end'])
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'registers an error if non-control-flow branch has multiple lines' do

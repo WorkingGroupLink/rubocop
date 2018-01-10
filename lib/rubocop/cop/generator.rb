@@ -14,31 +14,51 @@ module RuboCop
         module RuboCop
           module Cop
             module %<department>s
-              # TODO: Write cop description and example of bad / good code.
+              # TODO: Write cop description and example of bad / good code. For every
+              # `SupportedStyle` and unique configuration, there needs to be examples.
+              # Examples must have valid Ruby syntax. Do not use upticks.
               #
-              # @example
-              #   # bad
-              #   bad_method()
+              # @example EnforcedStyle: bar (default)
+              #   # Description of the `bar` style.
               #
               #   # bad
-              #   bad_method(args)
+              #   bad_bar_method
+              #
+              #   # bad
+              #   bad_bar_method(args)
               #
               #   # good
-              #   good_method()
+              #   good_bar_method
               #
               #   # good
-              #   good_method(args)
+              #   good_bar_method(args)
+              #
+              # @example EnforcedStyle: foo
+              #   # Description of the `foo` style.
+              #
+              #   # bad
+              #   bad_foo_method
+              #
+              #   # bad
+              #   bad_foo_method(args)
+              #
+              #   # good
+              #   good_foo_method
+              #
+              #   # good
+              #   good_foo_method(args)
+              #
               class %<cop_name>s < Cop
-                # TODO: Implement the cop into here.
+                # TODO: Implement the cop in here.
                 #
                 # In many cases, you can use a node matcher for matching node pattern.
-                # See. https://github.com/bbatsov/rubocop/blob/master/lib/rubocop/node_pattern.rb
+                # See https://github.com/bbatsov/rubocop/blob/master/lib/rubocop/node_pattern.rb
                 #
                 # For example
-                MSG = 'Message of %<cop_name>s'.freeze
+                MSG = 'Use `#good_method` instead of `#bad_method`.'.freeze
 
                 def_node_matcher :bad_method?, <<-PATTERN
-                  (send nil :bad_method ...)
+                  (send nil? :bad_method ...)
                 PATTERN
 
                 def on_send(node)
@@ -54,9 +74,10 @@ module RuboCop
       SPEC_TEMPLATE = <<-SPEC.strip_indent
         # frozen_string_literal: true
 
-        describe RuboCop::Cop::%<department>s::%<cop_name>s do
-          let(:config) { RuboCop::Config.new }
+        RSpec.describe RuboCop::Cop::%<department>s::%<cop_name>s do
           subject(:cop) { described_class.new(config) }
+
+          let(:config) { RuboCop::Config.new }
 
           # TODO: Write test code
           #
@@ -76,9 +97,9 @@ module RuboCop
         end
       SPEC
 
-      def initialize(name)
+      def initialize(name, output: $stdout)
         @badge = Badge.parse(name)
-
+        @output = output
         return if badge.qualified?
 
         raise ArgumentError, 'Specify a cop name with Department/Name style'
@@ -92,29 +113,46 @@ module RuboCop
         write_unless_file_exists(spec_path, generated_spec)
       end
 
-      def inject_require
-        RequireFileInjector.new(require_path).inject
+      def inject_require(root_file_path: 'lib/rubocop.rb')
+        RequireFileInjector.new(
+          source_path: source_path,
+          root_file_path: root_file_path
+        ).inject
+      end
+
+      def inject_config(config_file_path: 'config/enabled.yml')
+        config = File.readlines(config_file_path)
+        content = <<-YAML.strip_indent
+          #{badge}:
+            Description: 'TODO: Write a description of the cop.'
+            Enabled: true
+
+        YAML
+        target_line = config.find.with_index(1) do |line, index|
+          next if line =~ /^[\s#]/
+          break index - 1 if badge.to_s < line
+        end
+        config.insert(target_line, content)
+        File.write(config_file_path, config.join)
+        output.puts <<-MESSAGE.strip_indent
+          [modify] A configuration for the cop is added into #{config_file_path}.
+                   If you want to disable the cop by default, move the added config to config/disabled.yml
+        MESSAGE
       end
 
       def todo
         <<-TODO.strip_indent
-          Files created:
-            - #{source_path}
-            - #{spec_path}
-          File modified:
-            - `require_relative '#{require_path}'` added into lib/rubocop.rb
-
           Do 3 steps:
             1. Add an entry to the "New features" section in CHANGELOG.md,
                e.g. "Add new `#{badge}` cop. ([@your_id][])"
-            2. Add an entry into config/enabled.yml or config/disabled.yml
+            2. Modify the description of #{badge} in config/enabled.yml
             3. Implement your new cop in the generated file!
         TODO
       end
 
       private
 
-      attr_reader :badge
+      attr_reader :badge, :output
 
       def write_unless_file_exists(path, contents)
         if File.exist?(path)
@@ -126,6 +164,7 @@ module RuboCop
         FileUtils.mkdir_p(dir) unless File.exist?(dir)
 
         File.write(path, contents)
+        output.puts "[create] #{path}"
       end
 
       def generated_source
@@ -138,10 +177,6 @@ module RuboCop
 
       def generate(template)
         format(template, department: badge.department, cop_name: badge.cop_name)
-      end
-
-      def require_path
-        source_path.sub('lib/', '').sub('.rb', '')
       end
 
       def spec_path
@@ -165,76 +200,11 @@ module RuboCop
       end
 
       def snake_case(camel_case_string)
+        return 'rspec' if camel_case_string == 'RSpec'
         camel_case_string
           .gsub(/([^A-Z])([A-Z]+)/, '\1_\2')
           .gsub(/([A-Z])([A-Z][^A-Z\d]+)/, '\1_\2')
           .downcase
-      end
-
-      # A class that injects a require directive into the root RuboCop file.
-      # It looks for other directives that require files in the same (cop)
-      # namespace and injects the provided one in alpha
-      class RequireFileInjector
-        REQUIRE_PATH = /require_relative ['"](.+)['"]/
-
-        def initialize(require_path)
-          @require_path    = require_path
-          @require_entries = File.readlines(rubocop_root_file_path)
-        end
-
-        def inject
-          return if require_exists? || !target_line
-
-          File.write(rubocop_root_file_path, updated_directives)
-        end
-
-        private
-
-        attr_reader :require_path, :require_entries
-
-        def rubocop_root_file_path
-          File.join('lib', 'rubocop.rb')
-        end
-
-        def require_exists?
-          require_entries.any? do |entry|
-            entry == injectable_require_directive
-          end
-        end
-
-        def updated_directives
-          require_entries.insert(target_line,
-                                 injectable_require_directive).join
-        end
-
-        def target_line
-          @target_line ||= begin
-            in_the_same_department = false
-            inject_parts = require_path_fragments(injectable_require_directive)
-
-            require_entries.find.with_index do |entry, index|
-              current_entry_parts = require_path_fragments(entry)
-
-              if inject_parts[0..-2] == current_entry_parts[0..-2]
-                in_the_same_department = true
-
-                break index if inject_parts.last < current_entry_parts.last
-              elsif in_the_same_department
-                break index
-              end
-            end
-          end
-        end
-
-        def require_path_fragments(require_directove)
-          path = require_directove.match(REQUIRE_PATH)
-
-          path ? path.captures.first.split('/') : []
-        end
-
-        def injectable_require_directive
-          "require_relative '#{require_path}'\n"
-        end
       end
     end
   end

@@ -6,6 +6,7 @@ module RuboCop
   RUBY_EXTENSIONS = %w[.rb
                        .builder
                        .fcgi
+                       .gemfile
                        .gemspec
                        .god
                        .jb
@@ -118,7 +119,7 @@ module RuboCop
       end
 
       # Most recently modified file first.
-      target_files.sort_by! { |path| -File.mtime(path).to_i } if fail_fast?
+      target_files.sort_by! { |path| Integer(-File.mtime(path)) } if fail_fast?
 
       target_files
     end

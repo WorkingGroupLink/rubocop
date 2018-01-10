@@ -10,8 +10,7 @@ module RuboCop
       # replaced by receiver.empty? and !receiver.empty.
       #
       # @example
-      #
-      #   @bad
+      #   # bad
       #   [1, 2, 3].length == 0
       #   0 == "foobar".length
       #   array.length < 1
@@ -19,7 +18,7 @@ module RuboCop
       #   string.length > 0
       #   hash.size > 0
       #
-      #   @good
+      #   # good
       #   [1, 2, 3].empty?
       #   "foobar".empty?
       #   array.empty?
@@ -27,12 +26,19 @@ module RuboCop
       #   !string.empty?
       #   !hash.empty?
       class ZeroLengthPredicate < Cop
-        ZERO_MSG = 'Use `empty?` instead of `%s %s %s`.'.freeze
-        NONZERO_MSG = 'Use `!empty?` instead of `%s %s %s`.'.freeze
+        ZERO_MSG = 'Use `empty?` instead of `%<lhs>s %<opr>s %<rhs>s`.'.freeze
+        NONZERO_MSG = 'Use `!empty?` instead of ' \
+                      '`%<lhs>s %<opr>s %<rhs>s`.'.freeze
 
         def on_send(node)
           check_zero_length_predicate(node)
           check_nonzero_length_predicate(node)
+        end
+
+        def autocorrect(node)
+          lambda do |corrector|
+            corrector.replace(node.loc.expression, replacement(node))
+          end
         end
 
         private
@@ -42,8 +48,12 @@ module RuboCop
 
           return unless zero_length_predicate
 
-          add_offense(node, :expression,
-                      format(ZERO_MSG, *zero_length_predicate))
+          lhs, opr, rhs = zero_length_predicate
+
+          add_offense(
+            node,
+            message: format(ZERO_MSG, lhs: lhs, opr: opr, rhs: rhs)
+          )
         end
 
         def check_nonzero_length_predicate(node)
@@ -51,8 +61,12 @@ module RuboCop
 
           return unless nonzero_length_predicate
 
-          add_offense(node, :expression,
-                      format(NONZERO_MSG, *nonzero_length_predicate))
+          lhs, opr, rhs = nonzero_length_predicate
+
+          add_offense(
+            node,
+            message: format(NONZERO_MSG, lhs: lhs, opr: opr, rhs: rhs)
+          )
         end
 
         def_node_matcher :zero_length_predicate, <<-PATTERN
@@ -66,12 +80,6 @@ module RuboCop
           {(send (send (...) ${:length :size}) ${:> :!=} (int $0))
            (send (int $0) ${:< :!=} (send (...) ${:length :size}))}
         PATTERN
-
-        def autocorrect(node)
-          lambda do |corrector|
-            corrector.replace(node.loc.expression, replacement(node))
-          end
-        end
 
         def replacement(node)
           receiver = zero_length_receiver(node)

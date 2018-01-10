@@ -52,12 +52,12 @@ module RuboCop
 
       def investigate(processed_source)
         reset_errors
-        remove_irrelevant_cops(processed_source.buffer.name)
+        remove_irrelevant_cops(processed_source.file_path)
         reset_callbacks
         prepare(processed_source)
         invoke_custom_processing(@cops, processed_source)
         invoke_custom_processing(@forces, processed_source)
-        walk(processed_source.ast) if processed_source.ast
+        walk(processed_source.ast) unless processed_source.blank?
         @cops.flat_map(&:offenses)
       end
 
@@ -110,7 +110,7 @@ module RuboCop
       rescue StandardError => e
         raise e if @options[:raise_error]
         if node
-          line = node.loc.line
+          line = node.first_line
           column = node.loc.column
         end
         error = CopError.new(e, line, column)

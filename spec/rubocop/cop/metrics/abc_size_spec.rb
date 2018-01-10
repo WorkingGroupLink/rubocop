@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Metrics::AbcSize, :config do
+RSpec.describe RuboCop::Cop::Metrics::AbcSize, :config do
   subject(:cop) { described_class.new(config) }
 
   context 'when Max is 0' do
@@ -9,6 +9,13 @@ describe RuboCop::Cop::Metrics::AbcSize, :config do
     it 'accepts an empty method' do
       expect_no_offenses(<<-RUBY.strip_indent)
         def method_name
+        end
+      RUBY
+    end
+
+    it 'accepts an empty `define_method`' do
+      expect_no_offenses(<<-RUBY.strip_indent)
+        define_method :method_name do
         end
       RUBY
     end
@@ -22,7 +29,11 @@ describe RuboCop::Cop::Metrics::AbcSize, :config do
       expect(cop.messages)
         .to eq(['Assignment Branch Condition size for method_name is too ' \
                 'high. [2.24/0]'])
-      expect(cop.highlights).to eq(['def'])
+      expect(cop.highlights).to eq([<<-RUBY.strip_indent.chomp])
+        def method_name
+          call_foo if some_condition # 0 + 2*2 + 1*1
+        end
+      RUBY
       expect(cop.config_to_allow_offenses).to eq('Max' => 3)
     end
 
@@ -66,11 +77,20 @@ describe RuboCop::Cop::Metrics::AbcSize, :config do
                 'high. [6.4/0]']) # sqrt(1*1 + 6*6 + 2*2) => 6.4
     end
 
+    it 'registers an offense for a `define_method`' do
+      expect_offense(<<-RUBY.strip_indent)
+        define_method :method_name do
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Assignment Branch Condition size for method_name is too high. [1/0]
+          x = 1
+        end
+      RUBY
+    end
+
     context 'target_ruby_version >= 2.3', :ruby23 do
       it 'treats safe navigation method calls like regular method calls' do
         expect_offense(<<-RUBY.strip_indent) # sqrt(0 + 2*2 + 0) => 2
           def method_name
-          ^^^ Assignment Branch Condition size for method_name is too high. [2/0]
+          ^^^^^^^^^^^^^^^ Assignment Branch Condition size for method_name is too high. [2/0]
             object&.do_something
           end
         RUBY

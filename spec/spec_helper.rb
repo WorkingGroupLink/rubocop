@@ -13,6 +13,7 @@ require 'rubocop/cop/internal_affairs'
 require 'webmock/rspec'
 
 require 'powerpack/string/strip_margin'
+require 'pry'
 
 # Require supporting files exposed for testing.
 require 'rubocop/rspec/support'
@@ -33,16 +34,12 @@ RSpec.configure do |config|
   end
 
   config.example_status_persistence_file_path = 'spec/examples.txt'
+  config.disable_monkey_patching!
 
   config.include RuboCop::RSpec::ExpectOffense
 
   config.order = :random
   Kernel.srand config.seed
-
-  broken_filter = lambda do |v|
-    v.is_a?(Symbol) ? RUBY_ENGINE == v.to_s : v
-  end
-  config.filter_run_excluding broken: broken_filter
 
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
@@ -52,5 +49,9 @@ RSpec.configure do |config|
   config.mock_with :rspec do |mocks|
     mocks.syntax = :expect # Disable `should_receive` and `stub`
     mocks.verify_partial_doubles = true
+  end
+
+  config.after do
+    RuboCop::PathUtil.reset_pwd
   end
 end

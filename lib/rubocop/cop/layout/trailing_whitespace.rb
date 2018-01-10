@@ -5,6 +5,8 @@ module RuboCop
     module Layout
       # This cop looks for trailing whitespace in the source code.
       class TrailingWhitespace < Cop
+        include RangeHelp
+
         MSG = 'Trailing whitespace detected.'.freeze
 
         def investigate(processed_source)
@@ -15,7 +17,7 @@ module RuboCop
                                  index + 1,
                                  (line.rstrip.length)...(line.length))
 
-            add_offense(range, range)
+            add_offense(range, location: range)
           end
         end
 

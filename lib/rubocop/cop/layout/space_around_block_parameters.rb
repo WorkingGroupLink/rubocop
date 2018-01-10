@@ -5,10 +5,7 @@ module RuboCop
     module Layout
       # Checks the spacing inside and after block parameters pipes.
       #
-      # @example
-      #
-      #   # EnforcedStyleInsidePipes: no_space (default)
-      #
+      # @example EnforcedStyleInsidePipes: no_space (default)
       #   # bad
       #   {}.each { | x,  y |puts x }
       #   ->( x,  y ) { puts x }
@@ -17,10 +14,7 @@ module RuboCop
       #   {}.each { |x, y| puts x }
       #   ->(x, y) { puts x }
       #
-      # @example
-      #
-      #   # EnforcedStyleInsidePipes: space
-      #
+      # @example EnforcedStyleInsidePipes: space
       #   # bad
       #   {}.each { |x,  y| puts x }
       #   ->(x,  y) { puts x }
@@ -30,6 +24,7 @@ module RuboCop
       #   ->( x, y ) { puts x }
       class SpaceAroundBlockParameters < Cop
         include ConfigurableEnforcedStyle
+        include RangeHelp
 
         def on_block(node)
           return unless node.arguments?
@@ -48,6 +43,15 @@ module RuboCop
           end
 
           check_each_arg(args)
+        end
+
+        def autocorrect(range)
+          lambda do |corrector|
+            case range.source
+            when /^\s+$/ then corrector.remove(range)
+            else              corrector.insert_after(range, ' ')
+            end
+          end
         end
 
         private
@@ -105,31 +109,26 @@ module RuboCop
         def check_each_arg(args)
           args.children.butfirst.each do |arg|
             expr = arg.source_range
-            check_no_space(range_with_surrounding_space(expr, :left).begin_pos,
-                           expr.begin_pos - 1, 'Extra space before')
+            check_no_space(
+              range_with_surrounding_space(range: expr, side: :left).begin_pos,
+              expr.begin_pos - 1,
+              'Extra space before'
+            )
           end
         end
 
         def check_space(space_begin_pos, space_end_pos, range, msg)
           return if space_begin_pos != space_end_pos
 
-          add_offense(range, range, "Space #{msg} missing.")
+          add_offense(range, location: range, message: "Space #{msg} missing.")
         end
 
         def check_no_space(space_begin_pos, space_end_pos, msg)
           return if space_begin_pos >= space_end_pos
 
           range = range_between(space_begin_pos, space_end_pos)
-          add_offense(range, range, "#{msg} block parameter detected.")
-        end
-
-        def autocorrect(range)
-          lambda do |corrector|
-            case range.source
-            when /^\s+$/ then corrector.remove(range)
-            else              corrector.insert_after(range, ' ')
-            end
-          end
+          add_offense(range, location: range,
+                             message: "#{msg} block parameter detected.")
         end
       end
     end

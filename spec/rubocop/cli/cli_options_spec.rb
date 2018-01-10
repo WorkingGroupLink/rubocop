@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-describe RuboCop::CLI, :isolated_environment do
+RSpec.describe RuboCop::CLI, :isolated_environment do
   include_context 'cli spec behavior'
 
   subject(:cli) { described_class.new }
 
-  before(:each) do
+  before do
     RuboCop::ConfigLoader.default_configuration = nil
   end
 
@@ -51,12 +51,12 @@ describe RuboCop::CLI, :isolated_environment do
     context 'when there are no files' do
       it 'prints nothing with -L' do
         cli.run ['-L']
-        expect($stdout.string).to be_empty
+        expect($stdout.string.empty?).to be(true)
       end
 
       it 'prints nothing with --list-target-files' do
         cli.run ['--list-target-files']
-        expect($stdout.string).to be_empty
+        expect($stdout.string.empty?).to be(true)
       end
     end
 
@@ -126,9 +126,9 @@ describe RuboCop::CLI, :isolated_environment do
                         'example.rb'])).to eq(1)
         expect($stdout.string)
           .to eq(['== example.rb ==',
-                  'C:  2:  1: Favor modifier if usage when ' \
-                  'having a single-line body. Another good alternative is ' \
-                  'the usage of control flow &&/||.',
+                  'C:  2:  1: Style/IfUnlessModifier: Favor modifier if ' \
+                  'usage when having a single-line body. Another good ' \
+                  'alternative is the usage of control flow &&/||.',
                   '',
                   '1 file inspected, 1 offense detected',
                   ''].join("\n"))
@@ -141,6 +141,15 @@ describe RuboCop::CLI, :isolated_environment do
         expect(cli.run(['--only', 'Style/123'])).to eq(2)
         expect($stderr.string)
           .to include('Unrecognized cop or department: Style/123.')
+      end
+
+      it 'displays correction candidate if an incorrect cop name is given' do
+        create_file('example.rb', ['x'])
+        expect(cli.run(['--only', 'Style/BlockComment'])).to eq(2)
+        expect($stderr.string)
+          .to include('Unrecognized cop or department: Style/BlockComment.')
+        expect($stderr.string)
+          .to include('Did you mean? Style/BlockComments')
       end
 
       it 'exits with error if an empty string is given' do
@@ -157,14 +166,17 @@ describe RuboCop::CLI, :isolated_environment do
         end
       end
 
-      %w[Lint/UnneededDisable UnneededDisable].each do |name|
+      %w[Lint/UnneededCopDisableDirective
+         UnneededCopDisableDirective].each do |name|
         it "exits with error if cop name #{name} is passed" do
           create_file('example.rb', ['if x== 0 ',
                                      "\ty",
                                      'end'])
-          expect(cli.run(['--only', 'UnneededDisable'])).to eq(2)
+          expect(cli.run(['--only', 'UnneededCopDisableDirective'])).to eq(2)
           expect($stderr.string)
-            .to include('Lint/UnneededDisable can not be used with --only.')
+            .to include(
+              'Lint/UnneededCopDisableDirective can not be used with --only.'
+            )
         end
       end
 
@@ -242,7 +254,7 @@ describe RuboCop::CLI, :isolated_environment do
         expect($stdout.string)
           .to eq(<<-RESULT.strip_indent)
             == example.rb ==
-            C:  1:  6: Trailing whitespace detected.
+            C:  1:  6: Layout/TrailingWhitespace: Trailing whitespace detected.
 
             1 file inspected, 1 offense detected
           RESULT
@@ -260,16 +272,14 @@ describe RuboCop::CLI, :isolated_environment do
                         'Layout/SpaceAroundOperators',
                         'example.rb'])).to eq(1)
         expect($stderr.string).to eq('')
-        expect($stdout.string)
-          .to eq(['== example.rb ==',
-                  'C:  1:  1: Favor modifier if usage when ' \
-                  'having a single-line body. Another good alternative is ' \
-                  'the usage of control flow &&/||.',
-                  'C:  1:  5: Surrounding space missing for operator ==.',
-                  'C:  2:  1: Tab detected.',
-                  '',
-                  '1 file inspected, 3 offenses detected',
-                  ''].join("\n"))
+        expect($stdout.string).to eq(<<-RESULT.strip_indent)
+          == example.rb ==
+          C:  1:  1: Style/IfUnlessModifier: Favor modifier if usage when having a single-line body. Another good alternative is the usage of control flow &&/||.
+          C:  1:  5: Layout/SpaceAroundOperators: Surrounding space missing for operator ==.
+          C:  2:  1: Layout/Tab: Tab detected.
+
+          1 file inspected, 3 offenses detected
+        RESULT
       end
 
       context 'and --lint' do
@@ -278,7 +288,7 @@ describe RuboCop::CLI, :isolated_environment do
                                      "\ty = 3",
                                      '  end'])
           create_file('.rubocop.yml', <<-YAML.strip_indent)
-            Lint/EndAlignment:
+            Layout/EndAlignment:
               Enabled: false
           YAML
           expect(cli.run(['--format', 'simple',
@@ -288,9 +298,9 @@ describe RuboCop::CLI, :isolated_environment do
           expect($stdout.string)
             .to eq(<<-RESULT.strip_indent)
               == example.rb ==
-              C:  1:  5: Surrounding space missing for operator ==.
-              C:  2:  1: Tab detected.
-              W:  2:  2: Useless assignment to variable - y.
+              C:  1:  5: Layout/SpaceAroundOperators: Surrounding space missing for operator ==.
+              C:  2:  1: Layout/Tab: Tab detected.
+              W:  2:  2: Lint/UselessAssignment: Useless assignment to variable - y.
 
               1 file inspected, 3 offenses detected
             RESULT
@@ -361,6 +371,15 @@ describe RuboCop::CLI, :isolated_environment do
         expect($stderr.string).to include('Unrecognized cop or department: .')
       end
 
+      it 'displays correction candidate if an incorrect cop name is given' do
+        create_file('example.rb', 'x')
+        expect(cli.run(['--except', 'Style/BlockComment'])).to eq(2)
+        expect($stderr.string)
+          .to include('Unrecognized cop or department: Style/BlockComment.')
+        expect($stderr.string)
+          .to include('Did you mean? Style/BlockComments')
+      end
+
       %w[Syntax Lint/Syntax].each do |name|
         it "exits with error if #{name} is given" do
           create_file('example.rb', 'x ')
@@ -419,7 +438,8 @@ describe RuboCop::CLI, :isolated_environment do
     end
 
     context 'when several cops are given' do
-      %w[UnneededDisable Lint/UnneededDisable Lint].each do |cop_name|
+      %w[UnneededCopDisableDirective
+         Lint/UnneededCopDisableDirective Lint].each do |cop_name|
         it "disables the given cops including #{cop_name}" do
           create_file('example.rb', ['if x== 100000000000000 ',
                                      "\ty",
@@ -458,7 +478,7 @@ describe RuboCop::CLI, :isolated_environment do
       expect($stdout.string)
         .to eq(<<-RESULT.strip_indent)
           == example.rb ==
-          W:  1:  4: Literal 0 appeared in a condition.
+          W:  1:  4: Lint/LiteralAsCondition: Literal 0 appeared as a condition.
 
           1 file inspected, 1 offense detected
         RESULT
@@ -492,18 +512,58 @@ describe RuboCop::CLI, :isolated_environment do
   end
 
   describe '-D/--display-cop-names' do
-    it 'shows cop names' do
+    before do
       create_file('example1.rb', 'puts 0 # rubocop:disable NumericLiterals ')
-      file = abs('example1.rb')
+    end
 
+    let(:file) { abs('example1.rb') }
+
+    it 'shows cop names' do
       expect(cli.run(['--format', 'emacs', '--display-cop-names',
                       'example1.rb'])).to eq(1)
-      expect($stdout.string)
-        .to eq(["#{file}:1:8: W: Lint/UnneededDisable: Unnecessary " \
-                'disabling of `Style/NumericLiterals`.',
-                "#{file}:1:41: C: Layout/TrailingWhitespace: Trailing " \
-                'whitespace detected.',
-                ''].join("\n"))
+      expect($stdout.string).to eq(<<-RESULT.strip_indent)
+        #{file}:1:8: W: Lint/UnneededCopDisableDirective: Unnecessary disabling of `Style/NumericLiterals`.
+        #{file}:1:41: C: Layout/TrailingWhitespace: Trailing whitespace detected.
+      RESULT
+    end
+
+    context '--no-display-cop-names' do
+      it 'does not show cop names' do
+        expect(cli.run(['--format', 'emacs', '--no-display-cop-names',
+                        'example1.rb'])).to eq(1)
+        expect($stdout.string).to eq(<<-RESULT.strip_indent)
+          #{file}:1:8: W: Unnecessary disabling of `Style/NumericLiterals`.
+          #{file}:1:41: C: Trailing whitespace detected.
+        RESULT
+      end
+    end
+
+    context 'DisplayCopNames: false in .rubocop.yml' do
+      before do
+        create_file('.rubocop.yml', <<-YAML.strip_indent)
+          AllCops:
+            DisplayCopNames: false
+        YAML
+      end
+
+      it 'shows cop names' do
+        expect(cli.run(['--format', 'emacs', '--display-cop-names',
+                        'example1.rb'])).to eq(1)
+        expect($stdout.string).to eq(<<-RESULT.strip_indent)
+          #{file}:1:8: W: Lint/UnneededCopDisableDirective: Unnecessary disabling of `Style/NumericLiterals`.
+          #{file}:1:41: C: Layout/TrailingWhitespace: Trailing whitespace detected.
+        RESULT
+      end
+
+      context 'without --display-cop-names' do
+        it 'does not show cop names' do
+          expect(cli.run(['--format', 'emacs', 'example1.rb'])).to eq(1)
+          expect($stdout.string).to eq(<<-RESULT.strip_indent)
+            #{file}:1:8: W: Unnecessary disabling of `Style/NumericLiterals`.
+            #{file}:1:41: C: Trailing whitespace detected.
+          RESULT
+        end
+      end
     end
   end
 
@@ -518,12 +578,10 @@ describe RuboCop::CLI, :isolated_environment do
 
       expect(cli.run(['--format', 'emacs', '--extra-details',
                       'example1.rb'])).to eq(1)
-      expect($stdout.string)
-        .to eq(["#{file}:1:8: W: Unnecessary disabling of " \
-                '`Style/NumericLiterals`.',
-                "#{file}:1:41: C: Trailing " \
-                'whitespace detected. Trailing space is just sloppy.',
-                ''].join("\n"))
+      expect($stdout.string).to eq(<<-RESULT.strip_indent)
+        #{file}:1:8: W: Lint/UnneededCopDisableDirective: Unnecessary disabling of `Style/NumericLiterals`.
+        #{file}:1:41: C: Layout/TrailingWhitespace: Trailing whitespace detected. Trailing space is just sloppy.
+      RESULT
 
       expect($stderr.string).to eq('')
     end
@@ -541,7 +599,8 @@ describe RuboCop::CLI, :isolated_environment do
                       '--display-style-guide',
                       'example1.rb'])).to eq(1)
       expect($stdout.string.lines.to_a[-1])
-        .to eq("#{file}:1:7: C: Trailing whitespace detected. (#{url})\n")
+        .to eq("#{file}:1:7: C: Layout/TrailingWhitespace: " \
+               "Trailing whitespace detected. (#{url})\n")
     end
 
     it 'shows reference entry' do
@@ -555,7 +614,7 @@ describe RuboCop::CLI, :isolated_environment do
                       '--display-style-guide',
                       'example1.rb'])).to eq(1)
 
-      output = "#{file}:1:11: C: " \
+      output = "#{file}:1:11: C: Performance/ReverseEach: " \
                "Use `reverse_each` instead of `reverse.each`. (#{url})"
       expect($stdout.string.lines.to_a[-1])
         .to eq([output, ''].join("\n"))
@@ -573,7 +632,7 @@ describe RuboCop::CLI, :isolated_environment do
                       '--display-style-guide',
                       'example1.rb'])).to eq(1)
 
-      output = "#{file}:1:1: C: " \
+      output = "#{file}:1:1: C: Style/GlobalVars: " \
                'Do not introduce global variables. ' \
                "(#{style_guide_link}, #{reference_link})"
       expect($stdout.string.lines.to_a[-1])
@@ -586,7 +645,7 @@ describe RuboCop::CLI, :isolated_environment do
       it 'prints the current configuration' do
         out = stdout.lines.to_a
         printed_config = YAML.load(out.join) # rubocop:disable Security/YAMLLoad
-        cop_names = (cop_list[0] || '').split(',')
+        cop_names = (arguments[0] || '').split(',')
         cop_names.each do |cop_name|
           global_conf[cop_name].each do |key, value|
             printed_value = printed_config[cop_name][key]
@@ -612,12 +671,12 @@ describe RuboCop::CLI, :isolated_environment do
         Metrics/LineLength:
           Max: 110
       YAML
-      # expect(cli.run(['--show-cops'] + cop_list)).to eq(0)
-      cli.run(['--show-cops'] + cop_list)
+      # expect(cli.run(['--show-cops'] + arguments)).to eq(0)
+      cli.run(['--show-cops'] + arguments)
     end
 
     context 'with no args' do
-      let(:cop_list) { [] }
+      let(:arguments) { [] }
 
       # Extracts the first line out of the description
       def short_description_of_cop(cop)
@@ -670,7 +729,7 @@ describe RuboCop::CLI, :isolated_environment do
     end
 
     context 'with one cop given' do
-      let(:cop_list) { ['Layout/Tab'] }
+      let(:arguments) { ['Layout/Tab'] }
 
       it 'prints that cop and nothing else' do
         expect(stdout).to match(
@@ -679,8 +738,7 @@ describe RuboCop::CLI, :isolated_environment do
            '  Description: No hard tabs.',
            /^  StyleGuide: ('|")#spaces-indentation('|")$/,
            '  Enabled: true',
-           '',
-           ''].join("\n")
+           '  IndentationWidth:'].join("\n")
         )
       end
 
@@ -688,12 +746,13 @@ describe RuboCop::CLI, :isolated_environment do
     end
 
     context 'with two cops given' do
-      let(:cop_list) { ['Layout/Tab,Metrics/LineLength'] }
+      let(:arguments) { ['Layout/Tab,Metrics/LineLength'] }
+
       include_examples :prints_config
     end
 
     context 'with one of the cops misspelled' do
-      let(:cop_list) { ['Layout/Tab,Lint/X123'] }
+      let(:arguments) { ['Layout/Tab,Lint/X123'] }
 
       it 'skips the unknown cop' do
         expect(stdout).to match(
@@ -701,10 +760,16 @@ describe RuboCop::CLI, :isolated_environment do
            'Layout/Tab:',
            '  Description: No hard tabs.',
            /^  StyleGuide: ('|")#spaces-indentation('|")$/,
-           '  Enabled: true',
-           '',
-           ''].join("\n")
+           '  Enabled: true'].join("\n")
         )
+      end
+    end
+
+    context 'with --force-default-config' do
+      let(:arguments) { ['Metrics/LineLength', '--force-default-config'] }
+
+      it 'prioritizes default config' do
+        expect(YAML.safe_load(stdout)['Metrics/LineLength']['Max']).to eq(80)
       end
     end
   end
@@ -723,7 +788,7 @@ describe RuboCop::CLI, :isolated_environment do
           expect($stdout.string)
             .to include(<<-RESULT.strip_indent)
               == #{target_file} ==
-              C:  1: 81: Line is too long. [90/80]
+              C:  1: 81: Metrics/LineLength: Line is too long. [90/80]
             RESULT
         end
       end
@@ -804,60 +869,66 @@ describe RuboCop::CLI, :isolated_environment do
           expect(cli.run(['--format', 'clang', 'example1.rb',
                           'example2.rb', 'example3.rb']))
             .to eq(1)
-          expect($stdout.string)
-            .to eq(['example1.rb:1:2: C: Surrounding space missing for ' \
-                    'operator =.',
-                    'x= 0 ',
-                    ' ^',
-                    'example1.rb:1:5: C: Trailing whitespace detected.',
-                    'x= 0 ',
-                    '    ^',
-                    'example1.rb:2:81: C: Line is too long. [85/80]',
-                    '###################################################' \
-                    '##################################',
-                    '                                                   ' \
-                    '                             ^^^^^',
-                    'example1.rb:3:2: C: Trailing whitespace detected.',
-                    'y ',
-                    ' ^',
-                    'example2.rb:1:1: C: Incorrect indentation detected' \
-                    ' (column 0 instead of 1).',
-                    '# frozen_string_literal: true',
-                    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-                    'example2.rb:3:1: C: Tab detected.',
-                    "\tx",
-                    '^',
-                    'example2.rb:3:2: C: Indentation of first line in file ' \
-                    'detected.',
-                    "\tx",
-                    ' ^',
-                    'example2.rb:4:1: C: Inconsistent indentation ' \
-                    'detected.',
-                    'def a ...',
-                    '^^^^^',
-                    'example2.rb:5:1: C: Use 2 (not 3) spaces for ' \
-                    'indentation.',
-                    '   puts',
-                    '^^^',
-                    'example3.rb:1:5: C: Use snake_case for method names.',
-                    'def badName',
-                    '    ^^^^^^^',
-                    'example3.rb:2:3: C: Use a guard clause instead of ' \
-                    'wrapping the code inside a conditional expression.',
-                    '  if something',
-                    '  ^^',
-                    'example3.rb:2:3: C: Favor modifier if usage ' \
-                    'when having a single-line body. Another good ' \
-                    'alternative is the usage of control flow &&/||.',
-                    '  if something',
-                    '  ^^',
-                    'example3.rb:4:5: W: end at 4, 4 is not aligned ' \
-                    'with if at 2, 2.',
-                    '    end',
-                    '    ^^^',
-                    '',
-                    '3 files inspected, 13 offenses detected',
-                    ''].join("\n"))
+          expect($stdout.string).to eq([
+            'example1.rb:1:2: C: Layout/SpaceAroundOperators: ' \
+            'Surrounding space missing for operator =.',
+            'x= 0 ',
+            ' ^',
+            'example1.rb:1:5: C: Layout/TrailingWhitespace: ' \
+            'Trailing whitespace detected.',
+            'x= 0 ',
+            '    ^',
+            'example1.rb:2:81: C: Metrics/LineLength: ' \
+            'Line is too long. [85/80]',
+            '###################################################' \
+            '##################################',
+            '                                                   ' \
+            '                             ^^^^^',
+            'example1.rb:3:2: C: Layout/TrailingWhitespace: ' \
+            'Trailing whitespace detected.',
+            'y ',
+            ' ^',
+            'example2.rb:1:1: C: Layout/CommentIndentation: ' \
+            'Incorrect indentation detected (column 0 instead of 1).',
+            '# frozen_string_literal: true',
+            '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+            'example2.rb:3:1: C: Layout/Tab: Tab detected.',
+            "\tx",
+            '^',
+            'example2.rb:3:2: C: Layout/InitialIndentation: ' \
+            'Indentation of first line in file detected.',
+            "\tx",
+            ' ^',
+            'example2.rb:4:1: C: Layout/IndentationConsistency: ' \
+            'Inconsistent indentation detected.',
+            'def a ...',
+            '^^^^^',
+            'example2.rb:5:1: C: Layout/IndentationWidth: ' \
+            'Use 2 (not 3) spaces for indentation.',
+            '   puts',
+            '^^^',
+            'example3.rb:1:5: C: Naming/MethodName: ' \
+            'Use snake_case for method names.',
+            'def badName',
+            '    ^^^^^^^',
+            'example3.rb:2:3: C: Style/GuardClause: ' \
+            'Use a guard clause instead of wrapping the code inside a ' \
+            'conditional expression.',
+            '  if something',
+            '  ^^',
+            'example3.rb:2:3: C: Style/IfUnlessModifier: ' \
+            'Favor modifier if usage when having a single-line body. ' \
+            'Another good alternative is the usage of control flow &&/||.',
+            '  if something',
+            '  ^^',
+            'example3.rb:4:5: W: Layout/EndAlignment: ' \
+            'end at 4, 4 is not aligned with if at 2, 2.',
+            '    end',
+            '    ^^^',
+            '',
+            '3 files inspected, 13 offenses detected',
+            ''
+          ].join("\n"))
         end
       end
 
@@ -876,19 +947,15 @@ describe RuboCop::CLI, :isolated_environment do
           RUBY
           expect(cli.run(['--format', 'emacs', 'example1.rb',
                           'example2.rb'])).to eq(1)
-          expected_output =
-            ["#{abs('example1.rb')}:3:2: C: Surrounding space missing" \
-             ' for operator `=`.',
-             "#{abs('example1.rb')}:3:5: C: Trailing whitespace detected.",
-             "#{abs('example1.rb')}:4:2: C: Trailing whitespace detected.",
-             "#{abs('example2.rb')}:1:1: C: Incorrect indentation detected" \
-             ' (column 0 instead of 1).',
-             "#{abs('example2.rb')}:3:1: C: Tab detected.",
-             "#{abs('example2.rb')}:3:2: C: Indentation of first line in " \
-             'file detected.',
-             "#{abs('example2.rb')}:4:1: C: Inconsistent indentation " \
-             'detected.',
-             ''].join("\n")
+          expected_output = <<-RESULT.strip_indent
+            #{abs('example1.rb')}:3:2: C: Layout/SpaceAroundOperators: Surrounding space missing for operator `=`.
+            #{abs('example1.rb')}:3:5: C: Layout/TrailingWhitespace: Trailing whitespace detected.
+            #{abs('example1.rb')}:4:2: C: Layout/TrailingWhitespace: Trailing whitespace detected.
+            #{abs('example2.rb')}:1:1: C: Layout/CommentIndentation: Incorrect indentation detected (column 0 instead of 1).
+            #{abs('example2.rb')}:3:1: C: Layout/Tab: Tab detected.
+            #{abs('example2.rb')}:3:2: C: Layout/InitialIndentation: Indentation of first line in file detected.
+            #{abs('example2.rb')}:4:1: C: Layout/IndentationConsistency: Inconsistent indentation detected.
+          RESULT
           expect($stdout.string).to eq(expected_output)
         end
       end
@@ -957,11 +1024,11 @@ describe RuboCop::CLI, :isolated_environment do
 
     it 'can be used multiple times' do
       cli.run(['--format', 'simple', '--format', 'emacs', 'example.rb'])
-      expect($stdout.string)
-        .to include(["== #{target_file} ==",
-                     'C:  1: 81: Line is too long. [90/80]',
-                     "#{abs(target_file)}:1:81: C: Line is too long. " \
-                     '[90/80]'].join("\n"))
+      expect($stdout.string).to include(<<-RESULT.strip_indent)
+        == #{target_file} ==
+        C:  1: 81: Metrics/LineLength: Line is too long. [90/80]
+        #{abs(target_file)}:1:81: C: Metrics/LineLength: Line is too long. [90/80]
+      RESULT
     end
   end
 
@@ -984,14 +1051,14 @@ describe RuboCop::CLI, :isolated_environment do
 
       expect($stdout.string).to eq(<<-RESULT.strip_indent)
         == #{target_file} ==
-        C:  1: 81: Line is too long. [90/80]
+        C:  1: 81: Metrics/LineLength: Line is too long. [90/80]
 
         1 file inspected, 1 offense detected
       RESULT
 
       expect(File.read('emacs_output.txt'))
         .to eq(<<-RESULT.strip_indent)
-          #{abs(target_file)}:1:81: C: Line is too long. [90/80]
+          #{abs(target_file)}:1:81: C: Metrics/LineLength: Line is too long. [90/80]
       RESULT
     end
   end
@@ -1007,30 +1074,34 @@ describe RuboCop::CLI, :isolated_environment do
       RUBY
     end
 
-    after do
+    def expect_offense_detected(num)
       expect($stderr.string).to eq('')
       expect($stdout.string)
-        .to include('1 file inspected, 1 offense detected')
+        .to include("1 file inspected, #{num} offense detected")
     end
 
     it 'fails when option is less than the severity level' do
       expect(cli.run(['--fail-level', 'refactor', target_file])).to eq(1)
       expect(cli.run(['--fail-level', 'autocorrect', target_file])).to eq(1)
+      expect_offense_detected(1)
     end
 
     it 'fails when option is equal to the severity level' do
       expect(cli.run(['--fail-level', 'convention', target_file])).to eq(1)
+      expect_offense_detected(1)
     end
 
     it 'succeeds when option is greater than the severity level' do
       expect(cli.run(['--fail-level', 'warning', target_file])).to eq(0)
+      expect_offense_detected(1)
     end
 
     context 'with --auto-correct' do
-      after do
+      def expect_auto_corrected(num)
+        expect_offense_detected(num)
         expect($stdout.string.lines.to_a.last)
-          .to eq('1 file inspected, 1 offense detected, 1 offense corrected' \
-                 "\n")
+          .to eq("1 file inspected, #{num} offense detected, " \
+                 "#{num} offense corrected\n")
       end
 
       it 'fails when option is autocorrect and all offenses are ' \
@@ -1038,18 +1109,21 @@ describe RuboCop::CLI, :isolated_environment do
         expect(cli.run(['--auto-correct', '--format', 'simple',
                         '--fail-level', 'autocorrect',
                         target_file])).to eq(1)
+        expect_auto_corrected(1)
       end
 
       it 'fails when option is A and all offenses are autocorrected' do
         expect(cli.run(['--auto-correct', '--format', 'simple',
                         '--fail-level', 'A',
                         target_file])).to eq(1)
+        expect_auto_corrected(1)
       end
 
       it 'succeeds when option is not given and all offenses are ' \
          'autocorrected' do
         expect(cli.run(['--auto-correct', '--format', 'simple',
                         target_file])).to eq(0)
+        expect_auto_corrected(1)
       end
 
       it 'succeeds when option is refactor and all offenses are ' \
@@ -1057,17 +1131,14 @@ describe RuboCop::CLI, :isolated_environment do
         expect(cli.run(['--auto-correct', '--format', 'simple',
                         '--fail-level', 'refactor',
                         target_file])).to eq(0)
+        expect_auto_corrected(1)
       end
     end
   end
 
   describe 'with --auto-correct and disabled offense' do
     let(:target_file) { 'example.rb' }
-    after do
-      expect($stdout.string.lines.to_a.last)
-        .to eq('1 file inspected, no offenses detected' \
-               "\n")
-    end
+
     it 'succeeds when there is only a disabled offense' do
       create_file(target_file, <<-RUBY.strip_indent)
         def f
@@ -1078,11 +1149,15 @@ describe RuboCop::CLI, :isolated_environment do
       expect(cli.run(['--auto-correct', '--format', 'simple',
                       '--fail-level', 'autocorrect',
                       target_file])).to eq(0)
+
+      expect($stdout.string.lines.to_a.last)
+        .to eq('1 file inspected, no offenses detected' \
+               "\n")
     end
   end
 
   describe '--force-exclusion' do
-    context 'when explicitely excluded' do
+    context 'when explicitly excluded' do
       let(:target_file) { 'example.rb' }
 
       before do
@@ -1124,14 +1199,12 @@ describe RuboCop::CLI, :isolated_environment do
                   '--stdin',
                   'fake.rb']
         expect(cli.run(argv)).to eq(1)
-        expect($stdout.string).to eq([
-          '== fake.rb ==',
-          'C:  1:  3: Prefer $INPUT_RECORD_SEPARATOR or $RS from the ' \
-          "stdlib 'English' module (don't forget to require it) over $/.",
-          '',
-          '1 file inspected, 1 offense detected',
-          ''
-        ].join("\n"))
+        expect($stdout.string).to eq(<<-RESULT.strip_indent)
+          == fake.rb ==
+          C:  1:  3: Style/SpecialGlobalVars: Prefer $INPUT_RECORD_SEPARATOR or $RS from the stdlib 'English' module (don't forget to require it) over $/.
+
+          1 file inspected, 1 offense detected
+        RESULT
       ensure
         $stdin = STDIN
       end
@@ -1176,15 +1249,14 @@ describe RuboCop::CLI, :isolated_environment do
                   '--stdin',
                   'fake.rb']
         expect(cli.run(argv)).to eq(0)
-        expect($stdout.string).to eq([
-          '== fake.rb ==',
-          'C:  1:  3: [Corrected] Prefer $INPUT_RECORD_SEPARATOR or $RS from ' \
-          "the stdlib 'English' module (don't forget to require it) over $/.",
-          '',
-          '1 file inspected, 1 offense detected, 1 offense corrected',
-          '====================',
-          'p $INPUT_RECORD_SEPARATOR'
-        ].join("\n"))
+        expect($stdout.string).to eq(<<-RESULT.strip_indent.chomp)
+          == fake.rb ==
+          C:  1:  3: [Corrected] Style/SpecialGlobalVars: Prefer $INPUT_RECORD_SEPARATOR or $RS from the stdlib 'English' module (don't forget to require it) over $/.
+
+          1 file inspected, 1 offense detected, 1 offense corrected
+          ====================
+          p $INPUT_RECORD_SEPARATOR
+        RESULT
       ensure
         $stdin = STDIN
       end
@@ -1212,7 +1284,7 @@ describe RuboCop::CLI, :isolated_environment do
           expect($stdout.string)
             .to eq(<<-RESULT.strip_indent)
               == fake.rb ==
-              C:  1:  1: Carriage return character detected.
+              C:  1:  1: Layout/EndOfLine: Carriage return character detected.
 
               1 file inspected, 1 offense detected
             RESULT

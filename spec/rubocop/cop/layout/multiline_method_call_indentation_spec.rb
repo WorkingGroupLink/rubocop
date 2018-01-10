@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
+RSpec.describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
   subject(:cop) { described_class.new(config) }
+
   let(:config) do
     merged = RuboCop::ConfigLoader
              .default_configuration['Layout/MultilineMethodCallIndentation']
@@ -33,7 +34,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
             end
         end
       RUBY
-      expect(cop.messages).to be_empty
+      expect(cop.messages.empty?).to be(true)
     end
 
     it 'accepts indentation relative to first receiver' do
@@ -49,7 +50,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
         a.
           b
       RUBY
-      expect(cop.messages).to be_empty
+      expect(cop.messages.empty?).to be(true)
     end
 
     it 'accepts no extra indentation of third line' do
@@ -58,7 +59,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
         |     b.
         |     c
       RUBY
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'accepts indented methods in for body' do
@@ -68,7 +69,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
             something_else
         end
       RUBY
-      expect(cop.highlights).to be_empty
+      expect(cop.highlights.empty?).to be(true)
     end
 
     it 'accepts alignment inside a grouped expression' do
@@ -76,7 +77,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
         (a.
          b)
       RUBY
-      expect(cop.messages).to be_empty
+      expect(cop.messages.empty?).to be(true)
     end
 
     it 'accepts an expression where the first method spans multiple lines' do
@@ -85,7 +86,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
           result = resolve(locale) and return result
         end.a
       RUBY
-      expect(cop.messages).to be_empty
+      expect(cop.messages.empty?).to be(true)
     end
 
     it 'accepts any indentation of parameters to #[]' do
@@ -94,7 +95,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
                 id:      input['incoming-payment-id'],
                    user_id: @user[:id]]
       RUBY
-      expect(cop.messages).to be_empty
+      expect(cop.messages.empty?).to be(true)
     end
 
     it "doesn't fail on unary operators" do
@@ -106,6 +107,13 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
       RUBY
       expect(cop.offenses.size).to eq(1)
     end
+
+    it "doesn't crash on unaligned multiline lambdas" do
+      expect_no_offenses(<<-RUBY.strip_indent)
+        MyClass.(my_args)
+          .my_method
+      RUBY
+    end
   end
 
   shared_examples 'common for aligned and indented' do
@@ -115,7 +123,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
           to change { Bar.count }.
           from(1).to(2)
       RUBY
-      expect(cop.messages).to be_empty
+      expect(cop.messages.empty?).to be(true)
     end
 
     it 'registers an offense for no indentation of second line' do
@@ -228,7 +236,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
          'assignment' do
         inspect_source(['user = authorize scope.includes(:user)',
                         '                      .order(:name)'])
-        expect(cop.offenses).to be_empty
+        expect(cop.offenses.empty?).to be(true)
       end
 
       it 'accepts method being aligned with method in assignment' do
@@ -544,9 +552,9 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
             .c
             .b
         RUBY
-        expect(cop.messages).to be_empty
-        expect(cop.highlights).to be_empty
-        expect(cop.offenses).to be_empty
+        expect(cop.messages.empty?).to be(true)
+        expect(cop.highlights.empty?).to be(true)
+        expect(cop.offenses.empty?).to be(true)
       end
     end
   end
@@ -563,8 +571,8 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
         |              .b
         |              .c
       RUBY
-      expect(cop.highlights).to be_empty
-      expect(cop.offenses).to be_empty
+      expect(cop.highlights.empty?).to be(true)
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'accepts indentation of consecutive lines in typical RSpec code' do
@@ -672,8 +680,8 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
         |          .b
         |          .c
       RUBY
-      expect(cop.offenses).to be_empty
-      expect(cop.highlights).to be_empty
+      expect(cop.offenses.empty?).to be(true)
+      expect(cop.highlights.empty?).to be(true)
     end
 
     it 'registers an offense for one space indentation of third line' do
@@ -746,7 +754,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
               !args.empty?
           end
         RUBY
-        expect(cop.messages).to be_empty
+        expect(cop.messages.empty?).to be(true)
       end
 
       it "registers an offense for a 2 space indentation of #{keyword} " \
@@ -770,7 +778,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
               something_else
           end
         RUBY
-        expect(cop.highlights).to be_empty
+        expect(cop.highlights.empty?).to be(true)
       end
     end
 
@@ -781,7 +789,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
               !args.empty? &&
               BLACKLIST.include?(method_name)
         RUBY
-        expect(cop.messages).to be_empty
+        expect(cop.messages.empty?).to be(true)
       end
     end
 
@@ -871,8 +879,8 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
           |               .b
           |               .c
         RUBY
-        expect(cop.offenses).to be_empty
-        expect(cop.highlights).to be_empty
+        expect(cop.offenses.empty?).to be(true)
+        expect(cop.highlights.empty?).to be(true)
       end
 
       it 'accepts indented methods in if condition' do
@@ -910,7 +918,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
                      !args.empty?
             end
           RUBY
-          expect(cop.messages).to be_empty
+          expect(cop.messages.empty?).to be(true)
         end
 
         it "registers an offense for a 4 space indentation of #{keyword} " \
@@ -934,7 +942,7 @@ describe RuboCop::Cop::Layout::MultilineMethodCallIndentation do
                      something_else
             end
           RUBY
-          expect(cop.highlights).to be_empty
+          expect(cop.highlights.empty?).to be(true)
         end
       end
     end

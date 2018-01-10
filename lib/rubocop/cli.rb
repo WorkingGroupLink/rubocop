@@ -1,10 +1,18 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 module RuboCop
   # The CLI is a class responsible of handling all the command line interface
   # logic.
   class CLI
     include Formatter::TextUtil
+
+    SKIPPED_PHASE_1 = 'Phase 1 of 2: run Metrics/LineLength cop (skipped ' \
+                      'because the default Metrics/LineLength:Max is ' \
+                      'overridden)'.freeze
+    STATUS_SUCCESS  = 0
+    STATUS_OFFENSES = 1
+    STATUS_ERROR    = 2
 
     class Finished < RuntimeError; end
 
@@ -23,34 +31,95 @@ module RuboCop
     #
     # @param args [Array<String>] command line arguments
     # @return [Integer] UNIX exit code
+    #
+    # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     def run(args = ARGV)
       @options, paths = Options.new.parse(args)
       validate_options_vs_config
       act_on_options
       apply_default_formatter
-
-      execute_runner(paths)
+      execute_runners(paths)
+    rescue RuboCop::ConfigNotFoundError => e
+      warn e.message
+      return e.status
     rescue RuboCop::Error => e
-      $stderr.puts Rainbow("Error: #{e.message}").red
-      return 2
+      warn Rainbow("Error: #{e.message}").red
+      return STATUS_ERROR
     rescue Finished
-      return 0
-    rescue StandardError, SyntaxError => e
-      $stderr.puts e.message
-      $stderr.puts e.backtrace
-      return 2
+      return STATUS_SUCCESS
+    rescue IncorrectCopNameError => e
+      warn e.message
+      return STATUS_ERROR
+    rescue StandardError, SyntaxError, LoadError => e
+      warn e.message
+      warn e.backtrace
+      return STATUS_ERROR
     end
+    # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
     def trap_interrupt(runner)
       Signal.trap('INT') do
         exit!(1) if runner.aborting?
         runner.abort
-        $stderr.puts
-        $stderr.puts 'Exiting... Interrupt again to exit immediately.'
+        warn
+        warn 'Exiting... Interrupt again to exit immediately.'
       end
     end
 
     private
+
+    def execute_runners(paths)
+      if @options[:auto_gen_config]
+        reset_config_and_auto_gen_file
+        line_length_contents =
+          if max_line_length(@config_store.for(Dir.pwd)) ==
+             max_line_length(ConfigLoader.default_configuration)
+            run_line_length_cop_auto_gen_config(paths)
+          else
+            puts Rainbow(SKIPPED_PHASE_1).yellow
+            ''
+          end
+        run_all_cops_auto_gen_config(line_length_contents, paths)
+      else
+        execute_runner(paths)
+      end
+    end
+
+    def max_line_length(config)
+      config.for_cop('Metrics/LineLength')['Max']
+    end
+
+    # Do an initial run with only Metrics/LineLength so that cops that depend
+    # on Metrics/LineLength:Max get the correct value for that parameter.
+    def run_line_length_cop_auto_gen_config(paths)
+      puts Rainbow('Phase 1 of 2: run Metrics/LineLength cop').yellow
+      @options[:only] = ['Metrics/LineLength']
+      execute_runner(paths)
+      @options.delete(:only)
+      @config_store = ConfigStore.new
+      # Save the todo configuration of the LineLength cop.
+      IO.read(ConfigLoader::AUTO_GENERATED_FILE)
+        .lines
+        .drop_while { |line| line.start_with?('#') }
+        .join
+    end
+
+    def run_all_cops_auto_gen_config(line_length_contents, paths)
+      puts Rainbow('Phase 2 of 2: run all cops').yellow
+      result = execute_runner(paths)
+      # This run was made with the current maximum length allowed, so append
+      # the saved setting for LineLength.
+      File.open(ConfigLoader::AUTO_GENERATED_FILE, 'a') do |f|
+        f.write(line_length_contents)
+      end
+      result
+    end
+
+    def reset_config_and_auto_gen_file
+      @config_store = ConfigStore.new
+      File.open(ConfigLoader::AUTO_GENERATED_FILE, 'w') {}
+      ConfigLoader.add_inheritance_from_auto_generated_file
+    end
 
     def validate_options_vs_config
       if @options[:parallel] &&
@@ -62,13 +131,14 @@ module RuboCop
     end
 
     def act_on_options
-      handle_exiting_options
-
       ConfigLoader.debug = @options[:debug]
       ConfigLoader.auto_gen_config = @options[:auto_gen_config]
+      ConfigLoader.ignore_parent_exclusion = @options[:ignore_parent_exclusion]
 
       @config_store.options_config = @options[:config] if @options[:config]
       @config_store.force_default_config! if @options[:force_default_config]
+
+      handle_exiting_options
 
       if @options[:color]
         # color output explicitly forced on
@@ -88,7 +158,11 @@ module RuboCop
       display_error_summary(runner.errors)
       maybe_print_corrected_source
 
-      all_passed && !runner.aborting? && runner.errors.empty? ? 0 : 1
+      if all_passed && !runner.aborting? && runner.errors.empty?
+        STATUS_SUCCESS
+      else
+        STATUS_OFFENSES
+      end
     end
 
     def handle_exiting_options
@@ -201,3 +275,4 @@ module RuboCop
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

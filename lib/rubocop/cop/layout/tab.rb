@@ -7,6 +7,9 @@ module RuboCop
     module Layout
       # This cop checks for tabs inside the source code.
       class Tab < Cop
+        include Alignment
+        include RangeHelp
+
         MSG = 'Tab detected.'.freeze
 
         def investigate(processed_source)
@@ -22,17 +25,18 @@ module RuboCop
                                  index + 1,
                                  (spaces.length)...(match.end(0)))
 
-            add_offense(range, range)
+            add_offense(range, location: range)
+          end
+        end
+
+        def autocorrect(range)
+          lambda do |corrector|
+            spaces = ' ' * configured_indentation_width
+            corrector.replace(range, range.source.gsub(/\t/, spaces))
           end
         end
 
         private
-
-        def autocorrect(range)
-          lambda do |corrector|
-            corrector.replace(range, range.source.gsub(/\t/, '  '))
-          end
-        end
 
         def string_literal_lines(ast)
           # which lines start inside a string literal?

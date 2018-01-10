@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::EmptyCaseCondition do
+RSpec.describe RuboCop::Cop::Style::EmptyCaseCondition do
   subject(:cop) { described_class.new }
 
   let(:message) do
@@ -21,7 +21,7 @@ describe RuboCop::Cop::Style::EmptyCaseCondition do
 
     it 'accepts the source with case' do
       inspect_source(source_with_case)
-      expect(cop.messages).to be_empty
+      expect(cop.messages.empty?).to be(true)
     end
   end
 

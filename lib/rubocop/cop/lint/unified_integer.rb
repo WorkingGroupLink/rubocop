@@ -21,7 +21,7 @@ module RuboCop
         MSG = 'Use `Integer` instead of `%s`.'.freeze
 
         def_node_matcher :fixnum_or_bignum_const, <<-PATTERN
-          (:const {nil (:cbase)} ${:Fixnum :Bignum})
+          (:const {nil? (:cbase)} ${:Fixnum :Bignum})
         PATTERN
 
         def on_const(node)
@@ -29,7 +29,7 @@ module RuboCop
 
           return unless klass
 
-          add_offense(node, :expression, format(MSG, klass))
+          add_offense(node, message: format(MSG, klass))
         end
 
         def autocorrect(node)

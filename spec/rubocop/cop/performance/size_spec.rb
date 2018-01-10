@@ -1,20 +1,20 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Performance::Size do
+RSpec.describe RuboCop::Cop::Performance::Size do
   subject(:cop) { described_class.new }
 
   it 'does not register an offense when calling count ' \
      'as a stand alone method' do
     inspect_source('count(items)')
 
-    expect(cop.messages).to be_empty
+    expect(cop.messages.empty?).to be(true)
   end
 
   it 'does not register an offense when calling count on an object ' \
      'other than an array or a hash' do
     inspect_source('object.count(items)')
 
-    expect(cop.messages).to be_empty
+    expect(cop.messages.empty?).to be(true)
   end
 
   describe 'on array' do

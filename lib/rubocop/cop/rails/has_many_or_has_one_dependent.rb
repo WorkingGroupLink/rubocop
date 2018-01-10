@@ -23,32 +23,60 @@ module RuboCop
       class HasManyOrHasOneDependent < Cop
         MSG = 'Specify a `:dependent` option.'.freeze
 
-        def_node_matcher :is_has_many_or_has_one_without_options?, <<-PATTERN
-          (send nil {:has_many :has_one} _)
+        def_node_matcher :association_without_options?, <<-PATTERN
+          (send nil? {:has_many :has_one} _)
         PATTERN
 
-        def_node_matcher :is_has_many_or_has_one_with_options?, <<-PATTERN
-          (send nil {:has_many :has_one} _ (hash $...))
+        def_node_matcher :association_with_options?, <<-PATTERN
+          (send nil? {:has_many :has_one} _ (hash $...))
         PATTERN
 
-        def_node_matcher :has_dependent?, <<-PATTERN
-          (pair (sym :dependent) !(:nil))
+        def_node_matcher :dependent_option?, <<-PATTERN
+          (pair (sym :dependent) !nil)
         PATTERN
 
-        def_node_matcher :has_through?, <<-PATTERN
-          (pair (sym :through) !(:nil))
+        def_node_matcher :present_option?, <<-PATTERN
+          (pair (sym :through) !nil)
+        PATTERN
+
+        def_node_matcher :with_options_block, <<-PATTERN
+          (block
+            (send nil? :with_options
+              (hash $...))
+            (args) ...)
         PATTERN
 
         def on_send(node)
-          unless is_has_many_or_has_one_without_options?(node)
-            pairs = is_has_many_or_has_one_with_options?(node)
-            return unless pairs
-            return if pairs.any? do |pair|
-              has_dependent?(pair) || has_through?(pair)
-            end
+          unless association_without_options?(node)
+            return if valid_options?(association_with_options?(node))
           end
 
-          add_offense(node, :selector)
+          return if valid_options_in_with_options_block?(node)
+
+          add_offense(node, location: :selector)
+        end
+
+        private
+
+        def valid_options_in_with_options_block?(node)
+          return true unless node.parent
+
+          n = node.parent.begin_type? ? node.parent.parent : node.parent
+
+          if with_options_block(n)
+            return true if valid_options?(with_options_block(n))
+          end
+
+          false
+        end
+
+        def valid_options?(options)
+          return true unless options
+          return true if options.any? do |o|
+            dependent_option?(o) || present_option?(o)
+          end
+
+          false
         end
       end
     end

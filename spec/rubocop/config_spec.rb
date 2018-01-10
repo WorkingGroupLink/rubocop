@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-describe RuboCop::Config do
+RSpec.describe RuboCop::Config do
   include FileHelper
 
   subject(:configuration) { described_class.new(hash, loaded_path) }
+
   let(:hash) { {} }
   let(:loaded_path) { 'example/.rubocop.yml' }
 
@@ -129,7 +130,7 @@ describe RuboCop::Config do
       end
     end
 
-    context 'when the configration includes an invalid EnforcedStyle' do
+    context 'when the configuration includes an invalid EnforcedStyle' do
       before do
         create_file(configuration_path, <<-YAML.strip_indent)
           Style/AndOr:
@@ -143,7 +144,7 @@ describe RuboCop::Config do
       end
     end
 
-    context 'when the configration includes a valid Enforced.+Style' do
+    context 'when the configuration includes a valid EnforcedStyle' do
       before do
         create_file(configuration_path, <<-YAML.strip_indent)
           Layout/SpaceAroundBlockParameters:
@@ -156,7 +157,7 @@ describe RuboCop::Config do
       end
     end
 
-    context 'when the configration includes an invalid Enforced.+Style' do
+    context 'when the configuration includes an invalid EnforcedStyle' do
       before do
         create_file(configuration_path, <<-YAML.strip_indent)
           Layout/SpaceAroundBlockParameters:
@@ -199,6 +200,29 @@ describe RuboCop::Config do
       end
     end
 
+    shared_examples 'obsolete MaxLineLength parameter' do |cop_name|
+      context "when the configuration includes the obsolete #{cop_name}: " \
+              'MaxLineLength parameter' do
+        before do
+          create_file(configuration_path, <<-YAML.strip_indent)
+            #{cop_name}:
+              MaxLineLength: 100
+          YAML
+        end
+
+        it 'raises validation error' do
+          expect { configuration.validate }
+            .to raise_error(RuboCop::ValidationError,
+                            /`#{cop_name}: MaxLineLength` has been removed./)
+        end
+      end
+    end
+
+    include_examples 'obsolete MaxLineLength parameter',
+                     'Style/WhileUntilModifier'
+    include_examples 'obsolete MaxLineLength parameter',
+                     'Style/IfUnlessModifier'
+
     context 'when the configuration includes obsolete parameters and cops' do
       before do
         create_file(configuration_path, <<-YAML.strip_indent)
@@ -206,7 +230,7 @@ describe RuboCop::Config do
             EnforcedMode: conservative
           Style/MethodCallParentheses:
             Enabled: false
-          Lint/BlockAlignment:
+          Layout/BlockAlignment:
             AlignWith: either
           Layout/SpaceBeforeModifierKeyword:
             Enabled: false
@@ -240,6 +264,43 @@ describe RuboCop::Config do
             RuboCop::ValidationError,
             /Cops cannot be both enabled by default and disabled by default/
           )
+      end
+    end
+
+    context 'when the configuration includes Lint/Syntax cop' do
+      before do
+        # Force reloading default configuration
+        RuboCop::ConfigLoader.default_configuration = nil
+      end
+
+      context 'when the configuration matches the default' do
+        before do
+          create_file(configuration_path, <<-YAML.strip_indent)
+            Lint/Syntax:
+              Enabled: true
+          YAML
+        end
+
+        it 'does not raise validation error' do
+          expect { configuration.validate }.not_to raise_error
+        end
+      end
+
+      context 'when the configuration does not match the default' do
+        before do
+          create_file(configuration_path, <<-YAML.strip_indent)
+            Lint/Syntax:
+              Enabled: false
+          YAML
+        end
+
+        it 'raises validation error' do
+          expect { configuration.validate }
+            .to raise_error(
+              RuboCop::ValidationError,
+              /configuration for Syntax cop found/
+            )
+        end
       end
     end
   end
@@ -455,6 +516,28 @@ describe RuboCop::Config do
     end
   end
 
+  describe '#check' do
+    subject(:configuration) do
+      described_class.new(hash, loaded_path)
+    end
+
+    let(:loaded_path) { 'example/.rubocop.yml' }
+
+    context 'when a deprecated configuration is detected' do
+      let(:hash) { { 'AllCops' => { 'Includes' => [] } } }
+
+      before { $stderr = StringIO.new }
+      after { $stderr = STDERR }
+
+      it 'prints a warning message for the loaded path' do
+        configuration.check
+        expect($stderr.string).to include(
+          "#{loaded_path} - AllCops/Includes was renamed"
+        )
+      end
+    end
+  end
+
   describe '#deprecation_check' do
     context 'when there is no AllCops configuration' do
       let(:hash) { {} }
@@ -579,7 +662,7 @@ describe RuboCop::Config do
     end
   end
 
-  describe '#target_ruby_version' do
+  describe '#target_ruby_version', :isolated_environment do
     context 'when TargetRubyVersion is set' do
       let(:ruby_version) { 2.1 }
 
@@ -608,11 +691,8 @@ describe RuboCop::Config do
     context 'when TargetRubyVersion is not set' do
       context 'when .ruby-version is present' do
         before do
-          allow(File).to receive(:file?).with('.ruby-version').and_return true
-          allow(File)
-            .to receive(:read)
-            .with('.ruby-version')
-            .and_return ruby_version
+          dir = configuration.base_dir_for_path_parameters
+          create_file(File.join(dir, '.ruby-version'), ruby_version)
         end
 
         context 'when .ruby-version contains an MRI version' do
@@ -671,13 +751,20 @@ describe RuboCop::Config do
       end
 
       context 'when .ruby-version is not present' do
-        before do
-          allow(File).to receive(:file?).with('.ruby-version').and_return false
-        end
-
         it 'uses the default target ruby version' do
           expect(configuration.target_ruby_version)
             .to eq described_class::DEFAULT_RUBY_VERSION
+        end
+      end
+
+      context 'when .ruby-version is in a parent directory' do
+        before do
+          dir = configuration.base_dir_for_path_parameters
+          create_file(File.join(dir, '..', '.ruby-version'), '2.4.1')
+        end
+
+        it 'reads it to determine the target ruby version' do
+          expect(configuration.target_ruby_version).to eq 2.4
         end
       end
     end

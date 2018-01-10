@@ -7,10 +7,7 @@ module RuboCop
       #
       # Supported styles are: return, return_nil.
       #
-      # @example
-      #
-      #   # EnforcedStyle: return (default)
-      #
+      # @example EnforcedStyle: return (default)
       #   # bad
       #   def foo(arg)
       #     return nil if arg
@@ -21,8 +18,7 @@ module RuboCop
       #     return if arg
       #   end
       #
-      #   # EnforcedStyle: return_nil
-      #
+      # @example EnforcedStyle: return_nil
       #   # bad
       #   def foo(arg)
       #     return if arg
@@ -39,8 +35,7 @@ module RuboCop
         RETURN_NIL_MSG = 'Use `return nil` instead of `return`.'.freeze
 
         def_node_matcher :return_node?, '(return)'
-        # TODO: fix (return nil) on the NodePattern class
-        # def_node_matcher :return_nil_node?, '(return nil)'
+        def_node_matcher :return_nil_node?, '(return nil)'
 
         def on_return(node)
           # Check Lint/NonLocalExitFromIterator first before this cop
@@ -62,14 +57,14 @@ module RuboCop
           add_offense(node) unless correct_style?(node)
         end
 
-        private
-
         def autocorrect(node)
           lambda do |corrector|
             corrected = style == :return ? 'return' : 'return nil'
             corrector.replace(node.source_range, corrected)
           end
         end
+
+        private
 
         def message(_node)
           style == :return ? RETURN_MSG : RETURN_NIL_MSG
@@ -80,15 +75,11 @@ module RuboCop
             style == :return_nil && !return_node?(node)
         end
 
-        def return_nil_node?(node)
-          !node.children.empty? && node.children.first.nil_type?
-        end
-
         def scoped_node?(node)
           node.def_type? || node.defs_type? || node.lambda?
         end
 
-        def_node_matcher :chained_send?, '(send !nil ...)'
+        def_node_matcher :chained_send?, '(send !nil? ...)'
         def_node_matcher :define_method?, <<-PATTERN
           (send _ {:define_method :define_singleton_method} _)
         PATTERN

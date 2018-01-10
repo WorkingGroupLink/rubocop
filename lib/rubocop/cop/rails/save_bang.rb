@@ -24,7 +24,7 @@ module RuboCop
       #
       #   # good
       #   unless user.save
-      #      . . .
+      #     # ...
       #   end
       #   user.save!
       #   user.update!(name: 'Joe')
@@ -33,16 +33,16 @@ module RuboCop
       #
       #   user = User.find_or_create_by(name: 'Joe')
       #   unless user.persisted?
-      #      . . .
+      #     # ...
       #   end
       class SaveBang < Cop
-        MSG = 'Use `%s` instead of `%s` if the return value is not checked.'
-              .freeze
+        MSG = 'Use `%<prefer>s` instead of `%<current>s` if the return ' \
+              'value is not checked.'.freeze
         CREATE_MSG = (MSG +
-                      ' Or check `persisted?` on model returned from `%s`.')
-                     .freeze
-        CREATE_CONDITIONAL_MSG = '`%s` returns a model which is always truthy.'
-                                 .freeze
+                      ' Or check `persisted?` on model returned from ' \
+                      '`%<current>s`.').freeze
+        CREATE_CONDITIONAL_MSG = '`%<method>s` returns a model which is ' \
+                                 'always truthy.'.freeze
 
         CREATE_PERSIST_METHODS = %i[create
                                     first_or_create find_or_create_by].freeze
@@ -70,11 +70,10 @@ module RuboCop
           return unless expected_signature?(node)
           return if persisted_referenced?(assignment)
 
-          add_offense(node, :selector,
-                      format(CREATE_MSG,
-                             "#{node.method_name}!",
-                             node.method_name.to_s,
-                             node.method_name.to_s))
+          add_offense(node, location: :selector,
+                            message: format(CREATE_MSG,
+                                            prefer: "#{node.method_name}!",
+                                            current: node.method_name.to_s))
         end
 
         def on_send(node)
@@ -84,10 +83,10 @@ module RuboCop
           return if check_used_in_conditional(node)
           return if last_call_of_method?(node)
 
-          add_offense(node, :selector,
-                      format(MSG,
-                             "#{node.method_name}!",
-                             node.method_name.to_s))
+          add_offense(node, location: :selector,
+                            message: format(MSG,
+                                            prefer: "#{node.method_name}!",
+                                            current: node.method_name.to_s))
         end
 
         def autocorrect(node)
@@ -121,9 +120,9 @@ module RuboCop
           return false unless conditional?(node)
 
           unless MODIFY_PERSIST_METHODS.include?(node.method_name)
-            add_offense(node, :selector,
-                        format(CREATE_CONDITIONAL_MSG,
-                               node.method_name.to_s))
+            add_offense(node, location: :selector,
+                              message: format(CREATE_CONDITIONAL_MSG,
+                                              method: node.method_name.to_s))
           end
 
           true

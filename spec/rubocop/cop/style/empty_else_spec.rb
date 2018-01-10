@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::EmptyElse do
+RSpec.describe RuboCop::Cop::Style::EmptyElse do
   subject(:cop) { described_class.new(config) }
+
   let(:missing_else_config) { {} }
 
   shared_examples 'auto-correct' do |keyword|
@@ -113,6 +114,25 @@ describe RuboCop::Cop::Style::EmptyElse do
             if cond2
               something
             end
+          end
+        RUBY
+
+        it_behaves_like 'auto-correct', 'if'
+        it_behaves_like 'offense registration'
+      end
+      context 'with an empty comment' do
+        let(:source) { <<-RUBY.strip_indent }
+          if cond
+            something
+          else
+            # TODO
+          end
+        RUBY
+        let(:corrected_source) { <<-RUBY.strip_indent }
+          if cond
+            something
+          else
+            # TODO
           end
         RUBY
 

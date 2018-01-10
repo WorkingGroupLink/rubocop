@@ -26,21 +26,26 @@ module RuboCop
       #   source 'https://rubygems.org' # strongly recommended
       #   source 'http://rubygems.org'
       class InsecureProtocolSource < Cop
-        MSG = 'The source `:%s` is deprecated because HTTP requests are ' \
-              "insecure. Please change your source to 'https://rubygems.org' " \
+        include RangeHelp
+
+        MSG = 'The source `:%<source>s` is deprecated because HTTP requests ' \
+              'are insecure. ' \
+              "Please change your source to 'https://rubygems.org' " \
               "if possible, or 'http://rubygems.org' if not.".freeze
 
         def_node_matcher :insecure_protocol_source?, <<-PATTERN
-          (send nil :source
+          (send nil? :source
             (sym ${:gemcutter :rubygems :rubyforge}))
         PATTERN
 
         def on_send(node)
           insecure_protocol_source?(node) do |source|
-            message = format(MSG, source)
+            message = format(MSG, source: source)
 
             add_offense(
-              node, source_range(node.first_argument.loc.expression), message
+              node,
+              location: range(node.first_argument.loc.expression),
+              message: message
             )
           end
         end
@@ -55,7 +60,7 @@ module RuboCop
 
         private
 
-        def source_range(node)
+        def range(node)
           range_between(node.begin_pos, node.end_pos)
         end
       end

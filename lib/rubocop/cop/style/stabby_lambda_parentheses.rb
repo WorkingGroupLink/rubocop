@@ -6,17 +6,18 @@ module RuboCop
       # Check for parentheses around stabby lambda arguments.
       # There are two different styles. Defaults to `require_parentheses`.
       #
-      # @example
-      #   # require_parentheses - bad
+      # @example EnforcedStyle: require_parentheses (default)
+      #   # bad
       #   ->a,b,c { a + b + c }
       #
-      #   # require_parentheses - good
+      #   # good
       #   ->(a,b,c) { a + b + c}
       #
-      #   # require_no_parentheses - bad
+      # @example EnforcedStyle: require_no_parentheses
+      #   # bad
       #   ->(a,b,c) { a + b + c }
       #
-      #   # require_no_parentheses - good
+      #   # good
       #   ->a,b,c { a + b + c}
       class StabbyLambdaParentheses < Cop
         include ConfigurableEnforcedStyle
@@ -24,8 +25,6 @@ module RuboCop
         MSG_REQUIRE = 'Wrap stabby lambda arguments with parentheses.'.freeze
         MSG_NO_REQUIRE = 'Do not wrap stabby lambda arguments ' \
                          'with parentheses.'.freeze
-        ARROW = '->'.freeze
-
         def on_send(node)
           return unless stabby_lambda_with_args?(node)
           return unless redundant_parentheses?(node) ||
@@ -75,11 +74,7 @@ module RuboCop
         end
 
         def stabby_lambda_with_args?(node)
-          node.command?(:lambda) && arrow_form?(node) && node.parent.arguments?
-        end
-
-        def arrow_form?(node)
-          node.loc.selector.source == ARROW
+          node.stabby_lambda? && node.parent.arguments?
         end
 
         def parentheses?(node)

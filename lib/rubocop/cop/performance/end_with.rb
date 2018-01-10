@@ -7,11 +7,11 @@ module RuboCop
       # would suffice.
       #
       # @example
-      #   @bad
+      #   # bad
       #   'abc' =~ /bc\Z/
       #   'abc'.match(/bc\Z/)
       #
-      #   @good
+      #   # good
       #   'abc'.end_with?('bc')
       class EndWith < Cop
         MSG = 'Use `String#end_with?` instead of a regex match anchored to ' \
@@ -19,7 +19,7 @@ module RuboCop
         SINGLE_QUOTE = "'".freeze
 
         def_node_matcher :redundant_regex?, <<-PATTERN
-          {(send $!nil {:match :=~} (regexp (str $#literal_at_end?) (regopt)))
+          {(send $!nil? {:match :=~} (regexp (str $#literal_at_end?) (regopt)))
            (send (regexp (str $#literal_at_end?) (regopt)) {:match :=~} $_)}
         PATTERN
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::SpaceAroundKeyword do
+RSpec.describe RuboCop::Cop::Layout::SpaceAroundKeyword do
   subject(:cop) { described_class.new }
 
   shared_examples 'missing before' do |highlight, expr, correct|
@@ -34,21 +34,21 @@ describe RuboCop::Cop::Layout::SpaceAroundKeyword do
   shared_examples 'accept before' do |after, expr|
     it "accepts `#{after}` before keyword in `#{expr}`" do
       inspect_source(expr)
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 
   shared_examples 'accept after' do |after, expr|
     it "accepts `#{after}` after keyword in `#{expr}`" do
       inspect_source(expr)
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 
   shared_examples 'accept around' do |after, expr|
     it "accepts `#{after}` around keyword in `#{expr}`" do
       inspect_source(expr)
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 
@@ -200,14 +200,17 @@ describe RuboCop::Cop::Layout::SpaceAroundKeyword do
   # Layout/SpaceBeforeSemicolon, Layout/SpaceAfterSemicolon
   it_behaves_like 'accept around', ';', 'test do;end'
 
+  # Layout/SpaceInsideArrayLiteralBrackets
+  it_behaves_like 'accept around', '[]', '[begin end]'
+
   # Layout/SpaceInsideBlockBraces
   it_behaves_like 'accept around', '{}', 'loop {next}'
 
-  # Layout/SpaceInsideBrackets
-  it_behaves_like 'accept around', '[]', '[begin end]'
-
   # Layout/SpaceInsideHashLiteralBraces
   it_behaves_like 'accept around', '{}', '{a: begin end}'
+
+  # Layout/SpaceInsideReferenceBrackets
+  it_behaves_like 'accept around', '[]', 'a[begin end]'
 
   # Layout/SpaceInsideStringInterpolation
   it_behaves_like 'accept around', '{}', '"#{begin end}"'

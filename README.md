@@ -6,7 +6,8 @@
 [![Code Climate](https://codeclimate.com/github/bbatsov/rubocop/badges/gpa.svg)](https://codeclimate.com/github/bbatsov/rubocop)
 [![Inline docs](http://inch-ci.org/github/bbatsov/rubocop.svg)](http://inch-ci.org/github/bbatsov/rubocop)
 
-[![Gratipay Team](https://img.shields.io/gratipay/team/rubocop.svg?maxAge=2592000)](https://gratipay.com/rubocop/)
+[![Patreon](https://img.shields.io/badge/patreon-donate-orange.svg)](https://www.patreon.com/bbatsov)
+[![Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/bbatsov/donate)
 [![OpenCollective](https://opencollective.com/rubocop/backers/badge.svg)](#open-collective-backers)
 [![OpenCollective](https://opencollective.com/rubocop/sponsors/badge.svg)](#open-collective-sponsors)
 
@@ -51,7 +52,7 @@ haven't reached version 1.0 yet). To prevent an unwanted RuboCop update you
 might want to use a conservative version locking in your `Gemfile`:
 
 ```rb
-gem 'rubocop', '~> 0.50.0', require: false
+gem 'rubocop', '~> 0.52.1', require: false
 ```
 
 ## Quickstart
@@ -71,13 +72,8 @@ You can read a ton more about RuboCop in its [official manual](http://rubocop.re
 
 RuboCop supports the following Ruby implementations:
 
-* MRI 2.0
-* MRI 2.1
-* MRI 2.2
-* MRI 2.3
-* MRI 2.4
+* MRI 2.1+
 * JRuby 9.0+
-* Rubinius 2.0+
 
 ## Team
 
@@ -134,9 +130,9 @@ to become a RuboCop sponsor.
 
 You can support the development of RuboCop via
 [Salt](https://salt.bountysource.com/teams/rubocop),
-[Gratipay](https://www.gratipay.com/rubocop) and [Open Collective](https://opencollective.com/rubocop).
-
-[![Support via Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.1.3/dist/gratipay.png)](https://gratipay.com/rubocop)
+[Patreon](https://www.patreon.com/bbatsov),
+[Liberapay](https://liberapay.com/bbatsov/donate),
+and [Open Collective](https://opencollective.com/rubocop).
 
 ### Open Collective Backers
 
@@ -214,5 +210,5 @@ RuboCop's changelog is available [here](CHANGELOG.md).
 
 ## Copyright
 
-Copyright (c) 2012-2017 Bozhidar Batsov. See [LICENSE.txt](LICENSE.txt) for
+Copyright (c) 2012-2018 Bozhidar Batsov. See [LICENSE.txt](LICENSE.txt) for
 further details.

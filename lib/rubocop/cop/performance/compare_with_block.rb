@@ -8,13 +8,13 @@ module RuboCop
       # This cop also checks `max` and `min` methods.
       #
       # @example
-      #   @bad
+      #   # bad
       #   array.sort { |a, b| a.foo <=> b.foo }
       #   array.max { |a, b| a.foo <=> b.foo }
       #   array.min { |a, b| a.foo <=> b.foo }
       #   array.sort { |a, b| a[:foo] <=> b[:foo] }
       #
-      #   @good
+      #   # good
       #   array.sort_by(&:foo)
       #   array.sort_by { |v| v.foo }
       #   array.sort_by do |var|
@@ -24,8 +24,11 @@ module RuboCop
       #   array.min_by(&:foo)
       #   array.sort_by { |a| a[:foo] }
       class CompareWithBlock < Cop
-        MSG = 'Use `%s_by%s` instead of ' \
-              '`%s { |%s, %s| %s <=> %s }`.'.freeze
+        include RangeHelp
+
+        MSG = 'Use `%<compare_method>s_by%<instead>s` instead of ' \
+              '`%<compare_method>s { |%<var_a>s, %<var_b>s| %<str_a>s ' \
+              '<=> %<str_b>s }`.'.freeze
 
         def_node_matcher :compare?, <<-PATTERN
           (block
@@ -46,8 +49,12 @@ module RuboCop
             replaceable_body?(body, var_a, var_b) do |method, args_a, args_b|
               return unless slow_compare?(method, args_a, args_b)
               range = compare_range(send, node)
-              add_offense(node, range,
-                          message(send, method, var_a, var_b, args_a))
+
+              add_offense(
+                node,
+                location: range,
+                message: message(send, method, var_a, var_b, args_a)
+              )
             end
           end
         end
@@ -81,6 +88,7 @@ module RuboCop
           true
         end
 
+        # rubocop:disable Metrics/MethodLength
         def message(send, method, var_a, var_b, args)
           compare_method = send.method_name
           if method == :[]
@@ -93,10 +101,14 @@ module RuboCop
             str_a = "#{var_a}.#{method}"
             str_b = "#{var_b}.#{method}"
           end
-          format(MSG, compare_method, instead,
-                 compare_method, var_a, var_b,
-                 str_a, str_b)
+          format(MSG, compare_method: compare_method,
+                      instead: instead,
+                      var_a: var_a,
+                      var_b: var_b,
+                      str_a: str_a,
+                      str_b: str_b)
         end
+        # rubocop:enable Metrics/MethodLength
 
         def compare_range(send, node)
           range_between(send.loc.selector.begin_pos, node.loc.end.end_pos)

@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
-describe RuboCop::AST::WhileNode do
+RSpec.describe RuboCop::AST::WhileNode do
   let(:while_node) { parse_source(source).ast }
 
   describe '.new' do
     context 'with a statement while' do
       let(:source) { 'while foo; bar; end' }
 
-      it { expect(while_node).to be_a(described_class) }
+      it { expect(while_node.is_a?(described_class)).to be(true) }
     end
 
     context 'with a modifier while' do
       let(:source) { 'begin foo; end while bar' }
 
-      it { expect(while_node).to be_a(described_class) }
+      it { expect(while_node.is_a?(described_class)).to be(true) }
     end
   end
 

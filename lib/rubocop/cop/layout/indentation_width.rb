@@ -10,16 +10,22 @@ module RuboCop
       # one.
       #
       # @example
-      #   # bad, Width: 2
+      #   # bad
       #   class A
       #    def test
       #     puts 'hello'
       #    end
       #   end
       #
-      #   # bad, Width: 2,
-      #          IgnoredPatterns:
-      #            - '^\s*module'
+      #   # good
+      #   class A
+      #     def test
+      #       puts 'hello'
+      #     end
+      #   end
+      #
+      # @example IgnoredPatterns: ['^\s*module']
+      #   # bad
       #   module A
       #   class B
       #     def test
@@ -28,16 +34,7 @@ module RuboCop
       #   end
       #   end
       #
-      #   # good, Width: 2
-      #   class A
-      #     def test
-      #       puts 'hello'
-      #     end
-      #   end
-      #
-      #   # good, Width: 2,
-      #           IgnoredPatterns:
-      #             - '^\s*module'
+      #   # good
       #   module A
       #   class B
       #     def test
@@ -45,11 +42,15 @@ module RuboCop
       #     end
       #   end
       #   end
-      class IndentationWidth < Cop
+      class IndentationWidth < Cop # rubocop:disable Metrics/ClassLength
         include EndKeywordAlignment
-        include AutocorrectAlignment
+        include Alignment
         include CheckAssignment
         include IgnoredPattern
+        include RangeHelp
+
+        MSG = 'Use %<configured_indentation_width>d (not %<indentation>d) ' \
+              'spaces for%<name>s indentation.'.freeze
 
         SPECIAL_MODIFIERS = %w[private protected].freeze
 
@@ -100,7 +101,7 @@ module RuboCop
 
           *_, body = *node.first_argument
 
-          def_end_config = config.for_cop('Lint/DefEndAlignment')
+          def_end_config = config.for_cop('Layout/DefEndAlignment')
           style = def_end_config['EnforcedStyleAlignWith'] || 'start_of_line'
           base = style == 'def' ? node.first_argument : node
 
@@ -139,6 +140,10 @@ module RuboCop
           return if node.ternary? || node.modifier_form?
 
           check_if(node, node.body, node.else_branch, base.loc)
+        end
+
+        def autocorrect(node)
+          AlignmentCorrector.correct(processed_source, node, @column_delta)
         end
 
         private
@@ -182,7 +187,7 @@ module RuboCop
           rhs = first_part_of_call_chain(rhs)
           return unless rhs
 
-          end_config = config.for_cop('Lint/EndAlignment')
+          end_config = config.for_cop('Layout/EndAlignment')
           style = end_config['EnforcedStyleAlignWith'] || 'keyword'
           base = variable_alignment?(node.loc, rhs, style.to_sym) ? node : rhs
 
@@ -236,11 +241,20 @@ module RuboCop
                    body_node
                  end
 
-          indentation_name = style == 'normal' ? '' : "#{style} "
-          add_offense(node, offending_range(body_node, indentation),
-                      format("Use #{configured_indentation_width} (not %d) " \
-                             "spaces for #{indentation_name}indentation.",
-                             indentation))
+          name = style == 'normal' ? '' : " #{style}"
+          message = message(configured_indentation_width, indentation, name)
+
+          add_offense(node, location: offending_range(body_node, indentation),
+                            message: message)
+        end
+
+        def message(configured_indentation_width, indentation, name)
+          format(
+            MSG,
+            configured_indentation_width: configured_indentation_width,
+            indentation: indentation,
+            name: name
+          )
         end
 
         # Returns true if the given node is within another node that has

@@ -16,10 +16,7 @@ module RuboCop
       # populated with objects which can be compared with integers, but are
       # not themselves `Interger` polymorphic.
       #
-      # @example
-      #
-      #   # EnforcedStyle: predicate (default)
-      #
+      # @example EnforcedStyle: predicate (default)
       #   # bad
       #
       #   foo == 0
@@ -32,10 +29,7 @@ module RuboCop
       #   foo.negative?
       #   bar.baz.positive?
       #
-      # @example
-      #
-      #   # EnforcedStyle: comparison
-      #
+      # @example EnforcedStyle: comparison
       #   # bad
       #
       #   foo.zero?
@@ -50,7 +44,7 @@ module RuboCop
       class NumericPredicate < Cop
         include ConfigurableEnforcedStyle
 
-        MSG = 'Use `%s` instead of `%s`.'.freeze
+        MSG = 'Use `%<prefer>s` instead of `%<current>s`.'.freeze
 
         REPLACEMENTS = {
           'zero?' => '==',
@@ -63,8 +57,18 @@ module RuboCop
 
           return unless numeric
 
-          add_offense(node, :expression,
-                      format(MSG, replacement, node.source))
+          add_offense(node,
+                      message: format(MSG,
+                                      prefer: replacement,
+                                      current: node.source))
+        end
+
+        def autocorrect(node)
+          _, replacement = check(node)
+
+          lambda do |corrector|
+            corrector.replace(node.loc.expression, replacement)
+          end
         end
 
         private
@@ -80,14 +84,6 @@ module RuboCop
           return unless numeric && operator && replacement_supported?(operator)
 
           [numeric, replacement(numeric, operator)]
-        end
-
-        def autocorrect(node)
-          _, replacement = check(node)
-
-          lambda do |corrector|
-            corrector.replace(node.loc.expression, replacement)
-          end
         end
 
         def replacement(numeric, operation)

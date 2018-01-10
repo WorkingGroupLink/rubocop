@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Rails::Exit, :config do
+RSpec.describe RuboCop::Cop::Rails::Exit, :config do
   subject(:cop) { described_class.new }
 
   it 'registers an offense for an exit call with no receiver' do
@@ -25,7 +25,7 @@ describe RuboCop::Cop::Rails::Exit, :config do
     it 'does not register an offense for an explicit exit call '\
       'with an argument on an object' do
       inspect_source('Object.new.exit(0)')
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'does not register an offense for an explicit exit! call on an object' do

@@ -8,23 +8,19 @@ module RuboCop
       # `StandardError`. It is configurable to suggest using either
       # `RuntimeError` (default) or `StandardError` instead.
       #
-      # @example
-      #
+      # @example EnforcedStyle: runtime_error (default)
       #   # bad
       #
       #   class C < Exception; end
-      #
-      # @example
-      #
-      #   # EnforcedStyle: runtime_error (default)
       #
       #   # good
       #
       #   class C < RuntimeError; end
       #
-      # @example
+      # @example EnforcedStyle: standard_error
+      #   # bad
       #
-      #   # EnforcedStyle: standard_error
+      #   class C < Exception; end
       #
       #   # good
       #
@@ -59,16 +55,16 @@ module RuboCop
           add_offense(base_class)
         end
 
-        private
-
-        def message(node)
-          format(MSG, preferred_base_class, node.const_name)
-        end
-
         def autocorrect(node)
           lambda do |corrector|
             corrector.replace(node.loc.expression, preferred_base_class)
           end
+        end
+
+        private
+
+        def message(node)
+          format(MSG, preferred_base_class, node.const_name)
         end
 
         def illegal_class_name?(class_node)

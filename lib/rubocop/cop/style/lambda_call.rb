@@ -5,13 +5,19 @@ module RuboCop
     module Style
       # This cop checks for use of the lambda.(args) syntax.
       #
-      # @example
-      #
+      # @example EnforcedStyle: call (default)
       #  # bad
       #  lambda.(x, y)
       #
       #  # good
       #  lambda.call(x, y)
+      #
+      # @example EnforcedStyle: braces
+      #  # bad
+      #  lambda.call(x, y)
+      #
+      #  # good
+      #  lambda.(x, y)
       class LambdaCall < Cop
         include ConfigurableEnforcedStyle
 
@@ -23,13 +29,6 @@ module RuboCop
           else
             correct_style_detected
           end
-        end
-
-        private
-
-        def offense?(node)
-          explicit_style? && node.implicit_call? ||
-            implicit_style? && !node.implicit_call?
         end
 
         def autocorrect(node)
@@ -44,6 +43,13 @@ module RuboCop
               corrector.remove(node.loc.selector)
             end
           end
+        end
+
+        private
+
+        def offense?(node)
+          explicit_style? && node.implicit_call? ||
+            implicit_style? && !node.implicit_call?
         end
 
         def add_parentheses(node, corrector)

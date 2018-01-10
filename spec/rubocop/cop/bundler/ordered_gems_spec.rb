@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Bundler::OrderedGems, :config do
+RSpec.describe RuboCop::Cop::Bundler::OrderedGems, :config do
+  subject(:cop) { described_class.new(config) }
+
   let(:cop_config) do
     {
       'TreatCommentsAsGroupSeparators' => treat_comments_as_group_separators,
@@ -12,13 +14,30 @@ describe RuboCop::Cop::Bundler::OrderedGems, :config do
     'Gems should be sorted in an alphabetical order within their ' \
       'section of the Gemfile. Gem `%s` should appear before `%s`.'
   end
-  subject(:cop) { described_class.new(config) }
 
   context 'When gems are alphabetically sorted' do
     it 'does not register any offenses' do
       expect_no_offenses(<<-RUBY.strip_indent)
         gem 'rspec'
         gem 'rubocop'
+      RUBY
+    end
+  end
+
+  context 'when a gem is referenced from a variable' do
+    it 'ignores the line' do
+      expect_no_offenses(<<-RUBY.strip_indent)
+        gem 'rspec'
+        gem ENV['env_key_undefined'] if ENV.key?('env_key_undefined')
+        gem 'rubocop'
+      RUBY
+    end
+
+    it 'resets the sorting to a new block' do
+      expect_no_offenses(<<-RUBY.strip_indent)
+        gem 'rubocop'
+        gem ENV['env_key_undefined'] if ENV.key?('env_key_undefined')
+        gem 'ast'
       RUBY
     end
   end

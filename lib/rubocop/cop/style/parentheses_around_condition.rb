@@ -5,6 +5,23 @@ module RuboCop
     module Style
       # This cop checks for the presence of superfluous parentheses around the
       # condition of if/unless/while/until.
+      #
+      # @example
+      #   # bad
+      #   x += 1 while (x < 10)
+      #   foo unless (bar || baz)
+      #
+      #   if (x > 10)
+      #   elsif (x < 3)
+      #   end
+      #
+      #   # good
+      #   x += 1 while x < 10
+      #   foo unless bar || baz
+      #
+      #   if x > 10
+      #   elsif x < 3
+      #   end
       class ParenthesesAroundCondition < Cop
         include SafeAssignment
         include Parentheses
@@ -20,6 +37,10 @@ module RuboCop
         end
         alias on_until on_while
 
+        def autocorrect(node)
+          ParenthesesCorrector.correct(node)
+        end
+
         private
 
         def_node_matcher :control_op_condition, <<-PATTERN
@@ -31,7 +52,7 @@ module RuboCop
 
           control_op_condition(cond) do |first_child|
             return if modifier_op?(first_child)
-            return if parens_required?(node.children.first)
+            return if parens_required?(node.condition)
             return if safe_assignment?(cond) && safe_assignment_allowed?
 
             add_offense(cond)
@@ -42,8 +63,7 @@ module RuboCop
           return false if node.if_type? && node.ternary?
           return true if node.rescue_type?
 
-          MODIFIER_NODES.include?(node.type) &&
-            node.modifier_form?
+          MODIFIER_NODES.include?(node.type) && node.modifier_form?
         end
 
         def message(node)

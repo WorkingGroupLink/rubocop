@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Lint::PercentStringArray do
+RSpec.describe RuboCop::Cop::Lint::PercentStringArray do
   subject(:cop) { described_class.new }
 
   let(:message) do
@@ -20,7 +20,7 @@ describe RuboCop::Cop::Lint::PercentStringArray do
       it 'accepts tokens without quotes or commas' do
         inspect_source("%#{char}(foo bar baz)")
 
-        expect(cop.offenses).to be_empty
+        expect(cop.offenses.empty?).to be(true)
       end
 
       [
@@ -32,7 +32,7 @@ describe RuboCop::Cop::Lint::PercentStringArray do
         it "accepts likely false positive #{false_positive}" do
           inspect_source(false_positive)
 
-          expect(cop.offenses).to be_empty
+          expect(cop.offenses.empty?).to be(true)
         end
       end
 
@@ -68,7 +68,7 @@ describe RuboCop::Cop::Lint::PercentStringArray do
       CORRECTED_SOURCE
     end
 
-    it 'removes undesireable characters' do
+    it 'removes undesirable characters' do
       expect(autocorrect_source(source)).to eq(expected_corrected_source)
     end
   end

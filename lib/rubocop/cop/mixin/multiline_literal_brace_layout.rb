@@ -7,6 +7,8 @@ module RuboCop
     module MultilineLiteralBraceLayout
       include ConfigurableEnforcedStyle
 
+      private
+
       def check_brace_layout(node)
         return if ignored_literal?(node)
 
@@ -16,30 +18,6 @@ module RuboCop
 
         check(node)
       end
-
-      def autocorrect(node)
-        if closing_brace_on_same_line?(node)
-          lambda do |corrector|
-            corrector.insert_before(node.loc.end, "\n".freeze)
-          end
-        else
-          # When a comment immediately before the closing brace gets in the way
-          # of an easy correction, the offense is reported but not auto-
-          # corrected. The user must handle the delicate decision of where to
-          # put the comment.
-          return if new_line_needed_before_closing_brace?(node)
-
-          lambda do |corrector|
-            corrector.remove(range_with_surrounding_space(node.loc.end,
-                                                          :left))
-
-            corrector.insert_after(last_element_range_with_trailing_comma(node),
-                                   node.loc.end.source)
-          end
-        end
-      end
-
-      private
 
       # Returns true for the case
       #   [a,
@@ -64,52 +42,43 @@ module RuboCop
       def check_new_line(node)
         return unless closing_brace_on_same_line?(node)
 
-        add_offense(node, :end, self.class::ALWAYS_NEW_LINE_MESSAGE)
+        add_offense(node,
+                    location: :end,
+                    message: self.class::ALWAYS_NEW_LINE_MESSAGE)
       end
 
       def check_same_line(node)
         return if closing_brace_on_same_line?(node)
 
-        add_offense(node, :end, self.class::ALWAYS_SAME_LINE_MESSAGE)
+        add_offense(node,
+                    location: :end,
+                    message: self.class::ALWAYS_SAME_LINE_MESSAGE)
       end
 
       def check_symmetrical(node)
         if opening_brace_on_same_line?(node)
           return if closing_brace_on_same_line?(node)
 
-          add_offense(node, :end, self.class::SAME_LINE_MESSAGE)
+          add_offense(node, location: :end,
+                            message: self.class::SAME_LINE_MESSAGE)
         else
           return unless closing_brace_on_same_line?(node)
 
-          add_offense(node, :end, self.class::NEW_LINE_MESSAGE)
+          add_offense(node, location: :end,
+                            message: self.class::NEW_LINE_MESSAGE)
         end
-      end
-
-      def ignored_literal?(node)
-        implicit_literal?(node) || empty_literal?(node) || node.single_line?
-      end
-
-      def implicit_literal?(node)
-        !node.loc.begin
       end
 
       def empty_literal?(node)
         children(node).empty?
       end
 
-      def last_element_range_with_trailing_comma(node)
-        trailing_comma_range = last_element_trailing_comma_range(node)
-        if trailing_comma_range
-          children(node).last.source_range.join(trailing_comma_range)
-        else
-          children(node).last.source_range
-        end
+      def implicit_literal?(node)
+        !node.loc.begin
       end
 
-      def last_element_trailing_comma_range(node)
-        range = range_with_surrounding_space(children(node).last.source_range,
-                                             :right).end.resize(1)
-        range.source == ',' ? range : nil
+      def ignored_literal?(node)
+        implicit_literal?(node) || empty_literal?(node) || node.single_line?
       end
 
       def children(node)
@@ -119,13 +88,13 @@ module RuboCop
       # This method depends on the fact that we have guarded
       # against implicit and empty literals.
       def opening_brace_on_same_line?(node)
-        node.loc.begin.line == children(node).first.loc.first_line
+        node.loc.begin.line == children(node).first.first_line
       end
 
       # This method depends on the fact that we have guarded
       # against implicit and empty literals.
       def closing_brace_on_same_line?(node)
-        node.loc.end.line == children(node).last.loc.last_line
+        node.loc.end.line == children(node).last.last_line
       end
 
       # Starting with the parent node and recursively for the parent node's
@@ -157,7 +126,7 @@ module RuboCop
 
         if node.respond_to?(:loc) &&
            node.loc.respond_to?(:heredoc_end) &&
-           node.loc.heredoc_end.last_line >= parent.loc.last_line
+           node.loc.heredoc_end.last_line >= parent.last_line
           return true
         end
 

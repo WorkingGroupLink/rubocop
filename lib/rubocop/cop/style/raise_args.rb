@@ -13,10 +13,7 @@ module RuboCop
       # will also suggest constructing error objects when the exception is
       # passed multiple arguments.
       #
-      # @example
-      #
-      #   # EnforcedStyle: exploded
-      #
+      # @example EnforcedStyle: exploded (default)
       #   # bad
       #   raise StandardError.new("message")
       #
@@ -26,10 +23,7 @@ module RuboCop
       #   raise MyCustomError.new(arg1, arg2, arg3)
       #   raise MyKwArgError.new(key1: val1, key2: val2)
       #
-      # @example
-      #
-      #   # EnforcedStyle: compact
-      #
+      # @example EnforcedStyle: compact
       #   # bad
       #   raise StandardError, "message"
       #   raise RuntimeError, arg1, arg2, arg3
@@ -42,9 +36,9 @@ module RuboCop
         include ConfigurableEnforcedStyle
 
         EXPLODED_MSG = 'Provide an exception class and message ' \
-          'as arguments to `%s`.'.freeze
+          'as arguments to `%<method>s`.'.freeze
         COMPACT_MSG = 'Provide an exception object ' \
-          'as an argument to `%s`.'.freeze
+          'as an argument to `%<method>s`.'.freeze
 
         def on_send(node)
           return unless node.command?(:raise) || node.command?(:fail)
@@ -57,8 +51,6 @@ module RuboCop
           end
         end
 
-        private
-
         def autocorrect(node)
           replacement = if style == :compact
                           correction_exploded_to_compact(node)
@@ -68,6 +60,8 @@ module RuboCop
 
           ->(corrector) { corrector.replace(node.source_range, replacement) }
         end
+
+        private
 
         def correction_compact_to_exploded(node)
           exception_node, _new, message_node = *node.first_argument
@@ -128,9 +122,9 @@ module RuboCop
 
         def message(node)
           if style == :compact
-            format(COMPACT_MSG, node.method_name)
+            format(COMPACT_MSG, method: node.method_name)
           else
-            format(EXPLODED_MSG, node.method_name)
+            format(EXPLODED_MSG, method: node.method_name)
           end
         end
       end

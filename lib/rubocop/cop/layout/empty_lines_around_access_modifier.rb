@@ -23,8 +23,11 @@ module RuboCop
       #     def baz; end
       #   end
       class EmptyLinesAroundAccessModifier < Cop
+        include RangeHelp
+
         MSG_AFTER = 'Keep a blank line after `%s`.'.freeze
-        MSG_BEFORE_AND_AFTER = 'Keep a blank line before and after `%s`.'.freeze
+        MSG_BEFORE_AND_AFTER = 'Keep a blank line before and after `%<node>s`.'
+                               .freeze
 
         def on_send(node)
           return unless node.access_modifier?
@@ -36,7 +39,7 @@ module RuboCop
 
         def autocorrect(node)
           lambda do |corrector|
-            send_line = node.loc.line
+            send_line = node.first_line
             previous_line = processed_source[send_line - 2]
             next_line = processed_source[send_line]
             line = range_by_whole_lines(node.source_range)
@@ -70,7 +73,7 @@ module RuboCop
         end
 
         def empty_lines_around?(node)
-          send_line = node.loc.line
+          send_line = node.first_line
           previous_line = previous_line_ignoring_comments(processed_source,
                                                           send_line)
           next_line = processed_source[send_line]
@@ -91,13 +94,13 @@ module RuboCop
         end
 
         def message(node)
-          previous_line = processed_source[node.loc.line - 2]
+          previous_line = processed_source[node.first_line - 2]
 
           if block_start?(previous_line) ||
              class_def?(previous_line)
             format(MSG_AFTER, node.loc.selector.source)
           else
-            format(MSG_BEFORE_AND_AFTER, node.loc.selector.source)
+            format(MSG_BEFORE_AND_AFTER, node: node.loc.selector.source)
           end
         end
       end

@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Bundler::InsecureProtocolSource do
-  let(:config) { RuboCop::Config.new }
+RSpec.describe RuboCop::Cop::Bundler::InsecureProtocolSource do
   subject(:cop) { described_class.new(config) }
+
+  let(:config) { RuboCop::Config.new }
 
   it 'registers an offense when using `source :gemcutter`' do
     expect_offense(<<-RUBY.strip_indent)

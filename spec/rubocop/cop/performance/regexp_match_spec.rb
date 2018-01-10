@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Performance::RegexpMatch, :config do
+RSpec.describe RuboCop::Cop::Performance::RegexpMatch, :config do
   subject(:cop) { described_class.new(config) }
 
   shared_examples :accepts do |name, code|
     it "accepts usages of #{name}" do
       inspect_source(code)
 
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 

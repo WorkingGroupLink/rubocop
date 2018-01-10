@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::IndentationWidth do
+RSpec.describe RuboCop::Cop::Layout::IndentationWidth do
   subject(:cop) { described_class.new(config) }
+
   let(:config) do
     RuboCop::Config.new('Layout/IndentationWidth' => cop_config,
                         'Layout/IndentationConsistency' => consistency_config,
-                        'Lint/EndAlignment' => end_alignment_config,
-                        'Lint/DefEndAlignment' => def_end_alignment_config)
+                        'Layout/EndAlignment' => end_alignment_config,
+                        'Layout/DefEndAlignment' => def_end_alignment_config)
   end
   let(:consistency_config) { { 'EnforcedStyle' => 'normal' } }
   let(:end_alignment_config) do
@@ -863,33 +864,31 @@ describe RuboCop::Cop::Layout::IndentationWidth do
 
         include_examples 'without modifier on the same line'
 
-        if RUBY_VERSION >= '2.1'
-          context 'when modifier and def are on the same line' do
-            it 'accepts a correctly aligned body' do
-              expect_no_offenses(<<-RUBY.strip_indent)
-                foo def test
-                  something
-                end
-              RUBY
-            end
+        context 'when modifier and def are on the same line' do
+          it 'accepts a correctly aligned body' do
+            expect_no_offenses(<<-RUBY.strip_indent)
+              foo def test
+                something
+              end
+            RUBY
+          end
 
-            it 'registers an offense for bad indentation of a def body' do
-              expect_offense(<<-RUBY.strip_indent)
-                foo def test
-                      something
-                ^^^^^^ Use 2 (not 6) spaces for indentation.
-                    end
-              RUBY
-            end
+          it 'registers an offense for bad indentation of a def body' do
+            expect_offense(<<-RUBY.strip_indent)
+              foo def test
+                    something
+              ^^^^^^ Use 2 (not 6) spaces for indentation.
+                  end
+            RUBY
+          end
 
-            it 'registers an offense for bad indentation of a defs body' do
-              expect_offense(<<-RUBY.strip_indent)
-                foo def self.test
-                      something
-                ^^^^^^ Use 2 (not 6) spaces for indentation.
-                    end
-              RUBY
-            end
+          it 'registers an offense for bad indentation of a defs body' do
+            expect_offense(<<-RUBY.strip_indent)
+              foo def self.test
+                    something
+              ^^^^^^ Use 2 (not 6) spaces for indentation.
+                  end
+            RUBY
           end
         end
       end
@@ -901,33 +900,31 @@ describe RuboCop::Cop::Layout::IndentationWidth do
 
         include_examples 'without modifier on the same line'
 
-        if RUBY_VERSION >= '2.1'
-          context 'when modifier and def are on the same line' do
-            it 'accepts a correctly aligned body' do
-              expect_no_offenses(<<-RUBY.strip_indent)
-                foo def test
-                      something
-                end
-              RUBY
-            end
+        context 'when modifier and def are on the same line' do
+          it 'accepts a correctly aligned body' do
+            expect_no_offenses(<<-RUBY.strip_indent)
+              foo def test
+                    something
+              end
+            RUBY
+          end
 
-            it 'registers an offense for bad indentation of a def body' do
-              expect_offense(<<-RUBY.strip_indent)
-                foo def test
-                  something
-                  ^^ Use 2 (not -2) spaces for indentation.
-                    end
-              RUBY
-            end
+          it 'registers an offense for bad indentation of a def body' do
+            expect_offense(<<-RUBY.strip_indent)
+              foo def test
+                something
+                ^^ Use 2 (not -2) spaces for indentation.
+                  end
+            RUBY
+          end
 
-            it 'registers an offense for bad indentation of a defs body' do
-              expect_offense(<<-RUBY.strip_indent)
-                foo def self.test
-                  something
-                  ^^ Use 2 (not -2) spaces for indentation.
-                    end
-              RUBY
-            end
+          it 'registers an offense for bad indentation of a defs body' do
+            expect_offense(<<-RUBY.strip_indent)
+              foo def self.test
+                something
+                ^^ Use 2 (not -2) spaces for indentation.
+                  end
+            RUBY
           end
         end
       end

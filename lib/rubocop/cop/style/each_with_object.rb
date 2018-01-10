@@ -17,7 +17,7 @@ module RuboCop
       #   # good
       #   [1, 2].each_with_object({}) { |e, a| a[e] = e }
       class EachWithObject < Cop
-        MSG = 'Use `each_with_object` instead of `%s`.'.freeze
+        MSG = 'Use `each_with_object` instead of `%<method>s`.'.freeze
         METHODS = %i[inject reduce].freeze
 
         def_node_matcher :each_with_object_candidate?, <<-PATTERN
@@ -34,11 +34,10 @@ module RuboCop
             return unless first_argument_returned?(args, return_value)
             return if accumulator_param_assigned_to?(body, args)
 
-            add_offense(node, method.loc.selector, format(MSG, method_name))
+            add_offense(node, location: method.loc.selector,
+                              message: format(MSG, method: method_name))
           end
         end
-
-        private
 
         # rubocop:disable Metrics/AbcSize
         def autocorrect(node)
@@ -55,7 +54,9 @@ module RuboCop
             corrector.remove(return_value.loc.expression)
           end
         end
-        # rubocop:endable Metrics/AbcSize
+        # rubocop:enable Metrics/AbcSize
+
+        private
 
         def simple_method_arg?(method_arg)
           method_arg && method_arg.basic_literal?

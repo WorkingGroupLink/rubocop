@@ -7,32 +7,29 @@ module RuboCop
       # current Ruby version supports keyword arguments.
       #
       # @example
-      #   Instead of:
       #
+      #   # bad
       #   def fry(options = {})
       #     temperature = options.fetch(:temperature, 300)
-      #     ...
+      #     # ...
       #   end
       #
-      #   Prefer:
       #
+      #   # good
       #   def fry(temperature: 300)
-      #     ...
+      #     # ...
       #   end
       class OptionHash < Cop
         MSG = 'Prefer keyword arguments to options hashes.'.freeze
 
+        def_node_matcher :option_hash, <<-PATTERN
+          (args ... $(optarg [#suspicious_name? _] (hash)))
+        PATTERN
+
         def on_args(node)
-          *_but_last, last_arg = *node
-
-          return unless last_arg && last_arg.optarg_type?
-
-          arg, default_value = *last_arg
-
-          return unless default_value.hash_type? && default_value.pairs.empty?
-          return unless suspicious_name?(arg)
-
-          add_offense(last_arg)
+          option_hash(node) do |options|
+            add_offense(options)
+          end
         end
 
         private

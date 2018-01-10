@@ -8,21 +8,21 @@ module RuboCop
       #
       # @example
       #   #bad
-      #   def method_missing(...)
-      #     ...
+      #   def method_missing(name, *args)
+      #     # ...
       #   end
       #
       #   #good
-      #   def respond_to_missing?(...)
-      #     ...
+      #   def respond_to_missing?(name, include_private)
+      #     # ...
       #   end
       #
-      #   def method_missing(...)
-      #     ...
+      #   def method_missing(name, *args)
+      #     # ...
       #     super
       #   end
       class MethodMissing < Cop
-        MSG = 'When using `method_missing`, %s.'.freeze
+        MSG = 'When using `method_missing`, %<instructions>s.'.freeze
 
         def on_def(node)
           return unless node.method?(:method_missing)
@@ -50,7 +50,7 @@ module RuboCop
             instructions << 'fall back on `super`'.freeze
           end
 
-          format(MSG, instructions.join(' and '))
+          format(MSG, instructions: instructions.join(' and '))
         end
 
         def calls_super?(node)

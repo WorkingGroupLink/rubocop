@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::HashSyntax, :config do
+RSpec.describe RuboCop::Cop::Style::HashSyntax, :config do
   subject(:cop) { described_class.new(config) }
 
   context 'configured to enforce ruby19 style' do
@@ -66,6 +66,11 @@ describe RuboCop::Cop::Style::HashSyntax, :config do
             x = { :"string" => 0 }
                   ^^^^^^^^^^^^ Use the new Ruby 1.9 hash syntax.
           RUBY
+        end
+
+        it 'preserves quotes during autocorrection' do
+          new_source = autocorrect_source("{ :'&&' => foo }")
+          expect(new_source).to eq("{ '&&': foo }")
         end
       end
 
@@ -135,6 +140,12 @@ describe RuboCop::Cop::Style::HashSyntax, :config do
         new_source = autocorrect_source('{ :a=>1, :b=>2 }')
         expect(new_source).to eq('{ a: 1, b: 2 }')
       end
+
+      # Bug: https://github.com/bbatsov/rubocop/issues/5019
+      it 'auto-corrects a missing space when hash is used as argument' do
+        new_source = autocorrect_source('foo:bar => 1')
+        expect(new_source).to eq('foo bar: 1')
+      end
     end
 
     context 'with SpaceAroundOperators disabled' do
@@ -174,7 +185,7 @@ describe RuboCop::Cop::Style::HashSyntax, :config do
       it 'accepts ruby19 syntax when no elements have symbol values ' \
         'in method calls' do
         inspect_source('func(3, a: 0)')
-        expect(cop.messages).to be_empty
+        expect(cop.messages.empty?).to be(true)
       end
 
       it 'accepts new syntax in method calls' do

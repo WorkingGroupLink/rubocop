@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::IfUnlessModifier do
+RSpec.describe RuboCop::Cop::Style::IfUnlessModifier do
   include StatementModifierHelper
 
   subject(:cop) { described_class.new(config) }
+
   let(:config) do
     hash = { 'Metrics/LineLength' => { 'Max' => 80 } }
     RuboCop::Config.new(hash)
@@ -241,25 +242,7 @@ describe RuboCop::Cop::Style::IfUnlessModifier do
         expect("  #{body} if #{conditional}".length).to eq(81)
 
         inspect_source(source)
-        expect(cop.offenses).to be_empty
-      end
-    end
-
-    context 'when the maximum line length is specified by the cop itself' do
-      let(:config) do
-        hash = {
-          'Metrics/LineLength' => { 'Max' => 100 },
-          'Style/IfUnlessModifier' => { 'MaxLineLength' => 80 }
-        }
-        RuboCop::Config.new(hash)
-      end
-
-      it "accepts multiline if that doesn't fit on one line" do
-        check_too_long(cop, 'if')
-      end
-
-      it "accepts multiline unless that doesn't fit on one line" do
-        check_too_long(cop, 'unless')
+        expect(cop.offenses.empty?).to be(true)
       end
     end
   end

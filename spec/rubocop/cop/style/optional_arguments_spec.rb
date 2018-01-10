@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::OptionalArguments do
+RSpec.describe RuboCop::Cop::Style::OptionalArguments do
   subject(:cop) { described_class.new }
 
   let(:message) do
@@ -81,7 +81,7 @@ describe RuboCop::Cop::Style::OptionalArguments do
       end
     end
 
-    context 'required params', :ruby21 do
+    context 'required params' do
       it 'registers an offense for optional arguments that come before ' \
          'required arguments where there are name arguments' do
         inspect_source(<<-RUBY.strip_indent)
@@ -107,7 +107,7 @@ describe RuboCop::Cop::Style::OptionalArguments do
           end
         RUBY
 
-        expect(cop.messages).to be_empty
+        expect(cop.messages.empty?).to be(true)
       end
     end
   end

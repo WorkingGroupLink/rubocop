@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Bundler::DuplicatedGem, :config do
-  let(:cop_config) { { 'Include' => ['**/Gemfile'] } }
+RSpec.describe RuboCop::Cop::Bundler::DuplicatedGem, :config do
   subject(:cop) { described_class.new(config) }
+
+  let(:cop_config) { { 'Include' => ['**/Gemfile'] } }
 
   context 'when investigating Ruby files' do
     it 'does not register any offenses' do
@@ -23,7 +24,7 @@ describe RuboCop::Cop::Bundler::DuplicatedGem, :config do
       end
 
       it 'does not register any offenses' do
-        expect(cop.offenses).to be_empty
+        expect(cop.offenses.empty?).to be(true)
       end
     end
 
@@ -48,7 +49,7 @@ describe RuboCop::Cop::Bundler::DuplicatedGem, :config do
         expect(cop.offenses.size).to eq(1)
       end
 
-      it "references gem's first occurance in message" do
+      it "references gem's first occurrence in message" do
         inspect_gemfile(source)
         expect(cop.offenses.first.message).to include('2')
       end

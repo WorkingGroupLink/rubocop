@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 # rubocop:disable Style/NumericLiteralPrefix
-describe RuboCop::Cop::Lint::ScriptPermission do
-  subject(:cop) { described_class.new(config) }
+RSpec.describe RuboCop::Cop::Lint::ScriptPermission do
+  subject(:cop) { described_class.new(config, options) }
+
   let(:config) { RuboCop::Config.new }
+  let(:options) { nil }
 
   let(:file) { Tempfile.new('') }
   let(:filename) { file.path.split('/').last }
@@ -63,6 +65,14 @@ describe RuboCop::Cop::Lint::ScriptPermission do
     end
   end
 
+  context 'with stdin' do
+    let(:options) { { stdin: '' } }
+
+    it 'skips investigation' do
+      expect_no_offenses('#!/usr/bin/ruby')
+    end
+  end
+
   unless RuboCop::Platform.windows?
     context 'auto-correct' do
       it 'adds execute permissions to the file' do
@@ -75,3 +85,4 @@ describe RuboCop::Cop::Lint::ScriptPermission do
     end
   end
 end
+# rubocop:enable Style/NumericLiteralPrefix

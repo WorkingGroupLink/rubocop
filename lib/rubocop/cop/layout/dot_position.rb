@@ -5,7 +5,7 @@ module RuboCop
     module Layout
       # This cop checks the . position in multi-line method calls.
       #
-      # @example
+      # @example EnforcedStyle: leading (default)
       #   # bad
       #   something.
       #     mehod
@@ -13,6 +13,15 @@ module RuboCop
       #   # good
       #   something
       #     .method
+      #
+      # @example EnforcedStyle: trailing
+      #   # bad
+      #   something
+      #     .method
+      #
+      #   # good
+      #   something.
+      #     mehod
       class DotPosition < Cop
         include ConfigurableEnforcedStyle
 
@@ -22,7 +31,19 @@ module RuboCop
           if proper_dot_position?(node)
             correct_style_detected
           else
-            add_offense(node, :dot) { opposite_style_detected }
+            add_offense(node, location: :dot) { opposite_style_detected }
+          end
+        end
+
+        def autocorrect(node)
+          lambda do |corrector|
+            corrector.remove(node.loc.dot)
+            case style
+            when :leading
+              corrector.insert_before(selector_range(node), '.')
+            when :trailing
+              corrector.insert_after(node.receiver.source_range, '.')
+            end
           end
         end
 
@@ -64,18 +85,6 @@ module RuboCop
           case style
           when :leading then dot_line == selector_line
           when :trailing then dot_line != selector_line
-          end
-        end
-
-        def autocorrect(node)
-          lambda do |corrector|
-            corrector.remove(node.loc.dot)
-            case style
-            when :leading
-              corrector.insert_before(selector_range(node), '.')
-            when :trailing
-              corrector.insert_after(node.receiver.source_range, '.')
-            end
           end
         end
 

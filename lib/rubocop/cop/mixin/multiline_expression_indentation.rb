@@ -4,14 +4,15 @@ module RuboCop
   module Cop
     # Common functionality for checking multiline method calls and binary
     # operations.
-    module MultilineExpressionIndentation
+    module MultilineExpressionIndentation # rubocop:disable Metrics/ModuleLength
       KEYWORD_ANCESTOR_TYPES  = [:for, :return, *Util::MODIFIER_NODES].freeze
       UNALIGNED_RHS_TYPES     = %i[if while until for return
                                    array kwbegin].freeze
       ASSIGNMENT_RHS_TYPES    = [:send, *Util::ASGN_NODES].freeze
       DEFAULT_MESSAGE_TAIL    = 'an expression'.freeze
       ASSIGNMENT_MESSAGE_TAIL = 'an expression in an assignment'.freeze
-      KEYWORD_MESSAGE_TAIL    = 'a %s in %s `%s` statement'.freeze
+      KEYWORD_MESSAGE_TAIL    = 'a %<kind>s in %<article>s `%<keyword>s` ' \
+                                'statement'.freeze
 
       def on_send(node)
         return if !node.receiver || node.method?(:[])
@@ -22,6 +23,8 @@ module RuboCop
         range = offending_range(node, lhs, rhs, style)
         check(range, node, lhs, rhs)
       end
+
+      private
 
       # In a chain of method calls, we regard the top send node as the base
       # for indentation of all lines following the first. For example:
@@ -72,7 +75,7 @@ module RuboCop
       end
 
       def incorrect_style_detected(range, node, lhs, rhs)
-        add_offense(range, range, message(node, lhs, rhs)) do
+        add_offense(range, location: range, message: message(node, lhs, rhs)) do
           if supported_styles.size > 2 ||
              offending_range(node, lhs, rhs, alternative_style)
             unrecognized_style_detected
@@ -103,12 +106,15 @@ module RuboCop
         kind    = keyword == 'for' ? 'collection' : 'condition'
         article = keyword =~ /^[iu]/ ? 'an' : 'a'
 
-        format(KEYWORD_MESSAGE_TAIL, kind, article, keyword)
+        format(KEYWORD_MESSAGE_TAIL, kind: kind,
+                                     article: article,
+                                     keyword: keyword)
       end
 
       def kw_node_with_special_indentation(node)
         keyword_node =
           node.each_ancestor(*KEYWORD_ANCESTOR_TYPES).find do |ancestor|
+            next if ancestor.if_type? && ancestor.ternary?
             within_node?(node, indented_keyword_expression(ancestor))
           end
 
@@ -214,6 +220,12 @@ module RuboCop
 
         node.source_range.begin_pos > ancestor.loc.begin.begin_pos &&
           node.source_range.end_pos < ancestor.loc.end.end_pos
+      end
+
+      def within_node?(inner, outer)
+        o = outer.is_a?(AST::Node) ? outer.source_range : outer
+        i = inner.is_a?(AST::Node) ? inner.source_range : inner
+        i.begin_pos >= o.begin_pos && i.end_pos <= o.end_pos
       end
     end
   end

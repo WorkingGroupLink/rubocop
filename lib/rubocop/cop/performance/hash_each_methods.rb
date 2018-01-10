@@ -7,7 +7,7 @@ module RuboCop
       #
       # Note: If you have an array of two-element arrays, you can put
       #   parentheses around the block arguments to indicate that you're not
-      #   working with a hash, and supress RuboCop offenses.
+      #   working with a hash, and suppress RuboCop offenses.
       #
       # @example
       #   # bad
@@ -22,10 +22,10 @@ module RuboCop
       class HashEachMethods < Cop
         include Lint::UnusedArgument
 
-        MSG = 'Use `%s` instead of `%s`.'.freeze
+        MSG = 'Use `%<prefer>s` instead of `%<current>s`.'.freeze
 
         def_node_matcher :plain_each, <<-PATTERN
-          (block $(send !(send _ :to_a) :each) (args (arg $_k) (arg $_v)) ...)
+          (block $(send !(send _ :to_a) :each) (args $(arg _k) $(arg _v)) ...)
         PATTERN
 
         def_node_matcher :kv_each, <<-PATTERN
@@ -37,82 +37,83 @@ module RuboCop
           register_kv_offense(node)
         end
 
+        def autocorrect(node)
+          receiver = node.receiver
+          _caller, first_method = *receiver
+
+          lambda do |corrector|
+            case first_method
+            when :keys, :values
+              correct_key_value_each(node, corrector)
+            else
+              correct_plain_each(node, corrector)
+            end
+          end
+        end
+
         private
 
         def register_each_offense(node)
           plain_each(node) do |target, k, v|
-            return if @args[k] && @args[v]
-            used = @args[k] ? :key : :value
+            return if used?(k) && used?(v)
+            used = used?(k) ? :key : :value
+
             add_offense(
-              target, plain_range(target), format(message,
-                                                  "each_#{used}",
-                                                  :each)
+              target,
+              location: plain_range(target),
+              message: format(message, prefer: "each_#{used}", current: :each)
             )
           end
         end
 
         def register_kv_offense(node)
           kv_each(node) do |target, method|
-            add_offense(
-              target, kv_range(target), format(message,
-                                               "each_#{method[0..-2]}",
-                                               "#{method}.each")
-            )
+            msg = format(message, prefer: "each_#{method[0..-2]}",
+                                  current: "#{method}.each")
+
+            add_offense(target, location: kv_range(target), message: msg)
           end
         end
 
         def check_argument(variable)
           return unless variable.block_argument?
-          (@args ||= {})[variable.name] = variable.used?
+          (@block_args ||= []).push(variable)
         end
 
-        def autocorrect(node)
-          receiver, _second_method = *node
-          _caller, first_method = *receiver
-
-          lambda do |corrector|
-            case first_method
-            when :keys, :values
-              return correct_implicit(node, corrector) if receiver.receiver.nil?
-
-              correct_key_value_each(node, corrector)
-            else
-              return correct_implicit(node, corrector) if receiver.nil?
-
-              correct_plain_each(node, corrector)
-            end
-          end
+        def used?(arg)
+          loc = arg.loc
+          variable = @block_args.find { |var| var.declaration_node.loc == loc }
+          variable.used?
         end
 
-        def correct_implicit(node, corrector)
-          method = @args.include?(:k) ? :key : :value
-          new_source = "each_#{method}"
-
-          corrector.replace(node.loc.expression, new_source)
+        def correct_implicit(node, corrector, method_name)
+          corrector.replace(node.loc.expression, method_name)
           correct_args(node, corrector)
         end
 
         def correct_key_value_each(node, corrector)
-          receiver = node.receiver
+          receiver = node.receiver.receiver
+          name = "each_#{node.receiver.method_name.to_s.chop}"
+          return correct_implicit(node, corrector, name) unless receiver
 
-          new_source = receiver.receiver.source +
-                       ".each_#{receiver.method_name[0..-2]}"
+          new_source = receiver.source + ".#{name}"
           corrector.replace(node.loc.expression, new_source)
         end
 
         def correct_plain_each(node, corrector)
-          method = @args.include?(:k) ? :key : :value
-          new_source = node.receiver.source + ".each_#{method}"
+          _each, key, _value = plain_each(node.parent)
+          name = used?(key) ? 'each_key' : 'each_value'
+          return correct_implicit(node, corrector, name) unless node.receiver
 
-          corrector.replace(node.loc.expression, new_source)
+          corrector.replace(node.loc.selector, name)
           correct_args(node, corrector)
         end
 
         def correct_args(node, corrector)
-          args = node.parent.children[1]
-          used_arg = "|#{@args.detect { |_k, v| v }.first}|"
+          args = node.parent.arguments
+          name, = *args.children.find { |arg| used?(arg) }
 
-          corrector.replace(args.source_range, used_arg)
+          corrector.replace(args.source_range, "|#{name}|")
         end
 
         def plain_range(outer_node)
@@ -120,8 +121,7 @@ module RuboCop
         end
 
         def kv_range(outer_node)
-          inner_node = outer_node.children.first
-          inner_node.loc.selector.join(outer_node.loc.selector)
+          outer_node.receiver.loc.selector.join(outer_node.loc.selector)
         end
       end
     end

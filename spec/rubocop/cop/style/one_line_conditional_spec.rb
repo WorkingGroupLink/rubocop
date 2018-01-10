@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::OneLineConditional do
+RSpec.describe RuboCop::Cop::Style::OneLineConditional do
   subject(:cop) { described_class.new }
 
   shared_examples 'offense' do |condition|
@@ -15,7 +15,7 @@ describe RuboCop::Cop::Style::OneLineConditional do
   shared_examples 'no offense' do
     it 'does not register an offense' do
       inspect_source(source)
-      expect(cop.messages).to be_empty
+      expect(cop.messages.empty?).to be(true)
     end
   end
 

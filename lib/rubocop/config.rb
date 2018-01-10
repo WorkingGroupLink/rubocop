@@ -2,28 +2,36 @@
 
 require 'pathname'
 
-# rubocop:disable Metrics/ClassLength
-
 module RuboCop
   # This class represents the configuration of the RuboCop application
   # and all its cops. A Config is associated with a YAML configuration
   # file from which it was read. Several different Configs can be used
   # during a run of the rubocop program, if files in several
   # directories are inspected.
+
+  # rubocop:disable Metrics/ClassLength
   class Config
     include PathUtil
+    include FileFinder
 
     COMMON_PARAMS = %w[Exclude Include Severity
                        AutoCorrect StyleGuide Details].freeze
     # 2.1 is the oldest officially supported Ruby version.
     DEFAULT_RUBY_VERSION = 2.1
-    KNOWN_RUBIES = [2.0, 2.1, 2.2, 2.3, 2.4].freeze
+    KNOWN_RUBIES = [2.1, 2.2, 2.3, 2.4, 2.5].freeze
+    OBSOLETE_RUBIES = { 1.9 => '0.50', 2.0 => '0.50' }.freeze
+    RUBY_VERSION_FILENAME = '.ruby-version'.freeze
     DEFAULT_RAILS_VERSION = 5.0
     OBSOLETE_COPS = {
       'Style/TrailingComma' =>
         'The `Style/TrailingComma` cop no longer exists. Please use ' \
-        '`Style/TrailingCommaInLiteral` and/or ' \
-        '`Style/TrailingCommaInArguments` instead.',
+        '`Style/TrailingCommaInArguments`, ' \
+        '`Style/TrailingCommaInArrayLiteral`, and/or ' \
+        '`Style/TrailingCommaInHashLiteral` instead.',
+      'Style/TrailingCommaInLiteral' =>
+        'The `Style/TrailingCommaInLiteral` cop no longer exists. Please use ' \
+        '`Style/TrailingCommaInArrayLiteral` and/or ' \
+        '`Style/TrailingCommaInHashLiteral` instead.',
       'Rails/DefaultScope' =>
         'The `Rails/DefaultScope` cop no longer exists.',
       'Lint/InvalidCharacterLiteral' =>
@@ -32,6 +40,9 @@ module RuboCop
       'Style/SingleSpaceBeforeFirstArg' =>
         'The `Style/SingleSpaceBeforeFirstArg` cop has been renamed to ' \
         '`Layout/SpaceBeforeFirstArg`.',
+      'Lint/RescueWithoutErrorClass' =>
+        'The `Lint/RescueWithoutErrorClass` cop has been replaced by ' \
+        '`Style/RescueStandardError`.',
       'Lint/SpaceBeforeFirstArg' =>
         'The `Lint/SpaceBeforeFirstArg` cop has been removed, since it was a ' \
         'duplicate of `Layout/SpaceBeforeFirstArg`. Please use ' \
@@ -84,7 +95,16 @@ module RuboCop
           '`Naming/VariableName`.',
       'Style/VariableNumber' =>
         'The `Style/VariableNumber` cop has been renamed to ' \
-          '`Naming/VariableNumber`.'
+          '`Naming/VariableNumber`.',
+      'Lint/BlockAlignment' =>
+        'The `Lint/BlockAlignment` cop has been renamed to ' \
+          '`Layout/BlockAlignment`.',
+      'Lint/EndAlignment' =>
+        'The `Lint/EndAlignment` cop has been renamed to ' \
+          '`Layout/EndAlignment`.',
+      'Lint/DefEndAlignment' =>
+        'The `Lint/DefEndAlignment` cop has been renamed to ' \
+          '`Layout/DefEndAlignment`.'
     }.freeze
 
     OBSOLETE_PARAMETERS = [
@@ -114,11 +134,25 @@ module RuboCop
                      'The "never" behavior is always assumed.'
       },
       {
+        cop: 'Style/IfUnlessModifier',
+        parameter: 'MaxLineLength',
+        alternative:
+          '`Style/IfUnlessModifier: MaxLineLength` has been removed. Use ' \
+          '`Metrics/LineLength: Max` instead'
+      },
+      {
         cop: 'Style/SpaceAroundOperators',
         parameter: 'MultiSpaceAllowedForOperators',
         alternative: 'If your intention was to allow extra spaces ' \
                      'for alignment, please use AllowForAlignment: ' \
                      'true instead.'
+      },
+      {
+        cop: 'Style/WhileUntilModifier',
+        parameter: 'MaxLineLength',
+        alternative:
+          '`Style/WhileUntilModifier: MaxLineLength` has been removed. Use ' \
+          '`Metrics/LineLength: Max` instead'
       },
       {
         cop: 'AllCops',
@@ -139,13 +173,31 @@ module RuboCop
                      '`EnforcedStyleAlignWith`'
       },
       {
+        cop: 'Layout/BlockAlignment',
+        parameter: 'AlignWith',
+        alternative: '`AlignWith` has been renamed to ' \
+                     '`EnforcedStyleAlignWith`'
+      },
+      {
         cop: 'Lint/EndAlignment',
         parameter: 'AlignWith',
         alternative: '`AlignWith` has been renamed to ' \
                      '`EnforcedStyleAlignWith`'
       },
       {
+        cop: 'Layout/EndAlignment',
+        parameter: 'AlignWith',
+        alternative: '`AlignWith` has been renamed to ' \
+                     '`EnforcedStyleAlignWith`'
+      },
+      {
         cop: 'Lint/DefEndAlignment',
+        parameter: 'AlignWith',
+        alternative: '`AlignWith` has been renamed to ' \
+                     '`EnforcedStyleAlignWith`'
+      },
+      {
+        cop: 'Layout/DefEndAlignment',
         parameter: 'AlignWith',
         alternative: '`AlignWith` has been renamed to ' \
                      '`EnforcedStyleAlignWith`'
@@ -169,6 +221,19 @@ module RuboCop
         h[cop] = cop_options
       end
       @hash = hash
+    end
+
+    def self.create(hash, path)
+      new(hash, path).check
+    end
+
+    def check
+      deprecation_check do |deprecation_message|
+        warn("#{loaded_path} - #{deprecation_message}")
+      end
+      validate
+      make_excludes_absolute
+      self
     end
 
     def [](key)
@@ -281,7 +346,7 @@ module RuboCop
       check_target_ruby
       validate_parameter_names(valid_cop_names)
       validate_enforced_styles(valid_cop_names)
-      validate_syntax_cop(valid_cop_names)
+      validate_syntax_cop
       reject_mutually_exclusive_defaults
     end
 
@@ -352,12 +417,10 @@ module RuboCop
           @target_ruby_version_source = :rubocop_yml
 
           for_all_cops['TargetRubyVersion']
-        elsif File.file?('.ruby-version') &&
-              /\A(ruby-)?(?<version>\d+\.\d+)/ =~ File.read('.ruby-version')
+        elsif target_ruby_version_from_version_file
+          @target_ruby_version_source = :ruby_version_file
 
-          @target_ruby_version_source = :dot_ruby_version
-
-          version.to_f
+          target_ruby_version_from_version_file
         else
           DEFAULT_RUBY_VERSION
         end
@@ -376,22 +439,26 @@ module RuboCop
         next if Cop::Cop.registry.contains_cop_matching?([name])
 
         warn Rainbow("Warning: unrecognized cop #{name} found in " \
-                     "#{loaded_path}").yellow
+                     "#{smart_loaded_path}").yellow
       end
     end
 
-    def validate_syntax_cop(valid_cop_names)
-      return unless valid_cop_names.include?('Lint/Syntax') ||
-                    valid_cop_names.include?('Syntax')
+    def validate_syntax_cop
+      syntax_config = self['Lint/Syntax']
+      default_config = ConfigLoader.default_configuration['Lint/Syntax']
+
+      return unless syntax_config &&
+                    default_config.merge(syntax_config) != default_config
 
       raise ValidationError,
-            "configuration for Syntax cop found in #{loaded_path}\n" \
-            'This cop cannot be configured.'
+            "configuration for Syntax cop found in #{smart_loaded_path}\n" \
+            'It\'s not possible to disable this cop.'
     end
 
     def validate_section_presence(name)
       return unless key?(name) && self[name].nil?
-      raise ValidationError, "empty section #{name} found in #{loaded_path}"
+      raise ValidationError,
+            "empty section #{name} found in #{smart_loaded_path}"
     end
 
     def validate_parameter_names(valid_cop_names)
@@ -402,7 +469,7 @@ module RuboCop
                   ConfigLoader.default_configuration[name].key?(param)
 
           warn Rainbow("Warning: unrecognized parameter #{name}:#{param} " \
-                       "found in #{loaded_path}").yellow
+                       "found in #{smart_loaded_path}").yellow
         end
       end
     end
@@ -418,7 +485,7 @@ module RuboCop
           next if valid.include?(style)
 
           msg = "invalid #{style_name} '#{style}' for #{name} found in " \
-            "#{loaded_path}\n" \
+            "#{smart_loaded_path}\n" \
             "Valid choices are: #{valid.join(', ')}"
           raise ValidationError, msg
         end
@@ -446,34 +513,58 @@ module RuboCop
       return unless self[cop] && self[cop].key?(parameter)
 
       "obsolete parameter #{parameter} (for #{cop}) " \
-        "found in #{loaded_path}" \
+        "found in #{smart_loaded_path}" \
         "\n#{alternative}"
     end
 
     def obsolete_cops
       OBSOLETE_COPS.map do |cop_name, message|
         next unless key?(cop_name) || key?(Cop::Badge.parse(cop_name).cop_name)
-        message + "\n(obsolete configuration found in #{loaded_path}, please" \
-                   ' update it)'
+        message + "\n(obsolete configuration found in #{smart_loaded_path}," \
+                   ' please update it)'
       end
     end
 
     def check_target_ruby
       return if KNOWN_RUBIES.include?(target_ruby_version)
 
-      msg = "Unknown Ruby version #{target_ruby_version.inspect} found "
+      msg = if OBSOLETE_RUBIES.include?(target_ruby_version)
+              "Unsupported Ruby version #{target_ruby_version} found in " \
+              "#{target_ruby_source}. #{target_ruby_version}-compatible " \
+              'analysis was dropped after version ' \
+              "#{OBSOLETE_RUBIES[target_ruby_version]}."
+            else
+              "Unknown Ruby version #{target_ruby_version.inspect} found in " \
+              "#{target_ruby_source}."
+            end
 
-      msg +=
-        case @target_ruby_version_source
-        when :dot_ruby_version
-          'in `.ruby-version`.'
-        when :rubocop_yml
-          "in `TargetRubyVersion` parameter (in #{loaded_path})." \
-        end
-
-      msg += "\nKnown versions: #{KNOWN_RUBIES.join(', ')}"
+      msg += "\nSupported versions: #{KNOWN_RUBIES.join(', ')}"
 
       raise ValidationError, msg
+    end
+
+    def target_ruby_source
+      case @target_ruby_version_source
+      when :ruby_version_file
+        "`#{RUBY_VERSION_FILENAME}`"
+      when :rubocop_yml
+        "`TargetRubyVersion` parameter (in #{smart_loaded_path})"
+      end
+    end
+
+    def ruby_version_file
+      @ruby_version_file ||=
+        find_file_upwards(RUBY_VERSION_FILENAME, base_dir_for_path_parameters)
+    end
+
+    def target_ruby_version_from_version_file
+      file = ruby_version_file
+      return unless file && File.file?(file)
+
+      @target_ruby_version_from_version_file ||=
+        File.read(file).match(/\A(ruby-)?(?<version>\d+\.\d+)/) do |md|
+          md[:version].to_f
+        end
     end
 
     def reject_mutually_exclusive_defaults
@@ -491,12 +582,17 @@ module RuboCop
 
       unless department
         department_options = self[cop_department]
-        if department_options && department_options.fetch('Enabled') == false
+        if department_options && department_options['Enabled'] == false
           return false
         end
       end
 
       cop_options.fetch('Enabled', true)
     end
+
+    def smart_loaded_path
+      PathUtil.smart_path(@loaded_path)
+    end
   end
+  # rubocop:enable Metrics/ClassLength
 end

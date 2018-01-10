@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Lint::UnneededSplatExpansion do
+RSpec.describe RuboCop::Cop::Lint::UnneededSplatExpansion do
   subject(:cop) { described_class.new }
+
   let(:message) { 'Unnecessary splat expansion.' }
   let(:array_param_message) { 'Pass array contents as separate arguments.' }
 
@@ -177,6 +178,23 @@ describe RuboCop::Cop::Lint::UnneededSplatExpansion do
 
   it 'allows expanding a method call on an array literal' do
     expect_no_offenses('[1, 2, *[3, 4, 5].map(&:to_s), 6, 7]')
+  end
+
+  describe 'expanding Array.new call on array literal' do
+    context 'when the array literal contains exactly one element' do
+      it 'registers an offense' do
+        expect_offense(<<-RUBY.strip_indent)
+          [*Array.new(foo)]
+           ^^^^^^^^^^^^^^^ Unnecessary splat expansion.
+        RUBY
+      end
+    end
+
+    context 'when the array literal contains more than one element' do
+      it 'accepts' do
+        expect_no_offenses('[1, 2, *Array.new(foo), 6]')
+      end
+    end
   end
 
   context 'autocorrect' do
@@ -416,6 +434,15 @@ describe RuboCop::Cop::Lint::UnneededSplatExpansion do
         new_source = autocorrect_source('[:a, :b, *%I(#{one} two), :e]')
 
         expect(new_source).to eq('[:a, :b, :"#{one}", :"two", :e]')
+      end
+
+      context 'when Array.new is expanded' do
+        context 'and the array contains exactly one element' do
+          it 'removes the splat and brackets' do
+            new_source = autocorrect_source('[*Array.new(foo)]')
+            expect(new_source).to eq 'Array.new(foo)'
+          end
+        end
       end
     end
   end

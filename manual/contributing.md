@@ -14,17 +14,14 @@ Patches in any form are always welcome! GitHub pull requests are even better! :-
 
 Before submitting a patch or a pull request make sure all tests are
 passing and that your patch is in line with the [contribution
-guidelines](https://github.com/bbatsov/rubocop/blob/master/.github/CONTRIBUTING.md).
-
-See also. [development.md](development.md)
+guidelines](https://github.com/bbatsov/rubocop/blob/master/CONTRIBUTING.md).
+Also see the [Development section](development.md).
 
 ## Documentation
 
-Good documentation is just as important as good code.
-
-Consider improving and extending the
-this manual and the
-[community wiki](https://github.com/bbatsov/rubocop/wiki).
+Good documentation is just as important as good code. Check out the
+[Documentation section](development.md#documentation) of this guide and consider
+adding or improving Cop descriptions.
 
 ### Working on the Manual
 
@@ -65,6 +62,8 @@ to become a RuboCop sponsor.
 
 You can support the development of RuboCop via
 [Salt](https://salt.bountysource.com/teams/rubocop),
-[Gratipay](https://www.gratipay.com/rubocop) and [Open Collective](https://opencollective.com/rubocop).
+[Patreon](https://www.patreon.com/bbatsov),
+[Liberapay](https://liberapay.com/bbatsov/donate),
+and [Open Collective](https://opencollective.com/rubocop).
 
 [![Support via Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.1.3/dist/gratipay.png)](https://gratipay.com/rubocop)

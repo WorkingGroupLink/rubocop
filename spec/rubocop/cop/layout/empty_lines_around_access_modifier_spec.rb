@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::EmptyLinesAroundAccessModifier do
+RSpec.describe RuboCop::Cop::Layout::EmptyLinesAroundAccessModifier do
   subject(:cop) { described_class.new }
 
   %w[private protected public module_function].each do |access_modifier|
@@ -43,7 +43,7 @@ describe RuboCop::Cop::Layout::EmptyLinesAroundAccessModifier do
           def test; end
         end
       RUBY
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it "ignores #{access_modifier} inside a method call" do
@@ -54,7 +54,7 @@ describe RuboCop::Cop::Layout::EmptyLinesAroundAccessModifier do
           end
         end
       RUBY
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it "ignores #{access_modifier} deep inside a method call" do
@@ -67,7 +67,7 @@ describe RuboCop::Cop::Layout::EmptyLinesAroundAccessModifier do
           end
         end
       RUBY
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it "ignores #{access_modifier} with a right-hand-side condition" do
@@ -78,7 +78,7 @@ describe RuboCop::Cop::Layout::EmptyLinesAroundAccessModifier do
           end
         end
       RUBY
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it "autocorrects blank line before #{access_modifier}" do

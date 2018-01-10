@@ -72,7 +72,7 @@ module RuboCop
       # @return [Boolean]
       #   whether this offense is automatically corrected.
       def corrected
-        @status == :unsupported ? false : @status == :corrected
+        @status == :corrected
       end
       alias corrected? corrected
 
@@ -135,6 +135,11 @@ module RuboCop
       # @api private
       def last_line
         location.last_line
+      end
+
+      # @api private
+      def last_column
+        location.last_column
       end
 
       # @api private

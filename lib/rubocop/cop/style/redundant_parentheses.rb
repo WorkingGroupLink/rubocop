@@ -31,6 +31,10 @@ module RuboCop
           check(node)
         end
 
+        def autocorrect(node)
+          ParenthesesCorrector.correct(node)
+        end
+
         private
 
         def parens_allowed?(node)
@@ -110,7 +114,7 @@ module RuboCop
         end
 
         def offense(node, msg)
-          add_offense(node, :expression, "Don't use parentheses around #{msg}.")
+          add_offense(node, message: "Don't use parentheses around #{msg}.")
         end
 
         def keyword_ancestor?(node)

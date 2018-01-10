@@ -19,8 +19,11 @@ module RuboCop
       #     first_param,
       #   second_param)
       class FirstParameterIndentation < Cop
-        include AutocorrectAlignment
+        include Alignment
         include ConfigurableEnforcedStyle
+        include RangeHelp
+
+        MSG = 'Indent the first parameter one step more than %<base>s.'.freeze
 
         def on_send(node)
           return if !node.arguments? || node.operator_method?
@@ -28,6 +31,10 @@ module RuboCop
           indent = base_indentation(node) + configured_indentation_width
 
           check_alignment([node.first_argument], indent)
+        end
+
+        def autocorrect(node)
+          AlignmentCorrector.correct(processed_source, node, column_delta)
         end
 
         private
@@ -44,14 +51,15 @@ module RuboCop
                  else
                    'the start of the previous line'
                  end
-          format('Indent the first parameter one step more than %s.', base)
+
+          format(MSG, base: base)
         end
 
         def base_indentation(node)
           if special_inner_call_indentation?(node)
             column_of(base_range(node, node.first_argument))
           else
-            previous_code_line(node.first_argument.loc.line) =~ /\S/
+            previous_code_line(node.first_argument.first_line) =~ /\S/
           end
         end
 

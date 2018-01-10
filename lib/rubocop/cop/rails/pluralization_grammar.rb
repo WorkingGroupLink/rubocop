@@ -26,7 +26,7 @@ module RuboCop
 
         PLURAL_DURATION_METHODS = SINGULAR_DURATION_METHODS.invert.freeze
 
-        MSG = 'Prefer `%s.%s`.'.freeze
+        MSG = 'Prefer `%<number>s.%<correct>s`.'.freeze
 
         def on_send(node)
           return unless duration_method?(node.method_name)
@@ -37,20 +37,21 @@ module RuboCop
           add_offense(node)
         end
 
-        private
-
-        def message(node)
-          number, = *node.receiver
-
-          format(MSG, number, correct_method(node.method_name.to_s))
-        end
-
         def autocorrect(node)
           lambda do |corrector|
             method_name = node.loc.selector.source
 
             corrector.replace(node.loc.selector, correct_method(method_name))
           end
+        end
+
+        private
+
+        def message(node)
+          number, = *node.receiver
+
+          format(MSG, number: number,
+                      correct: correct_method(node.method_name.to_s))
         end
 
         def correct_method(method_name)

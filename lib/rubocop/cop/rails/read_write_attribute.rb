@@ -16,29 +16,19 @@ module RuboCop
       #   x = self[:attr]
       #   self[:attr] = val
       class ReadWriteAttribute < Cop
-        MSG = 'Prefer `%s` over `%s`.'.freeze
+        MSG = 'Prefer `%<prefer>s` over `%<current>s`.'.freeze
 
         def_node_matcher :read_write_attribute?, <<-PATTERN
           {
-            (send nil :read_attribute _)
-            (send nil :write_attribute _ _)
+            (send nil? :read_attribute _)
+            (send nil? :write_attribute _ _)
           }
         PATTERN
 
         def on_send(node)
           return unless read_write_attribute?(node)
 
-          add_offense(node, :selector)
-        end
-
-        private
-
-        def message(node)
-          if node.method?(:read_attribute)
-            format(MSG, 'self[:attr]', 'read_attribute(:attr)')
-          else
-            format(MSG, 'self[:attr] = val', 'write_attribute(:attr, val)')
-          end
+          add_offense(node, location: :selector)
         end
 
         def autocorrect(node)
@@ -50,6 +40,17 @@ module RuboCop
           end
 
           ->(corrector) { corrector.replace(node.source_range, replacement) }
+        end
+
+        private
+
+        def message(node)
+          if node.method?(:read_attribute)
+            format(MSG, prefer: 'self[:attr]', current: 'read_attribute(:attr)')
+          else
+            format(MSG, prefer: 'self[:attr] = val',
+                        current: 'write_attribute(:attr, val)')
+          end
         end
 
         def read_attribute_replacement(node)

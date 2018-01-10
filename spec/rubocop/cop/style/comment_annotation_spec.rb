@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::CommentAnnotation, :config do
+RSpec.describe RuboCop::Cop::Style::CommentAnnotation, :config do
   subject(:cop) { described_class.new(config) }
+
   let(:cop_config) do
     { 'Keywords' => %w[TODO FIXME OPTIMIZE HACK REVIEW] }
   end

@@ -8,6 +8,9 @@ module RuboCop
       # In Ruby 2.3 or newer, squiggly heredocs (`<<~`) should be used. If you
       # use the older rubies, you should introduce some library to your project
       # (e.g. ActiveSupport, Powerpack or Unindent).
+      # Note: When `Metrics/LineLength`'s `AllowHeredoc` is false(not default),
+      #       this cop does not add any offenses for long here documents to
+      #       avoid `Metrics/LineLength`'s offenses.
       #
       # @example
       #
@@ -34,11 +37,12 @@ module RuboCop
         include ConfigurableEnforcedStyle
         include SafeMode
 
-        RUBY23_MSG = 'Use %d spaces for indentation in a heredoc by using ' \
-                     '`<<~` instead of `%s`.'.freeze
-        LIBRARY_MSG = 'Use %d spaces for indentation in a heredoc by using %s.'
-                      .freeze
-        StripMethods = {
+        RUBY23_MSG = 'Use %<indentation_width>d spaces for indentation in a ' \
+                     'heredoc by using `<<~` instead of ' \
+                     '`%<current_indent_type>s`.'.freeze
+        LIBRARY_MSG = 'Use %<indentation_width>d spaces for indentation in a ' \
+                      'heredoc by using %<method>s.'.freeze
+        STRIP_METHODS = {
           unindent: 'unindent',
           active_support: 'strip_heredoc',
           powerpack: 'strip_indent'
@@ -57,7 +61,8 @@ module RuboCop
             return unless body_indent_level.zero?
           end
 
-          add_offense(node, :heredoc_body)
+          return if too_long_line?(node)
+          add_offense(node, location: :heredoc_body)
         end
 
         def autocorrect(node)
@@ -88,14 +93,47 @@ module RuboCop
           case style
           when :squiggly
             current_indent_type = "<<#{heredoc_indent_type(node)}"
-            format(RUBY23_MSG, indentation_width, current_indent_type)
+            ruby23_message(indentation_width, current_indent_type)
           when nil
             method = "some library(e.g. ActiveSupport's `String#strip_heredoc`)"
-            format(LIBRARY_MSG, indentation_width, method)
+            library_message(indentation_width, method)
           else
-            method = "`String##{StripMethods[style]}`"
-            format(LIBRARY_MSG, indentation_width, method)
+            method = "`String##{STRIP_METHODS[style]}`"
+            library_message(indentation_width, method)
           end
+        end
+
+        def library_message(indentation_width, method)
+          format(
+            LIBRARY_MSG,
+            indentation_width: indentation_width,
+            method: method
+          )
+        end
+
+        def ruby23_message(indentation_width, current_indent_type)
+          format(
+            RUBY23_MSG,
+            indentation_width: indentation_width,
+            current_indent_type: current_indent_type
+          )
+        end
+
+        def too_long_line?(node)
+          return false if config.for_cop('Metrics/LineLength')['AllowHeredoc']
+          body = heredoc_body(node)
+
+          expected_indent = base_indent_level(node) + indentation_width
+          actual_indent = indent_level(body)
+          increase_indent_level = expected_indent - actual_indent
+
+          max_line = body.each_line.map { |line| line.chomp.size }.max
+
+          max_line + increase_indent_level >= max_line_length
+        end
+
+        def max_line_length
+          config.for_cop('Metrics/LineLength')['Max']
         end
 
         def correct_by_squiggly(node)
@@ -114,7 +152,7 @@ module RuboCop
         def correct_by_library(node)
           lambda do |corrector|
             corrector.replace(node.loc.heredoc_body, indented_body(node))
-            corrected = ".#{StripMethods[style]}"
+            corrected = ".#{STRIP_METHODS[style]}"
             corrector.insert_after(node.loc.expression, corrected)
           end
         end
@@ -146,7 +184,9 @@ module RuboCop
         end
 
         def indent_level(str)
-          indentations = str.scan(/^\s*/).reject { |line| line == "\n" }
+          indentations = str.lines
+                            .map { |line| line[/^\s*/] }
+                            .reject { |line| line == "\n" }
           indentations.empty? ? 0 : indentations.min_by(&:size).size
         end
 
@@ -160,7 +200,7 @@ module RuboCop
         end
 
         def heredoc_body(node)
-          scrub_string(node.loc.heredoc_body.source)
+          node.loc.heredoc_body.source.scrub
         end
       end
     end

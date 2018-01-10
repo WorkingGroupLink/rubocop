@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::RedundantSelf do
+RSpec.describe RuboCop::Cop::Style::RedundantSelf do
   subject(:cop) { described_class.new }
 
   it 'reports an offense a self receiver on an rvalue' do
@@ -147,7 +147,7 @@ describe RuboCop::Cop::Style::RedundantSelf do
         end
       RUBY
       inspect_source(src)
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 

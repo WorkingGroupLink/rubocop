@@ -27,13 +27,15 @@ module RuboCop
       #   end
       #
       class RedundantWithIndex < Cop
+        include RangeHelp
+
         MSG_EACH_WITH_INDEX = 'Use `each` instead of `each_with_index`.'.freeze
         MSG_WITH_INDEX = 'Remove redundant `with_index`.'.freeze
 
         def_node_matcher :redundant_with_index?, <<-PATTERN
           (block
             $(send
-              _ {:each_with_index :with_index})
+              _ {:each_with_index :with_index} ...)
             (args
               (arg _))
             ...)
@@ -41,7 +43,7 @@ module RuboCop
 
         def on_block(node)
           redundant_with_index?(node) do |send|
-            add_offense(node, with_index_range(send))
+            add_offense(node, location: with_index_range(send))
           end
         end
 
@@ -51,7 +53,7 @@ module RuboCop
               if send.method_name == :each_with_index
                 corrector.replace(send.loc.selector, 'each')
               else
-                corrector.remove(send.loc.selector)
+                corrector.remove(with_index_range(send))
                 corrector.remove(send.loc.dot)
               end
             end
@@ -69,7 +71,10 @@ module RuboCop
         end
 
         def with_index_range(send)
-          range_between(send.loc.selector.begin_pos, send.loc.selector.end_pos)
+          range_between(
+            send.loc.selector.begin_pos,
+            send.loc.expression.end_pos
+          )
         end
       end
     end

@@ -17,10 +17,12 @@ module RuboCop
       #   # good
       #   # Some comment
       class LeadingCommentSpace < Cop
+        include RangeHelp
+
         MSG = 'Missing space after `#`.'.freeze
 
         def investigate(processed_source)
-          processed_source.comments.each do |comment|
+          processed_source.each_comment do |comment|
             next unless comment.text =~ /\A#+[^#\s=:+-]/
             next if comment.loc.line == 1 && allowed_on_first_line?(comment)
 
@@ -28,14 +30,14 @@ module RuboCop
           end
         end
 
-        private
-
         def autocorrect(comment)
           expr = comment.loc.expression
           hash_mark = range_between(expr.begin_pos, expr.begin_pos + 1)
 
           ->(corrector) { corrector.insert_after(hash_mark, ' ') }
         end
+
+        private
 
         def allowed_on_first_line?(comment)
           shebang?(comment) || rackup_config_file? && rackup_options?(comment)
@@ -50,7 +52,7 @@ module RuboCop
         end
 
         def rackup_config_file?
-          File.basename(processed_source.buffer.name).eql?('config.ru')
+          File.basename(processed_source.file_path).eql?('config.ru')
         end
       end
     end

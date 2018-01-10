@@ -10,7 +10,7 @@ module RuboCop
         PATTERN
 
         base.def_node_matcher :class_new_definition, <<-PATTERN
-        [!^(casgn nil :#{base::SUPERCLASS} ...) (send (const nil :Class) :new #{base::BASE_PATTERN})]
+        [!^(casgn nil? :#{base::SUPERCLASS} ...) (send (const nil? :Class) :new #{base::BASE_PATTERN})]
         PATTERN
       end
 
@@ -23,12 +23,6 @@ module RuboCop
       def on_send(node)
         class_new_definition(node) do
           add_offense(node.children.last)
-        end
-      end
-
-      def autocorrect(node)
-        lambda do |corrector|
-          corrector.replace(node.source_range, self.class::SUPERCLASS)
         end
       end
     end

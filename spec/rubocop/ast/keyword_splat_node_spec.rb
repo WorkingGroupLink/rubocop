@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-describe RuboCop::AST::KeywordSplatNode do
+RSpec.describe RuboCop::AST::KeywordSplatNode do
   let(:kwsplat_node) { parse_source(source).ast.children.last }
 
   describe '.new' do
     let(:source) { '{ a: 1, **foo }' }
 
-    it { expect(kwsplat_node).to be_a(described_class) }
+    it { expect(kwsplat_node.is_a?(described_class)).to be(true) }
   end
 
   describe '#hash_rocket?' do

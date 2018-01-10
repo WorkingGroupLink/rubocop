@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Performance::Sample do
+RSpec.describe RuboCop::Cop::Performance::Sample do
   subject(:cop) { described_class.new }
 
   shared_examples 'offense' do |wrong, right|
@@ -20,7 +20,7 @@ describe RuboCop::Cop::Performance::Sample do
   shared_examples 'accepts' do |acceptable|
     it acceptable do
       inspect_source("[1, 2, 3].#{acceptable}")
-      expect(cop.messages).to be_empty
+      expect(cop.messages.empty?).to be(true)
     end
   end
 

@@ -8,14 +8,18 @@ module RuboCop
       # @example
       #
       #   # bad
-      #   1,2
+      #   [1,2]
       #   { foo:bar,}
       #
       #   # good
-      #   1, 2
+      #   [1, 2]
       #   { foo:bar, }
       class SpaceAfterComma < Cop
         include SpaceAfterPunctuation
+
+        def autocorrect(comma)
+          PunctuationCorrector.add_space(comma)
+        end
 
         def space_style_before_rcurly
           cfg = config.for_cop('Layout/SpaceInsideHashLiteralBraces')
@@ -23,7 +27,7 @@ module RuboCop
         end
 
         def kind(token)
-          'comma' if token.type == :tCOMMA
+          'comma' if token.comma?
         end
       end
     end

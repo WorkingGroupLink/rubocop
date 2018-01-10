@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength
-# rubocop:disable Metrics/CyclomaticComplexity
-
+# rubocop:disable Metrics/ClassLength, Metrics/CyclomaticComplexity
 module RuboCop
   # This class performs a pattern-matching operation on an AST node.
   #
@@ -116,7 +114,7 @@ module RuboCop
       PREDICATE = /\A#{IDENTIFIER}+\?\(?\Z/
       WILDCARD  = /\A_#{IDENTIFIER}*\Z/
       FUNCALL   = /\A\##{METHOD_NAME}/
-      LITERAL   = /\A(?:#{SYMBOL}|#{NUMBER}|#{STRING}|nil)\Z/
+      LITERAL   = /\A(?:#{SYMBOL}|#{NUMBER}|#{STRING})\Z/
       PARAM     = /\A#{PARAM_NUMBER}\Z/
       CLOSING   = /\A(?:\)|\}|\])\Z/
 
@@ -559,3 +557,4 @@ module RuboCop
     end
   end
 end
+# rubocop:enable Metrics/ClassLength, Metrics/CyclomaticComplexity

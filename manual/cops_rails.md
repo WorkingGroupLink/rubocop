@@ -14,13 +14,41 @@ something_filter methods or the newer something_action methods.
 If the TargetRailsVersion is set to less than 4.0, the cop will enforce
 the use of filter methods.
 
-### Important attributes
+### Examples
 
-Attribute | Value
---- | ---
-EnforcedStyle | action
-SupportedStyles | action, filter
-Include | app/controllers/\*\*/\*.rb
+#### EnforcedStyle: action (default)
+
+```ruby
+# bad
+after_filter :do_stuff
+append_around_filter :do_stuff
+skip_after_filter :do_stuff
+
+# good
+after_action :do_stuff
+append_around_action :do_stuff
+skip_after_action :do_stuff
+```
+#### EnforcedStyle: filter
+
+```ruby
+# bad
+after_action :do_stuff
+append_around_action :do_stuff
+skip_after_action :do_stuff
+
+# good
+after_filter :do_stuff
+append_around_filter :do_stuff
+skip_after_filter :do_stuff
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `action` | `action`, `filter`
+Include | `app/controllers/**/*.rb` | Array
 
 ## Rails/ActiveSupportAliases
 
@@ -31,7 +59,7 @@ Enabled | Yes
 This cop checks that ActiveSupport aliases to core ruby methods
 are not used.
 
-### Example
+### Examples
 
 ```ruby
 # good
@@ -55,17 +83,17 @@ Enabled | Yes
 
 This cop checks that jobs subclass ApplicationJob with Rails 5.0.
 
-### Example
+### Examples
 
 ```ruby
 # good
 class Rails5Job < ApplicationJob
-  ...
+  # ...
 end
 
 # bad
 class Rails4Job < ActiveJob::Base
-  ...
+  # ...
 end
 ```
 
@@ -77,17 +105,17 @@ Enabled | Yes
 
 This cop checks that models subclass ApplicationRecord with Rails 5.0.
 
-### Example
+### Examples
 
 ```ruby
 # good
 class Rails5Model < ApplicationRecord
-  ...
+  # ...
 end
 
 # bad
 class Rails4Model < ActiveRecord::Base
-  ...
+  # ...
 end
 ```
 
@@ -103,7 +131,7 @@ Settings:
   NotPresent: Convert usages of not `present?` to `blank?`
   UnlessPresent: Convert usages of `unless` `present?` to `blank?`
 
-### Example
+### Examples
 
 ```ruby
 # NilOrEmpty: true
@@ -135,13 +163,66 @@ Settings:
   end
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
+Name | Default value | Configurable values
+--- | --- | ---
+NilOrEmpty | `true` | Boolean
+NotPresent | `true` | Boolean
+UnlessPresent | `true` | Boolean
+
+## Rails/CreateTableWithTimestamps
+
+Enabled by default | Supports autocorrection
 --- | ---
-NilOrEmpty | true
-NotPresent | true
-UnlessPresent | true
+Enabled | No
+
+This cop checks the migration for which timestamps are not included
+when creating a new table.
+In many cases, timestamps are useful information and should be added.
+
+### Examples
+
+```ruby
+# bad
+create_table :users
+
+# bad
+create_table :users do |t|
+  t.string :name
+  t.string :email
+end
+
+# good
+create_table :users do |t|
+  t.string :name
+  t.string :email
+
+  t.timestamps
+end
+
+# good
+create_table :users do |t|
+  t.string :name
+  t.string :email
+
+  t.datetime :created_at, default: -> { 'CURRENT_TIMESTAMP' }
+end
+
+# good
+create_table :users do |t|
+  t.string :name
+  t.string :email
+
+  t.datetime :updated_at, default: -> { 'CURRENT_TIMESTAMP' }
+end
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `db/migrate/*.rb` | Array
 
 ## Rails/Date
 
@@ -166,31 +247,42 @@ and 'to_time_in_current_zone' is reported as warning.
 When EnforcedStyle is 'flexible' then only 'Date.today' is prohibited
 and only 'to_time' is reported as warning.
 
-### Example
+### Examples
+
+#### EnforcedStyle: strict
 
 ```ruby
-# no offense
-Time.zone.today
-Time.zone.today - 1.day
-
-# flexible
+# bad
 Date.current
 Date.yesterday
+Date.today
+date.to_time
+date.to_time_in_current_zone
 
-# always reports offense
+# good
+Time.zone.today
+Time.zone.today - 1.day
+```
+#### EnforcedStyle: flexible (default)
+
+```ruby
+# bad
 Date.today
 date.to_time
 
-# reports offense only when style is 'strict'
+# good
+Time.zone.today
+Time.zone.today - 1.day
+Date.current
+Date.yesterday
 date.to_time_in_current_zone
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | flexible
-SupportedStyles | strict, flexible
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `flexible` | `strict`, `flexible`
 
 ## Rails/Delegate
 
@@ -210,7 +302,7 @@ using the target object as a prefix of the method name
 without using the `delegate` method will be a violation.
 When set to `false`, this case is legal.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -251,11 +343,11 @@ end
 delegate :bar, to: :foo, prefix: true
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforceForPrefixed | true
+Name | Default value | Configurable values
+--- | --- | ---
+EnforceForPrefixed | `true` | Boolean
 
 ## Rails/DelegateAllowBlank
 
@@ -267,7 +359,7 @@ This cop looks for delegations that pass :allow_blank as an option
 instead of :allow_nil. :allow_blank is not a valid option to pass
 to ActiveSupport#delegate.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -287,7 +379,7 @@ This cop checks dynamic `find_by_*` methods.
 Use `find_by` instead of dynamic method.
 See. https://github.com/bbatsov/rails-style-guide#find_by
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -309,11 +401,11 @@ User.find_by(name: name, email: email)
 User.find_by!(email: email)
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Whitelist | find_by_sql
+Name | Default value | Configurable values
+--- | --- | ---
+Whitelist | `find_by_sql` | Array
 
 ### References
 
@@ -327,7 +419,7 @@ Enabled | No
 
 This cop looks for duplicate values in enum declarations.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -343,11 +435,33 @@ enum status: [:active, :archived, :active]
 enum status: [:active, :archived]
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `app/models/**/*.rb` | Array
+
+## Rails/EnvironmentComparison
+
+Enabled by default | Supports autocorrection
 --- | ---
-Include | app/models/\*\*/\*.rb
+Enabled | Yes
+
+This cop checks that Rails.env is compared using `.production?`-like
+methods instead of equality against a string or symbol.
+
+### Examples
+
+```ruby
+# bad
+Rails.env == 'production'
+
+# bad, always returns false
+Rails.env == :test
+
+# good
+Rails.env.production?
+```
 
 ## Rails/Exit
 
@@ -369,12 +483,22 @@ is used.)
 the program exiting, which could result in the code failing to run and
 do its job.
 
-### Important attributes
+### Examples
 
-Attribute | Value
---- | ---
-Include | app/\*\*/\*.rb, config/\*\*/\*.rb, lib/\*\*/\*.rb
-Exclude | lib/\*\*/\*.rake
+```ruby
+# bad
+exit(0)
+
+# good
+raise 'a bad error has happened'
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `app/**/*.rb`, `config/**/*.rb`, `lib/**/*.rb` | Array
+Exclude | `lib/**/*.rake` | Array
 
 ## Rails/FilePath
 
@@ -385,7 +509,7 @@ Enabled | No
 This cop is used to identify usages of file path joining process
 to use `Rails.root.join` clause.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -406,7 +530,7 @@ Enabled | Yes
 This cop is used to identify usages of `where.first` and
 change them to use `find_by` instead.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -417,11 +541,11 @@ User.where(name: 'Bruce').take
 User.find_by(name: 'Bruce')
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Include | app/models/\*\*/\*.rb
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `app/models/**/*.rb` | Array
 
 ### References
 
@@ -436,7 +560,7 @@ Enabled | Yes
 This cop is used to identify usages of `all.each` and
 change them to use `all.find_each` instead.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -446,11 +570,11 @@ User.all.each
 User.all.find_each
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Include | app/models/\*\*/\*.rb
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `app/models/**/*.rb` | Array
 
 ### References
 
@@ -464,11 +588,21 @@ Enabled | No
 
 This cop checks for the use of the has_and_belongs_to_many macro.
 
-### Important attributes
+### Examples
 
-Attribute | Value
---- | ---
-Include | app/models/\*\*/\*.rb
+```ruby
+# bad
+# has_and_belongs_to_many :ingredients
+
+# good
+# has_many :ingredients, through: :recipe_ingredients
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `app/models/**/*.rb` | Array
 
 ### References
 
@@ -484,7 +618,7 @@ This cop looks for `has_many` or `has_one` associations that don't
 specify a `:dependent` option.
 It doesn't register an offense if `:through` option was specified.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -501,11 +635,11 @@ class User < ActiveRecord::Base
 end
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Include | app/models/\*\*/\*.rb
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `app/models/**/*.rb` | Array
 
 ### References
 
@@ -524,7 +658,7 @@ If you are running Rails < 5 you should disable the
 Rails/HttpPositionalArguments cop or set your TargetRailsVersion in your
 .rubocop.yml file to 4.0, etc.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -534,11 +668,186 @@ get :new, { user_id: 1}
 get :new, params: { user_id: 1 }
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `spec/**/*`, `test/**/*` | Array
+
+## Rails/InverseOf
+
+Enabled by default | Supports autocorrection
 --- | ---
-Include | spec/\*\*/\*, test/\*\*/\*
+Enabled | No
+
+This cop looks for has_(one|many) and belongs_to associations where
+ActiveRecord can't automatically determine the inverse association
+because of a scope or the options used. This can result in unnecessary
+queries in some circumstances. `:inverse_of` must be manually specified
+for associations to work in both ways, or set to `false` to opt-out.
+
+### Examples
+
+```ruby
+# good
+class Blog < ApplicationRecord
+  has_many :posts
+end
+
+class Post < ApplicationRecord
+  belongs_to :blog
+end
+```
+```ruby
+# bad
+class Blog < ApplicationRecord
+  has_many :posts, -> { order(published_at: :desc) }
+end
+
+class Post < ApplicationRecord
+  belongs_to :blog
+end
+
+# good
+class Blog < ApplicationRecord
+  has_many(:posts,
+    -> { order(published_at: :desc) },
+    inverse_of: :blog
+  )
+end
+
+class Post < ApplicationRecord
+  belongs_to :blog
+end
+
+# good
+class Blog < ApplicationRecord
+  with_options inverse_of: :blog do
+    has_many :posts, -> { order(published_at: :desc) }
+  end
+end
+
+class Post < ApplicationRecord
+  belongs_to :blog
+end
+```
+```ruby
+# bad
+class Picture < ApplicationRecord
+  belongs_to :imageable, polymorphic: true
+end
+
+class Employee < ApplicationRecord
+  has_many :pictures, as: :imageable
+end
+
+class Product < ApplicationRecord
+  has_many :pictures, as: :imageable
+end
+
+# good
+class Picture < ApplicationRecord
+  belongs_to :imageable, polymorphic: true
+end
+
+class Employee < ApplicationRecord
+  has_many :pictures, as: :imageable, inverse_of: :imageable
+end
+
+class Product < ApplicationRecord
+  has_many :pictures, as: :imageable, inverse_of: :imageable
+end
+```
+```ruby
+# bad
+# However, RuboCop can not detect this pattern...
+class Physician < ApplicationRecord
+  has_many :appointments
+  has_many :patients, through: :appointments
+end
+
+class Appointment < ApplicationRecord
+  belongs_to :physician
+  belongs_to :patient
+end
+
+class Patient < ApplicationRecord
+  has_many :appointments
+  has_many :physicians, through: :appointments
+end
+
+# good
+class Physician < ApplicationRecord
+  has_many :appointments
+  has_many :patients, through: :appointments
+end
+
+class Appointment < ApplicationRecord
+  belongs_to :physician, inverse_of: :appointments
+  belongs_to :patient, inverse_of: :appointments
+end
+
+class Patient < ApplicationRecord
+  has_many :appointments
+  has_many :physicians, through: :appointments
+end
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `app/models/**/*.rb` | Array
+
+## Rails/LexicallyScopedActionFilter
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | No
+
+This cop checks that methods specified in the filter's `only`
+or `except` options are explicitly defined in the controller.
+
+You can specify methods of superclass or methods added by mixins
+on the filter, but these confuse developers. If you specify methods
+where are defined on another controller, you should define the filter
+in that controller.
+
+### Examples
+
+```ruby
+# bad
+class LoginController < ApplicationController
+  before_action :require_login, only: %i[index settings logout]
+
+  def index
+  end
+end
+
+# good
+class LoginController < ApplicationController
+  before_action :require_login, only: %i[index settings logout]
+
+  def index
+  end
+
+  def settings
+  end
+
+  def logout
+  end
+end
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `app/controllers/**/*.rb` | Array
+
+### References
+
+* [https://github.com/bbatsov/rails-style-guide#lexically-scoped-action-filter](https://github.com/bbatsov/rails-style-guide#lexically-scoped-action-filter)
 
 ## Rails/NotNullColumn
 
@@ -549,7 +858,7 @@ Enabled | No
 This cop checks for add_column call with NOT NULL constraint
 in migration file.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -563,11 +872,11 @@ add_reference :products, :category
 add_reference :products, :category, null: false, default: 1
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Include | db/migrate/\*.rb
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `db/migrate/*.rb` | Array
 
 ## Rails/Output
 
@@ -577,11 +886,23 @@ Enabled | No
 
 This cop checks for the use of output calls like puts and print
 
-### Important attributes
+### Examples
 
-Attribute | Value
---- | ---
-Include | app/\*\*/\*.rb, config/\*\*/\*.rb, db/\*\*/\*.rb, lib/\*\*/\*.rb
+```ruby
+# bad
+puts 'A debug message'
+pp 'A debug message'
+print 'A debug message'
+
+# good
+Rails.logger.debug 'A debug message'
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `app/**/*.rb`, `config/**/*.rb`, `db/**/*.rb`, `lib/**/*.rb` | Array
 
 ## Rails/OutputSafety
 
@@ -595,66 +916,61 @@ simply return a SafeBuffer containing the content as is. Instead,
 use safe_join to join content and escape it and concat to
 concatenate content and escape it, ensuring its safety.
 
-### Example
+### Examples
 
 ```ruby
 user_content = "<b>hi</b>"
 
 # bad
 "<p>#{user_content}</p>".html_safe
-=> ActiveSupport::SafeBuffer
-"<p><b>hi</b></p>"
+# => ActiveSupport::SafeBuffer "<p><b>hi</b></p>"
 
 # good
 content_tag(:p, user_content)
-=> ActiveSupport::SafeBuffer
-"<p>&lt;b&gt;hi&lt;/b&gt;</p>"
+# => ActiveSupport::SafeBuffer "<p>&lt;b&gt;hi&lt;/b&gt;</p>"
 
 # bad
 out = ""
 out << "<li>#{user_content}</li>"
 out << "<li>#{user_content}</li>"
 out.html_safe
-=> ActiveSupport::SafeBuffer
-"<li><b>hi</b></li><li><b>hi</b></li>"
+# => ActiveSupport::SafeBuffer "<li><b>hi</b></li><li><b>hi</b></li>"
 
 # good
 out = []
 out << content_tag(:li, user_content)
 out << content_tag(:li, user_content)
 safe_join(out)
-=> ActiveSupport::SafeBuffer
-"<li>&lt;b&gt;hi&lt;/b&gt;</li><li>&lt;b&gt;hi&lt;/b&gt;</li>"
+# => ActiveSupport::SafeBuffer
+#    "<li>&lt;b&gt;hi&lt;/b&gt;</li><li>&lt;b&gt;hi&lt;/b&gt;</li>"
 
 # bad
 out = "<h1>trusted content</h1>".html_safe
 out.safe_concat(user_content)
-=> ActiveSupport::SafeBuffer
-"<h1>trusted_content</h1><b>hi</b>"
+# => ActiveSupport::SafeBuffer "<h1>trusted_content</h1><b>hi</b>"
 
 # good
 out = "<h1>trusted content</h1>".html_safe
 out.concat(user_content)
-=> ActiveSupport::SafeBuffer
-"<h1>trusted_content</h1>&lt;b&gt;hi&lt;/b&gt;"
+# => ActiveSupport::SafeBuffer
+#    "<h1>trusted_content</h1>&lt;b&gt;hi&lt;/b&gt;"
 
 # safe, though maybe not good style
 out = "trusted content"
 result = out.concat(user_content)
-=> String "trusted content<b>hi</b>"
+# => String "trusted content<b>hi</b>"
 # because when rendered in ERB the String will be escaped:
-<%= result %>
-=> trusted content&lt;b&gt;hi&lt;/b&gt;
+# <%= result %>
+# => trusted content&lt;b&gt;hi&lt;/b&gt;
 
 # bad
 (user_content + " " + content_tag(:span, user_content)).html_safe
-=> ActiveSupport::SafeBuffer
-"<b>hi</b> <span><b>hi</b></span>"
+# => ActiveSupport::SafeBuffer "<b>hi</b> <span><b>hi</b></span>"
 
 # good
 safe_join([user_content, " ", content_tag(:span, user_content)])
-=> ActiveSupport::SafeBuffer
-"&lt;b&gt;hi&lt;/b&gt; <span>&lt;b&gt;hi&lt;/b&gt;</span>"
+# => ActiveSupport::SafeBuffer
+#    "&lt;b&gt;hi&lt;/b&gt; <span>&lt;b&gt;hi&lt;/b&gt;</span>"
 ```
 
 ## Rails/PluralizationGrammar
@@ -666,7 +982,7 @@ Enabled | Yes
 This cop checks for correct grammar when using ActiveSupport's
 core extensions to the numeric classes.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -676,6 +992,50 @@ core extensions to the numeric classes.
 # good
 3.days.ago
 1.month.ago
+```
+
+## Rails/Presence
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks code that can be written more easily using
+`Object#presence` defined by Active Support.
+
+### Examples
+
+```ruby
+# bad
+a.present? ? a : nil
+
+# bad
+!a.present? ? nil : a
+
+# bad
+a.blank? ? nil : a
+
+# bad
+!a.blank? ? a : nil
+
+# good
+a.presence
+```
+```ruby
+# bad
+a.present? ? a : b
+
+# bad
+!a.present? ? b : a
+
+# bad
+a.blank? ? b : a
+
+# bad
+!a.blank? ? a : b
+
+# good
+a.presence || b
 ```
 
 ## Rails/Present
@@ -691,7 +1051,7 @@ Settings:
   NotBlank: Convert usages of not `blank?` to `present?`
   UnlessBlank: Convert usages of `unless` `blank?` to `if` `present?`
 
-### Example
+### Examples
 
 ```ruby
 # NotNilAndNotEmpty: true
@@ -719,13 +1079,13 @@ Settings:
   something if  foo.present?
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-NotNilAndNotEmpty | true
-NotBlank | true
-UnlessBlank | true
+Name | Default value | Configurable values
+--- | --- | ---
+NotNilAndNotEmpty | `true` | Boolean
+NotBlank | `true` | Boolean
+UnlessBlank | `true` | Boolean
 
 ## Rails/ReadWriteAttribute
 
@@ -736,7 +1096,7 @@ Enabled | Yes
 This cop checks for the use of the read_attribute or
 write_attribute methods.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -748,15 +1108,76 @@ x = self[:attr]
 self[:attr] = val
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Include | app/models/\*\*/\*.rb
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `app/models/**/*.rb` | Array
 
 ### References
 
 * [https://github.com/bbatsov/rails-style-guide#read-attribute](https://github.com/bbatsov/rails-style-guide#read-attribute)
+
+## Rails/RedundantReceiverInWithOptions
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks for redundant receiver in `with_options`.
+Receiver is implicit from Rails 4.2 or higher.
+
+### Examples
+
+```ruby
+# bad
+class Account < ApplicationRecord
+  with_options dependent: :destroy do |assoc|
+    assoc.has_many :customers
+    assoc.has_many :products
+    assoc.has_many :invoices
+    assoc.has_many :expenses
+  end
+end
+
+# good
+class Account < ApplicationRecord
+  with_options dependent: :destroy do
+    has_many :customers
+    has_many :products
+    has_many :invoices
+    has_many :expenses
+  end
+end
+```
+```ruby
+# bad
+with_options options: false do |merger|
+  merger.invoke(merger.something)
+end
+
+# good
+with_options options: false do
+  invoke(something)
+end
+
+# good
+client = Client.new
+with_options options: false do |merger|
+  client.invoke(merger.something, something)
+end
+
+# ok
+# When `with_options` includes a block, all scoping scenarios
+# cannot be evaluated. Thus, it is ok to include the explicit
+# receiver.
+with_options options: false do |merger|
+  merger.invoke
+  with_another_method do |another_receiver|
+    merger.invoke(another_receiver)
+  end
+end
+```
 
 ## Rails/RelativeDateConstant
 
@@ -767,7 +1188,7 @@ Enabled | Yes
 This cop checks whether constant value isn't relative date.
 Because the relative date will be evaluated only once.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -792,17 +1213,20 @@ Enabled | Yes
 This cop checks for consistent uses of `request.referer` or
 `request.referrer`, depending on the cop's configuration.
 
-### Example
+### Examples
+
+#### EnforcedStyle: referer (default)
 
 ```ruby
-# EnforcedStyle: referer
 # bad
 request.referrer
 
 # good
 request.referer
+```
+#### EnforcedStyle: referrer
 
-# EnforcedStyle: referrer
+```ruby
 # bad
 request.referer
 
@@ -810,12 +1234,11 @@ request.referer
 request.referrer
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | referer
-SupportedStyles | referer, referrer
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `referer` | `referer`, `referrer`
 
 ## Rails/ReversibleMigration
 
@@ -826,7 +1249,7 @@ Enabled | No
 This cop checks whether the change method of the migration file is
 reversible.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -947,11 +1370,11 @@ def change
 end
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Include | db/migrate/\*.rb
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `db/migrate/*.rb` | Array
 
 ### References
 
@@ -968,7 +1391,7 @@ This cop converts usages of `try!` to `&.`. It can also be configured
 to convert `try`. It will convert code to use safe navigation if the
 target Ruby version is set to 2.3+
 
-### Example
+### Examples
 
 ```ruby
 # ConvertTry: false
@@ -1003,11 +1426,11 @@ target Ruby version is set to 2.3+
   foo&.bar { |e| e.baz }
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-ConvertTry | false
+Name | Default value | Configurable values
+--- | --- | ---
+ConvertTry | `false` | Boolean
 
 ## Rails/SaveBang
 
@@ -1026,7 +1449,7 @@ variable that has a call to `persisted?`. Finally, it will ignore any
 call with more than 2 arguments as that is likely not an Active Record
 call or a Model.update(id, attributes) call.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1037,7 +1460,7 @@ user.destroy
 
 # good
 unless user.save
-   . . .
+  # ...
 end
 user.save!
 user.update!(name: 'Joe')
@@ -1046,7 +1469,7 @@ user.destroy!
 
 user = User.find_or_create_by(name: 'Joe')
 unless user.persisted?
-   . . .
+  # ...
 end
 ```
 
@@ -1063,7 +1486,7 @@ Enabled | No
 This cop checks for scope calls where it was passed
 a method (usually a scope) instead of a lambda/proc.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1073,11 +1496,11 @@ scope :something, where(something: true)
 scope :something, -> { where(something: true) }
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Include | app/models/\*\*/\*.rb
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `app/models/**/*.rb` | Array
 
 ## Rails/SkipsModelValidations
 
@@ -1089,7 +1512,7 @@ This cop checks for the use of methods which skip
 validations which are listed in
 http://guides.rubyonrails.org/active_record_validations.html#skipping-validations
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1109,11 +1532,11 @@ user.update_attributes(website: 'example.com')
 FileUtils.touch('file')
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Blacklist | decrement!, decrement_counter, increment!, increment_counter, toggle!, touch, update_all, update_attribute, update_column, update_columns, update_counters
+Name | Default value | Configurable values
+--- | --- | ---
+Blacklist | `decrement!`, `decrement_counter`, `increment!`, `increment_counter`, `toggle!`, `touch`, `update_all`, `update_attribute`, `update_column`, `update_columns`, `update_counters` | Array
 
 ### References
 
@@ -1136,29 +1559,48 @@ then only use of Time.zone is allowed.
 When EnforcedStyle is 'flexible' then it's also allowed
 to use Time.in_time_zone.
 
-### Example
+### Examples
+
+#### EnforcedStyle: strict
 
 ```ruby
-# always offense
+# `strict` means that `Time` should be used with `zone`.
+
+# bad
 Time.now
 Time.parse('2015-03-02 19:05:37')
 
-# no offense
+# bad
+Time.current
+Time.at(timestamp).in_time_zone
+
+# good
+Time.zone.now
+Time.zone.parse('2015-03-02 19:05:37')
+```
+#### EnforcedStyle: flexible (default)
+
+```ruby
+# `flexible` allows usage of `in_time_zone` instead of `zone`.
+
+# bad
+Time.now
+Time.parse('2015-03-02 19:05:37')
+
+# good
 Time.zone.now
 Time.zone.parse('2015-03-02 19:05:37')
 
-# no offense only if style is 'flexible'
+# good
 Time.current
-DateTime.strptime(str, "%Y-%m-%d %H:%M %Z").in_time_zone
 Time.at(timestamp).in_time_zone
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | flexible
-SupportedStyles | strict, flexible
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `flexible` | `strict`, `flexible`
 
 ### References
 
@@ -1188,7 +1630,7 @@ vs a call to pluck on an ActiveRecord::Associations::CollectionProxy.
 Autocorrect is disabled by default for this cop since it may generate
 false positives.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1199,19 +1641,43 @@ Model.uniq.pluck(:id)
 ```
 ```ruby
 # this will return a Relation that pluck is called on
-Model.where(...).pluck(:id).uniq
+Model.where(cond: true).pluck(:id).uniq
 
 # an association on an instance will return a CollectionProxy
 instance.assoc.pluck(:id).uniq
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `conservative` | `conservative`, `aggressive`
+AutoCorrect | `false` | Boolean
+
+## Rails/UnknownEnv
+
+Enabled by default | Supports autocorrection
 --- | ---
-EnforcedStyle | conservative
-SupportedStyles | conservative, aggressive
-AutoCorrect | false
+Enabled | No
+
+This cop checks that environments called with `Rails.env` predicates
+exist.
+
+### Examples
+
+```ruby
+# bad
+Rails.env.proudction?
+
+# good
+Rails.env.production?
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+Environments | `development`, `test`, `production` | Array
 
 ## Rails/Validation
 
@@ -1221,8 +1687,36 @@ Enabled | Yes
 
 This cop checks for the use of old-style attribute validation macros.
 
-### Important attributes
+### Examples
 
-Attribute | Value
---- | ---
-Include | app/models/\*\*/\*.rb
+```ruby
+# bad
+validates_acceptance_of :foo
+validates_confirmation_of :foo
+validates_exclusion_of :foo
+validates_format_of :foo
+validates_inclusion_of :foo
+validates_length_of :foo
+validates_numericality_of :foo
+validates_presence_of :foo
+validates_size_of :foo
+validates_uniqueness_of :foo
+
+# good
+validates :foo, acceptance: true
+validates :foo, confirmation: true
+validates :foo, exclusion: true
+validates :foo, format: true
+validates :foo, inclusion: true
+validates :foo, length: true
+validates :foo, numericality: true
+validates :foo, presence: true
+validates :foo, size: true
+validates :foo, uniqueness: true
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `app/models/**/*.rb` | Array

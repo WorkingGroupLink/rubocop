@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Rails::Present, :config do
+RSpec.describe RuboCop::Cop::Rails::Present, :config do
   subject(:cop) { described_class.new(config) }
 
   shared_examples :offense do |source, correction, message|
@@ -37,7 +37,7 @@ describe RuboCop::Cop::Rails::Present, :config do
       expect_no_offenses('foo.nil? || bar.empty?')
     end
 
-    it 'accepts checking existance && not empty? on different objects' do
+    it 'accepts checking existence && not empty? on different objects' do
       expect_no_offenses('foo && !bar.empty?')
     end
 

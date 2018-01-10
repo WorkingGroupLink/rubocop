@@ -136,6 +136,10 @@ W:  4:  5: end at 4, 4 is not aligned with if at 2, 2
 1 file inspected, 4 offenses detected
 ```
 
+### Quiet Formatter
+
+Behaves like Simple Formatter if there are offenses. Completely quiet otherwise.
+
 ### File List Formatter
 
  **Machine-parsable**
@@ -158,10 +162,10 @@ The JSON structure is like the following example:
 ```javascript
 {
   "metadata": {
-    "rubocop_version": "0.9.0",
+    "rubocop_version": "0.50.0",
     "ruby_engine": "ruby",
-    "ruby_version": "2.0.0",
-    "ruby_patchlevel": "195",
+    "ruby_version": "2.4.2",
+    "ruby_patchlevel": "198",
     "ruby_platform": "x86_64-darwin12.3.0"
   },
   "files": [{

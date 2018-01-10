@@ -5,10 +5,6 @@ module RuboCop
     # Common functionality for checking for a line break before the first
     # element in a multi-line collection.
     module FirstElementLineBreak
-      def autocorrect(node)
-        ->(corrector) { corrector.insert_before(node.source_range, "\n") }
-      end
-
       private
 
       def check_method_line_break(node, children)
@@ -27,23 +23,23 @@ module RuboCop
       def check_children_line_break(node, children, start = node)
         return if children.size < 2
 
-        line = start.loc.line
+        line = start.first_line
 
         min = first_by_line(children)
-        return if line != min.loc.first_line
+        return if line != min.first_line
 
         max = last_by_line(children)
-        return if line == max.loc.last_line
+        return if line == max.last_line
 
         add_offense(min)
       end
 
       def first_by_line(nodes)
-        nodes.min_by { |n| n.loc.first_line }
+        nodes.min_by(&:first_line)
       end
 
       def last_by_line(nodes)
-        nodes.max_by { |n| n.loc.last_line }
+        nodes.max_by(&:last_line)
       end
     end
   end

@@ -21,7 +21,7 @@ module RuboCop
 
           colon = node.loc.operator
 
-          add_offense(colon, colon) unless followed_by_space?(colon)
+          add_offense(colon, location: colon) unless followed_by_space?(colon)
         end
 
         def on_kwoptarg(node)
@@ -29,17 +29,17 @@ module RuboCop
           # optional keyword argument's name, so must construct one.
           colon = node.loc.name.end.resize(1)
 
-          add_offense(colon, colon) unless followed_by_space?(colon)
+          add_offense(colon, location: colon) unless followed_by_space?(colon)
+        end
+
+        def autocorrect(range)
+          ->(corrector) { corrector.insert_after(range, ' ') }
         end
 
         private
 
         def followed_by_space?(colon)
           colon.source_buffer.source[colon.end_pos] =~ /\s/
-        end
-
-        def autocorrect(range)
-          ->(corrector) { corrector.insert_after(range, ' ') }
         end
       end
     end

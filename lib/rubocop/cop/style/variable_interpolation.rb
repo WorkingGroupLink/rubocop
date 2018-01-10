@@ -4,9 +4,20 @@ module RuboCop
   module Cop
     module Style
       # This cop checks for variable interpolation (like "#@ivar").
+      #
+      # @example
+      #   # bad
+      #   "His name is #$name"
+      #   /check #$pattern/
+      #   "Let's go to the #@store"
+      #
+      #   # good
+      #   "His name is #{$name}"
+      #   /check #{$pattern}/
+      #   "Let's go to the #{@store}"
       class VariableInterpolation < Cop
-        MSG = 'Replace interpolated variable `%s` ' \
-              'with expression `#{%s}`.'.freeze
+        MSG = 'Replace interpolated variable `%<variable>s` ' \
+              'with expression `#{%<variable>s}`.'.freeze
 
         def on_dstr(node)
           check_for_interpolation(node)
@@ -20,6 +31,12 @@ module RuboCop
           check_for_interpolation(node)
         end
 
+        def autocorrect(node)
+          lambda do |corrector|
+            corrector.replace(node.source_range, "{#{node.source}}")
+          end
+        end
+
         private
 
         def check_for_interpolation(node)
@@ -29,13 +46,7 @@ module RuboCop
         end
 
         def message(node)
-          format(MSG, node.source, node.source)
-        end
-
-        def autocorrect(node)
-          lambda do |corrector|
-            corrector.replace(node.source_range, "{#{node.source}}")
-          end
+          format(MSG, variable: node.source)
         end
 
         def var_nodes(nodes)

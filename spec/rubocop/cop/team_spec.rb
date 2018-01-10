@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Team do
+RSpec.describe RuboCop::Cop::Team do
   subject(:team) { described_class.new(cop_classes, config, options) }
 
   let(:cop_classes) { RuboCop::Cop::Cop.non_rails }
@@ -8,7 +8,7 @@ describe RuboCop::Cop::Team do
   let(:options) { nil }
   let(:ruby_version) { RuboCop::Config::KNOWN_RUBIES.last }
 
-  before(:each) do
+  before do
     RuboCop::ConfigLoader.default_configuration = nil
   end
 
@@ -28,6 +28,10 @@ describe RuboCop::Cop::Team do
           "#{baz}"
 
         i=i+1
+
+        def a
+          self::b
+        end
       RUBY
       corrected = <<-'RUBY'.strip_indent
         foo.map(&:nil?)
@@ -37,6 +41,10 @@ describe RuboCop::Cop::Team do
           "#{baz}"
 
         i += 1
+
+        def a
+          b
+        end
       RUBY
 
       create_file(file_path, source)
@@ -50,11 +58,13 @@ describe RuboCop::Cop::Team do
 
     context 'when the option argument of .new is omitted' do
       subject { described_class.new(cop_classes, config).autocorrect? }
+
       it { is_expected.to be_falsey }
     end
 
     context 'when { auto_correct: true } is passed to .new' do
       let(:options) { { auto_correct: true } }
+
       it { is_expected.to be_truthy }
     end
   end
@@ -64,11 +74,13 @@ describe RuboCop::Cop::Team do
 
     context 'when the option argument of .new is omitted' do
       subject { described_class.new(cop_classes, config).debug? }
+
       it { is_expected.to be_falsey }
     end
 
     context 'when { debug: true } is passed to .new' do
       let(:options) { { debug: true } }
+
       it { is_expected.to be_truthy }
     end
   end
@@ -90,7 +102,7 @@ describe RuboCop::Cop::Team do
     end
 
     it 'returns offenses' do
-      expect(offenses).not_to be_empty
+      expect(offenses.empty?).to be(false)
       expect(offenses.all? { |o| o.is_a?(RuboCop::Cop::Offense) }).to be_truthy
     end
 
@@ -134,7 +146,7 @@ describe RuboCop::Cop::Team do
     subject(:cops) { team.cops }
 
     it 'returns cop instances' do
-      expect(cops).not_to be_empty
+      expect(cops.empty?).to be(false)
       expect(cops.all? { |c| c.is_a?(RuboCop::Cop::Cop) }).to be_truthy
     end
 
@@ -168,7 +180,7 @@ describe RuboCop::Cop::Team do
       let(:cop_names) { cops.map(&:name) }
 
       it 'does not return instances of the classes' do
-        expect(cops).not_to be_empty
+        expect(cops.empty?).to be(false)
         expect(cop_names).not_to include('Lint/Void')
         expect(cop_names).not_to include('Metrics/LineLength')
       end
@@ -177,13 +189,14 @@ describe RuboCop::Cop::Team do
 
   describe '#forces' do
     subject(:forces) { team.forces }
+
     let(:cop_classes) { RuboCop::Cop::Cop.non_rails }
 
     it 'returns force instances' do
-      expect(forces).not_to be_empty
+      expect(forces.empty?).to be(false)
 
       forces.each do |force|
-        expect(force).to be_a(RuboCop::Cop::Force)
+        expect(force.is_a?(RuboCop::Cop::Force)).to be(true)
       end
     end
 
@@ -194,7 +207,7 @@ describe RuboCop::Cop::Team do
 
       it 'returns the force' do
         expect(forces.size).to eq(1)
-        expect(forces.first).to be_a(RuboCop::Cop::VariableForce)
+        expect(forces.first.is_a?(RuboCop::Cop::VariableForce)).to be(true)
       end
     end
 
@@ -219,7 +232,7 @@ describe RuboCop::Cop::Team do
       end
 
       it 'returns nothing' do
-        expect(forces).to be_empty
+        expect(forces.empty?).to be(true)
       end
     end
   end

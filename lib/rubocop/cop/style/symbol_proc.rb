@@ -12,10 +12,13 @@ module RuboCop
       #   # good
       #   something.map(&:upcase)
       class SymbolProc < Cop
-        MSG = 'Pass `&:%s` as an argument to `%s` instead of a block.'.freeze
+        include RangeHelp
+
+        MSG = 'Pass `&:%<method>s` as an argument to `%<block_method>s` ' \
+              'instead of a block.'.freeze
         SUPER_TYPES = %i[super zsuper].freeze
 
-        def_node_matcher :proc_node?, '(send (const nil :Proc) :new)'
+        def_node_matcher :proc_node?, '(send (const nil? :Proc) :new)'
         def_node_matcher :symbol_proc?, <<-PATTERN
           (block
             ${(send ...) (super ...) zsuper}
@@ -71,10 +74,10 @@ module RuboCop
           range = range_between(block_start, block_end)
 
           add_offense(node,
-                      range,
-                      format(MSG,
-                             method_name,
-                             block_method_name))
+                      location: range,
+                      message: format(MSG,
+                                      method: method_name,
+                                      block_method: block_method_name))
         end
 
         def autocorrect_method(corrector, node, args, method_name)
@@ -101,7 +104,7 @@ module RuboCop
         def block_range_with_space(node)
           block_range = range_between(begin_pos_for_replacement(node),
                                       node.loc.end.end_pos)
-          range_with_surrounding_space(block_range, :left)
+          range_with_surrounding_space(range: block_range, side: :left)
         end
 
         def begin_pos_for_replacement(node)

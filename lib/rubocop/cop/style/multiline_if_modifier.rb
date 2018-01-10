@@ -16,9 +16,9 @@ module RuboCop
       #   { result: 'ok' } if cond
       class MultilineIfModifier < Cop
         include StatementModifier
-        include AutocorrectAlignment
+        include Alignment
 
-        MSG = 'Favor a normal %s-statement over a modifier' \
+        MSG = 'Favor a normal %<keyword>s-statement over a modifier' \
               ' clause in a multiline statement.'.freeze
 
         def on_if(node)
@@ -27,16 +27,16 @@ module RuboCop
           add_offense(node)
         end
 
-        private
-
         def autocorrect(node)
           lambda do |corrector|
             corrector.replace(node.source_range, to_normal_if(node))
           end
         end
 
+        private
+
         def message(node)
-          format(MSG, node.keyword)
+          format(MSG, keyword: node.keyword)
         end
 
         def to_normal_if(node)

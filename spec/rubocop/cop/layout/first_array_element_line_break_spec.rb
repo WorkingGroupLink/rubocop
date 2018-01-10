@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::FirstArrayElementLineBreak do
+RSpec.describe RuboCop::Cop::Layout::FirstArrayElementLineBreak do
   subject(:cop) { described_class.new }
 
   context 'elements listed on the first line' do
@@ -10,6 +10,7 @@ describe RuboCop::Cop::Layout::FirstArrayElementLineBreak do
              :b]
       RUBY
     end
+
     it 'detects the offense' do
       inspect_source(source)
 

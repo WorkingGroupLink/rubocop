@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-describe RuboCop::CLI, :isolated_environment do
+RSpec.describe RuboCop::CLI, :isolated_environment do
   include_context 'cli spec behavior'
 
   subject(:cli) { described_class.new }
 
-  before(:each) do
+  before do
     RuboCop::ConfigLoader.default_configuration = nil
   end
 
@@ -99,7 +99,10 @@ describe RuboCop::CLI, :isolated_environment do
         'Style/TrailingCommaInArguments' => {
           'EnforcedStyleForMultiline' => comma_style
         },
-        'Style/TrailingCommaInLiteral' => {
+        'Style/TrailingCommaInArrayLiteral' => {
+          'EnforcedStyleForMultiline' => comma_style
+        },
+        'Style/TrailingCommaInHashLiteral' => {
           'EnforcedStyleForMultiline' => comma_style
         },
         'Style/BracesAroundHashParameters' =>
@@ -109,9 +112,6 @@ describe RuboCop::CLI, :isolated_environment do
 
     before do
       create_file('example.rb', source)
-    end
-
-    before do
       create_file('.rubocop.yml', YAML.dump(config))
     end
 
@@ -173,8 +173,10 @@ describe RuboCop::CLI, :isolated_environment do
 
         let(:expected_corrected_source) do
           <<-RUBY.strip_indent
-            func(@abc => 0,
-                 @xyz => 1)
+            func(
+              @abc => 0,
+              @xyz => 1,
+            )
             func(
               abc: 0,
             )
@@ -197,8 +199,10 @@ describe RuboCop::CLI, :isolated_environment do
 
         let(:expected_corrected_source) do
           <<-RUBY.strip_indent
-            func(@abc => 0,
-                 @xyz => 1)
+            func(
+              @abc => 0,
+              @xyz => 1,
+            )
             func(
               abc: 0,
             )
@@ -261,8 +265,10 @@ describe RuboCop::CLI, :isolated_environment do
 
         let(:expected_corrected_source) do
           <<-RUBY.strip_indent
-            func(@abc => 0,
-                 @xyz => 1,)
+            func(
+              @abc => 0,
+              @xyz => 1,
+            )
             func(
               abc: 0,
             )
@@ -285,8 +291,10 @@ describe RuboCop::CLI, :isolated_environment do
 
         let(:expected_corrected_source) do
           <<-RUBY.strip_indent
-            func(@abc => 0,
-                 @xyz => 1,)
+            func(
+              @abc => 0,
+              @xyz => 1,
+            )
             func(
               abc: 0,
             )
@@ -301,6 +309,99 @@ describe RuboCop::CLI, :isolated_environment do
 
         include_examples 'corrects offenses without producing a double comma'
       end
+    end
+  end
+
+  context 'space_inside_bracket cops' do
+    let(:source) do
+      <<-RUBY.strip_indent
+        [ a[b], c[ d ], [1, 2] ]
+        foo[[ 3, 4 ], [5, 6] ]
+      RUBY
+    end
+
+    let(:config) do
+      {
+        'Layout/SpaceInsideArrayLiteralBrackets' => {
+          'EnforcedStyle' => array_style
+        },
+        'Layout/SpaceInsideReferenceBrackets' => {
+          'EnforcedStyle' => reference_style
+        }
+      }
+    end
+
+    before do
+      create_file('example.rb', source)
+      create_file('.rubocop.yml', YAML.dump(config))
+    end
+
+    shared_examples 'corrects offenses' do
+      it 'corrects SpaceInsideArrayLiteralBrackets and ' \
+         'SpaceInsideReferenceBrackets' do
+        cli.run(['--auto-correct'])
+
+        expect(IO.read('example.rb'))
+          .to eq(corrected_source)
+
+        expect($stderr.string).to eq('')
+      end
+    end
+
+    context 'when array style is space & reference style is no space' do
+      let(:array_style) { 'space' }
+      let(:reference_style) { 'no_space' }
+
+      let(:corrected_source) do
+        <<-RUBY.strip_indent
+          [ a[b], c[d], [ 1, 2 ] ]
+          foo[[ 3, 4 ], [ 5, 6 ]]
+        RUBY
+      end
+
+      include_examples 'corrects offenses'
+    end
+
+    context 'when array style is no_space & reference style is space' do
+      let(:array_style) { 'no_space' }
+      let(:reference_style) { 'space' }
+
+      let(:corrected_source) do
+        <<-RUBY.strip_indent
+          [a[ b ], c[ d ], [1, 2]]
+          foo[ [3, 4], [5, 6] ]
+        RUBY
+      end
+
+      include_examples 'corrects offenses'
+    end
+
+    context 'when array style is compact & reference style is no_space' do
+      let(:array_style) { 'compact' }
+      let(:reference_style) { 'no_space' }
+
+      let(:corrected_source) do
+        <<-RUBY.strip_indent
+          [ a[b], c[d], [ 1, 2 ]]
+          foo[[ 3, 4 ], [ 5, 6 ]]
+        RUBY
+      end
+
+      include_examples 'corrects offenses'
+    end
+
+    context 'when array style is compact & reference style is space' do
+      let(:array_style) { 'compact' }
+      let(:reference_style) { 'space' }
+
+      let(:corrected_source) do
+        <<-RUBY.strip_indent
+          [ a[ b ], c[ d ], [ 1, 2 ]]
+          foo[ [ 3, 4 ], [ 5, 6 ] ]
+        RUBY
+      end
+
+      include_examples 'corrects offenses'
     end
   end
 
@@ -419,7 +520,7 @@ describe RuboCop::CLI, :isolated_environment do
       RUBY
     create_file('example.rb', source)
     create_file('.rubocop.yml', <<-YAML.strip_indent)
-      Lint/DefEndAlignment:
+      Layout/DefEndAlignment:
         AutoCorrect: true
     YAML
     expect(cli.run(['--auto-correct'])).to eq(0)
@@ -438,7 +539,7 @@ describe RuboCop::CLI, :isolated_environment do
     expect(IO.read('example.rb')).to eq(corrected)
   end
 
-  it 'corrects UnneededDisable offenses' do
+  it 'corrects UnneededCopDisableDirective offenses' do
     source = <<-RUBY.strip_indent
       class A
         # rubocop:disable Metrics/MethodLength
@@ -454,10 +555,10 @@ describe RuboCop::CLI, :isolated_environment do
     expect(cli.run(%w[--auto-correct --format simple])).to eq(1)
     expect($stdout.string).to eq(<<-RESULT.strip_indent)
       == example.rb ==
-      C:  1:  1: Missing top-level class documentation comment.
-      W:  2:  3: [Corrected] Unnecessary disabling of Metrics/MethodLength.
-      W:  4: 54: [Corrected] Unnecessary disabling of Style/For.
-      W:  6:  5: [Corrected] Unnecessary disabling of Style/ClassVars.
+      C:  1:  1: Style/Documentation: Missing top-level class documentation comment.
+      W:  2:  3: [Corrected] Lint/UnneededCopDisableDirective: Unnecessary disabling of Metrics/MethodLength.
+      W:  4: 54: [Corrected] Lint/UnneededCopDisableDirective: Unnecessary disabling of Style/For.
+      W:  6:  5: [Corrected] Lint/UnneededCopDisableDirective: Unnecessary disabling of Style/ClassVars.
 
       1 file inspected, 4 offenses detected, 3 offenses corrected
     RESULT
@@ -515,12 +616,12 @@ describe RuboCop::CLI, :isolated_environment do
       def func
         foo
         bar
-        rescue
+        rescue StandardError
           baz
         end
 
       def func
-        x; y; rescue; z
+        x; y; rescue StandardError; z
       end
 
       def method
@@ -531,14 +632,14 @@ describe RuboCop::CLI, :isolated_environment do
         BlockB do |_portfolio|
           foo
         end
-      rescue => e # some problem
+      rescue StandardError => e # some problem
         bar
       end
 
       def method
         # comment 1
         do_some_stuff
-      rescue # comment 2
+      rescue StandardError # comment 2
         # comment 3
       end
     RUBY
@@ -616,7 +717,7 @@ describe RuboCop::CLI, :isolated_environment do
     uncorrected = $stdout.string.split($RS).select do |line|
       line.include?('example.rb:') && !line.include?('[Corrected]')
     end
-    expect(uncorrected).to be_empty # Hence exit code 0.
+    expect(uncorrected.empty?).to be(true) # Hence exit code 0.
   end
 
   it 'corrects only IndentationWidth without crashing' do
@@ -663,11 +764,13 @@ describe RuboCop::CLI, :isolated_environment do
     expect(cli.run(['-D', '--auto-correct'])).to eq(0)
     corrected =
       <<-RUBY.strip_indent
-        expect(subject[:address]).to eq(street1:     '1 Market',
-                                        street2:     '#200',
-                                        city:        'Some Town',
-                                        state:       'CA',
-                                        postal_code: '99999-1111')
+        expect(subject[:address]).to eq(
+          street1:     '1 Market',
+          street2:     '#200',
+          city:        'Some Town',
+          state:       'CA',
+          postal_code: '99999-1111'
+        )
       RUBY
     expect(IO.read('example.rb')).to eq(corrected)
   end
@@ -801,14 +904,12 @@ describe RuboCop::CLI, :isolated_environment do
     e = abs('example.rb')
     # TODO: Don't report that a problem is corrected when it
     # actually went away due to another correction.
-    expect($stdout.string)
-      .to eq(["#{e}:1:35: C: [Corrected] Space inside { missing.",
-              "#{e}:1:35: C: [Corrected] Redundant curly braces around " \
-              'a hash parameter.',
-              "#{e}:1:36: C: [Corrected] Use the new Ruby 1.9 hash " \
-              'syntax.',
-              "#{e}:1:50: C: [Corrected] Space inside } missing.",
-              ''].join("\n"))
+    expect($stdout.string).to eq(<<-RESULT.strip_indent)
+      #{e}:1:35: C: [Corrected] Layout/SpaceInsideHashLiteralBraces: Space inside { missing.
+      #{e}:1:35: C: [Corrected] Style/BracesAroundHashParameters: Redundant curly braces around a hash parameter.
+      #{e}:1:36: C: [Corrected] Style/HashSyntax: Use the new Ruby 1.9 hash syntax.
+      #{e}:1:50: C: [Corrected] Layout/SpaceInsideHashLiteralBraces: Space inside } missing.
+    RESULT
   end
 
   # A case where two cops, EmptyLinesAroundBody and EmptyLines, try to
@@ -849,28 +950,18 @@ describe RuboCop::CLI, :isolated_environment do
       end
     RUBY
     e = abs('example.rb')
-    expect($stdout.string)
-      .to eq(["#{e}:1:1: C: Missing top-level class documentation " \
-              'comment.',
-              "#{e}:2:1: C: [Corrected] Indent access modifiers like " \
-              '`private`.',
-              "#{e}:2:1: C: [Corrected] Keep a blank line after `private`.",
-              "#{e}:2:3: W: Useless `private` access modifier.",
-              "#{e}:3:7: C: [Corrected] Freeze mutable objects assigned " \
-              'to constants.',
-              "#{e}:3:7: C: [Corrected] Use `%w` or `%W` " \
-              'for an array of words.',
-              "#{e}:3:8: C: [Corrected] Prefer single-quoted strings " \
-              "when you don't need string interpolation or special " \
-              'symbols.',
-              "#{e}:3:15: C: [Corrected] Prefer single-quoted strings " \
-              "when you don't need string interpolation or special " \
-              'symbols.',
-              "#{e}:3:21: C: [Corrected] Avoid comma after the last item " \
-              'of an array.',
-              "#{e}:4:7: C: [Corrected] Use `%w` or `%W` " \
-              'for an array of words.',
-              ''].join("\n"))
+    expect($stdout.string).to eq(<<-RESULT.strip_indent)
+      #{e}:1:1: C: Style/Documentation: Missing top-level class documentation comment.
+      #{e}:2:1: C: [Corrected] Layout/AccessModifierIndentation: Indent access modifiers like `private`.
+      #{e}:2:1: C: [Corrected] Layout/EmptyLinesAroundAccessModifier: Keep a blank line after `private`.
+      #{e}:2:3: W: Lint/UselessAccessModifier: Useless `private` access modifier.
+      #{e}:3:7: C: [Corrected] Style/MutableConstant: Freeze mutable objects assigned to constants.
+      #{e}:3:7: C: [Corrected] Style/WordArray: Use `%w` or `%W` for an array of words.
+      #{e}:3:8: C: [Corrected] Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+      #{e}:3:15: C: [Corrected] Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+      #{e}:3:21: C: [Corrected] Style/TrailingCommaInArrayLiteral: Avoid comma after the last item of an array.
+      #{e}:4:7: C: [Corrected] Style/WordArray: Use `%w` or `%W` for an array of words.
+    RESULT
   end
 
   # A case where the same cop could try to correct an offense twice in one
@@ -889,7 +980,7 @@ describe RuboCop::CLI, :isolated_environment do
     uncorrected = $stdout.string.split($RS).select do |line|
       line.include?('example.rb:') && !line.include?('[Corrected]')
     end
-    expect(uncorrected).not_to be_empty # Hence exit code 1.
+    expect(uncorrected.empty?).to be(false) # Hence exit code 1.
   end
 
   it 'can correct single line methods' do
@@ -936,24 +1027,21 @@ describe RuboCop::CLI, :isolated_environment do
         raise NotImplementedError,
               'Method should be overridden in child classes'
       RUBY
-    expect($stdout.string)
-      .to eq(['Inspecting 1 file',
-              'C',
-              '',
-              'Offenses:',
-              '',
-              'example.rb:1:1: C: [Corrected] Always use raise ' \
-              'to signal exceptions.',
-              'fail NotImplementedError,',
-              '^^^^',
-              'example.rb:2:6: C: [Corrected] Align the parameters of a ' \
-              'method call if they span more than one line.',
-              "     'Method should be overridden in child classes'",
-              '     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-              '',
-              '1 file inspected, 2 offenses detected, 2 offenses ' \
-              'corrected',
-              ''].join("\n"))
+    expect($stdout.string).to eq(<<-RESULT.strip_indent)
+      Inspecting 1 file
+      C
+
+      Offenses:
+
+      example.rb:1:1: C: [Corrected] Style/SignalException: Always use raise to signal exceptions.
+      fail NotImplementedError,
+      ^^^^
+      example.rb:2:6: C: [Corrected] Layout/AlignParameters: Align the parameters of a method call if they span more than one line.
+           'Method should be overridden in child classes'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+      1 file inspected, 2 offenses detected, 2 offenses corrected
+    RESULT
   end
 
   # Thanks to repeated auto-correction, we can get rid of the trailing
@@ -974,20 +1062,17 @@ describe RuboCop::CLI, :isolated_environment do
         end
       RUBY
     expect($stderr.string).to eq('')
-    expect($stdout.string)
-      .to eq(['Inspecting 1 file',
-              'C',
-              '',
-              'Offenses:',
-              '',
-              'example.rb:3:1: C: [Corrected] Extra empty line detected ' \
-              'at class body beginning.',
-              'example.rb:3:1: C: [Corrected] Trailing whitespace ' \
-              'detected.',
-              '',
-              '1 file inspected, 2 offenses detected, 2 offenses ' \
-              'corrected',
-              ''].join("\n"))
+    expect($stdout.string).to eq(<<-RESULT.strip_indent)
+      Inspecting 1 file
+      C
+
+      Offenses:
+
+      example.rb:3:1: C: [Corrected] Layout/EmptyLinesAroundClassBody: Extra empty line detected at class body beginning.
+      example.rb:3:1: C: [Corrected] Layout/TrailingWhitespace: Trailing whitespace detected.
+
+      1 file inspected, 2 offenses detected, 2 offenses corrected
+    RESULT
   end
 
   it 'can correct MethodDefParentheses and other offense' do
@@ -1081,9 +1166,8 @@ describe RuboCop::CLI, :isolated_environment do
     expect($stderr.string).to eq('')
     expect(IO.read('example.rb')).to eq("{ b: 1 }\n")
     expect($stdout.string)
-      .to eq(["#{abs('example.rb')}:1:3: C: [Corrected] Use the new " \
-              'Ruby 1.9 hash syntax.',
-              ''].join("\n"))
+      .to eq("#{abs('example.rb')}:1:3: C: [Corrected] Style/HashSyntax: " \
+              "Use the new Ruby 1.9 hash syntax.\n")
   end
 
   it 'can correct TrailingBlankLines and TrailingWhitespace offenses' do
@@ -1097,12 +1181,10 @@ describe RuboCop::CLI, :isolated_environment do
     expect(IO.read('example.rb')).to eq(<<-RUBY.strip_indent)
       # frozen_string_literal: true
     RUBY
-    expect($stdout.string)
-      .to eq(["#{abs('example.rb')}:2:1: C: [Corrected] 3 trailing " \
-              'blank lines detected.',
-              "#{abs('example.rb')}:3:1: C: [Corrected] Trailing " \
-              'whitespace detected.',
-              ''].join("\n"))
+    expect($stdout.string).to eq(<<-RESULT.strip_indent)
+      #{abs('example.rb')}:2:1: C: [Corrected] Layout/TrailingBlankLines: 3 trailing blank lines detected.
+      #{abs('example.rb')}:3:1: C: [Corrected] Layout/TrailingWhitespace: Trailing whitespace detected.
+    RESULT
   end
 
   it 'can correct MethodCallWithoutArgsParentheses and EmptyLiteral offenses' do
@@ -1110,12 +1192,10 @@ describe RuboCop::CLI, :isolated_environment do
     expect(cli.run(%w[--auto-correct --format emacs])).to eq(0)
     expect($stderr.string).to eq('')
     expect(IO.read('example.rb')).to eq("{}\n")
-    expect($stdout.string)
-      .to eq(["#{abs('example.rb')}:1:1: C: [Corrected] Use hash " \
-              'literal `{}` instead of `Hash.new`.',
-              "#{abs('example.rb')}:1:9: C: [Corrected] Do not use " \
-              'parentheses for method calls with no arguments.',
-              ''].join("\n"))
+    expect($stdout.string).to eq(<<-RESULT.strip_indent)
+      #{abs('example.rb')}:1:1: C: [Corrected] Style/EmptyLiteral: Use hash literal `{}` instead of `Hash.new`.
+      #{abs('example.rb')}:1:9: C: [Corrected] Style/MethodCallWithoutArgsParentheses: Do not use parentheses for method calls with no arguments.
+    RESULT
   end
 
   it 'can correct IndentHash offenses with separator style' do
@@ -1168,9 +1248,9 @@ describe RuboCop::CLI, :isolated_environment do
     expect(IO.read('example.rb')).to eq(corrected)
     expect($stdout.string).to eq(<<-RESULT.strip_indent)
       == example.rb ==
-      C:  1:  8: Prefer {...} over do...end for single-line blocks.
-      C:  2: 34: Do not use semicolons to terminate expressions.
-      W:  3: 27: Unused method argument - bar.
+      C:  1:  8: Style/BlockDelimiters: Prefer {...} over do...end for single-line blocks.
+      C:  2: 34: Style/Semicolon: Do not use semicolons to terminate expressions.
+      W:  3: 27: Lint/UnusedMethodArgument: Unused method argument - bar.
 
       1 file inspected, 3 offenses detected
     RESULT
@@ -1185,7 +1265,8 @@ describe RuboCop::CLI, :isolated_environment do
     expect(IO.read('example.rb')).to eq("some_method(a)\n")
   end
 
-  it 'does not hang SpaceAfterPunctuation and SpaceInsideBrackets' do
+  it 'does not hang SpaceAfterPunctuation and ' \
+     'SpaceInsideArrayLiteralBrackets' do
     create_file('example.rb', 'puts [1, ]')
     Timeout.timeout(10) do
       expect(cli.run(%w[--auto-correct])).to eq(0)
@@ -1217,7 +1298,7 @@ describe RuboCop::CLI, :isolated_environment do
         EnforcedStyle: space
       Layout/SpaceInsideHashLiteralBraces:
         EnforcedStyle: no_space
-      Style/TrailingCommaInLiteral:
+      Style/TrailingCommaInHashLiteral:
         EnforcedStyleForMultiline: consistent_comma
     YAML
     expect(cli.run(%w[--auto-correct])).to eq(1)

@@ -22,10 +22,8 @@ module RuboCop
           return unless !node.arguments? && node.parenthesized?
           return if same_name_assignment?(node)
 
-          add_offense(node, :begin)
+          add_offense(node, location: :begin)
         end
-
-        private
 
         def autocorrect(node)
           lambda do |corrector|
@@ -33,6 +31,8 @@ module RuboCop
             corrector.remove(node.loc.end)
           end
         end
+
+        private
 
         def ineligible_node?(node)
           node.camel_case_method? || node.implicit_call? || node.keyword_not?

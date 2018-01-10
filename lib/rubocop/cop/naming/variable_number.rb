@@ -7,9 +7,7 @@ module RuboCop
       # configured style, snake_case, normalcase or non_integer,
       # for their numbering.
       #
-      # @example
-      #   "EnforcedStyle => 'snake_case'"
-      #
+      # @example EnforcedStyle: snake_case
       #   # bad
       #
       #   variable1 = 1
@@ -18,9 +16,7 @@ module RuboCop
       #
       #   variable_1 = 1
       #
-      # @example
-      #   "EnforcedStyle => 'normalcase'"
-      #
+      # @example EnforcedStyle: normalcase (default)
       #   # bad
       #
       #   variable_1 = 1
@@ -29,48 +25,35 @@ module RuboCop
       #
       #   variable1 = 1
       #
-      # @example
-      #   "EnforcedStyle => 'non_integer'"
-      #
-      #   #bad
+      # @example EnforcedStyle: non_integer
+      #   # bad
       #
       #   variable1 = 1
       #
       #   variable_1 = 1
       #
-      #   #good
+      #   # good
       #
       #   variableone = 1
       #
       #   variable_one = 1
-      #
       class VariableNumber < Cop
         include ConfigurableNumbering
 
-        def on_lvasgn(node)
-          name, = *node
-          check_name(node, name, node.loc.name)
-        end
-
-        def on_ivasgn(node)
-          name, = *node
-          check_name(node, name, node.loc.name)
-        end
-
-        def on_cvasgn(node)
-          name, = *node
-          check_name(node, name, node.loc.name)
-        end
+        MSG = 'Use %<style>s for variable numbers.'.freeze
 
         def on_arg(node)
           name, = *node
           check_name(node, name, node.loc.name)
         end
+        alias on_lvasgn on_arg
+        alias on_ivasgn on_arg
+        alias on_cvasgn on_arg
 
         private
 
         def message(style)
-          format('Use %s for variable numbers.', style)
+          format(MSG, style: style)
         end
       end
     end

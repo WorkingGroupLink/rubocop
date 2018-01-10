@@ -8,44 +8,35 @@ module RuboCop
       # parentheses using `EnforcedStyle`. Omission is only enforced when
       # removing the parentheses won't cause a different behavior.
       #
-      # @example
-      #
-      #   EnforcedStyle: require_no_parentheses (default)
-      #
-      #   @bad
+      # @example EnforcedStyle: require_no_parentheses (default)
+      #   # bad
       #   foo = (bar?) ? a : b
       #   foo = (bar.baz?) ? a : b
       #   foo = (bar && baz) ? a : b
       #
-      #   @good
+      #   # good
       #   foo = bar? ? a : b
       #   foo = bar.baz? ? a : b
       #   foo = bar && baz ? a : b
       #
-      # @example
-      #
-      #   EnforcedStyle: require_parentheses
-      #
-      #   @bad
+      # @example EnforcedStyle: require_parentheses
+      #   # bad
       #   foo = bar? ? a : b
       #   foo = bar.baz? ? a : b
       #   foo = bar && baz ? a : b
       #
-      #   @good
+      #   # good
       #   foo = (bar?) ? a : b
       #   foo = (bar.baz?) ? a : b
       #   foo = (bar && baz) ? a : b
       #
-      # @example
-      #
-      #   EnforcedStyle: require_parentheses_when_complex
-      #
-      #   @bad
+      # @example EnforcedStyle: require_parentheses_when_complex
+      #   # bad
       #   foo = (bar?) ? a : b
       #   foo = (bar.baz?) ? a : b
       #   foo = bar && baz ? a : b
       #
-      #   @good
+      #   # good
       #   foo = bar? ? a : b
       #   foo = bar.baz? ? a : b
       #   foo = (bar && baz) ? a : b
@@ -57,14 +48,28 @@ module RuboCop
         VARIABLE_TYPES = AST::Node::VARIABLES
         NON_COMPLEX_TYPES = [*VARIABLE_TYPES, :const, :defined?, :yield].freeze
 
-        MSG = '%s parentheses for ternary conditions.'.freeze
-        MSG_COMPLEX = '%s parentheses for ternary expressions with' \
+        MSG = '%<command>s parentheses for ternary conditions.'.freeze
+        MSG_COMPLEX = '%<command>s parentheses for ternary expressions with' \
           ' complex conditions.'.freeze
 
         def on_if(node)
           return unless node.ternary? && !infinite_loop? && offense?(node)
 
-          add_offense(node, node.source_range)
+          add_offense(node, location: node.source_range)
+        end
+
+        def autocorrect(node)
+          condition = node.condition
+
+          return nil if parenthesized?(condition) &&
+                        (safe_assignment?(condition) ||
+                        unsafe_autocorrect?(condition))
+
+          if parenthesized?(condition)
+            correct_parenthesized(condition)
+          else
+            correct_unparenthesized(condition)
+          end
         end
 
         private
@@ -82,20 +87,6 @@ module RuboCop
             else
               require_parentheses? ? !parens : parens
             end
-          end
-        end
-
-        def autocorrect(node)
-          condition = node.condition
-
-          return nil if parenthesized?(condition) &&
-                        (safe_assignment?(condition) ||
-                        unsafe_autocorrect?(condition))
-
-          if parenthesized?(condition)
-            correct_parenthesized(condition)
-          else
-            correct_unparenthesized(condition)
           end
         end
 
@@ -124,11 +115,11 @@ module RuboCop
 
         def message(node)
           if require_parentheses_when_complex?
-            omit = parenthesized?(node.condition) ? 'Only use' : 'Use'
-            format(MSG_COMPLEX, omit)
+            command = parenthesized?(node.condition) ? 'Only use' : 'Use'
+            format(MSG_COMPLEX, command: command)
           else
-            verb = require_parentheses? ? 'Use' : 'Omit'
-            format(MSG, verb)
+            command = require_parentheses? ? 'Use' : 'Omit'
+            format(MSG, command: command)
           end
         end
 
@@ -169,7 +160,7 @@ module RuboCop
 
         def_node_matcher :method_call_argument, <<-PATTERN
           {(:defined? $...)
-           (send {_ nil} _ $(send nil _)...)}
+           (send {_ nil?} _ $(send nil? _)...)}
         PATTERN
 
         def correct_parenthesized(condition)
@@ -195,8 +186,8 @@ module RuboCop
 
         def whitespace_after?(node)
           index = index_of_last_token(node)
-          last_token, next_token = processed_source.tokens[index, 2]
-          space_between?(last_token, next_token)
+          last_token = processed_source.tokens[index]
+          last_token.space_after?
         end
       end
     end

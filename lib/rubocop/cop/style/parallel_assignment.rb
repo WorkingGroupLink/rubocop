@@ -38,6 +38,19 @@ module RuboCop
           add_offense(node)
         end
 
+        def autocorrect(node)
+          lambda do |corrector|
+            left, right = *node
+            left_elements = *left
+            right_elements = [*right].compact
+            order = find_valid_order(left_elements, right_elements)
+            correction = assignment_corrector(node, order)
+
+            corrector.replace(correction.correction_range,
+                              correction.correction)
+          end
+        end
+
         private
 
         def allowed_masign?(lhs_elements, rhs_elements)
@@ -66,19 +79,6 @@ module RuboCop
 
         def return_of_method_call?(node)
           node.block_type? || node.send_type?
-        end
-
-        def autocorrect(node)
-          lambda do |corrector|
-            left, right = *node
-            left_elements = *left
-            right_elements = [*right].compact
-            order = find_valid_order(left_elements, right_elements)
-            correction = assignment_corrector(node, order)
-
-            corrector.replace(correction.correction_range,
-                              correction.correction)
-          end
         end
 
         def assignment_corrector(node, order)
@@ -115,7 +115,7 @@ module RuboCop
           end
         end
 
-        def_node_matcher :implicit_self_getter?, '(send nil $_)'
+        def_node_matcher :implicit_self_getter?, '(send nil? $_)'
 
         # Helper class necessitated by silly design of TSort prior to Ruby 2.1
         # Newer versions have a better API, but that doesn't help us
@@ -174,7 +174,7 @@ module RuboCop
 
         # An internal class for correcting parallel assignment
         class GenericCorrector
-          include AutocorrectAlignment
+          include Alignment
 
           attr_reader :config, :node
 

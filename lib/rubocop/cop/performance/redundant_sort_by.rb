@@ -7,16 +7,18 @@ module RuboCop
       # `sort`.
       #
       # @example
-      #   @bad
+      #   # bad
       #   array.sort_by { |x| x }
       #   array.sort_by do |var|
       #     var
       #   end
       #
-      #   @good
+      #   # good
       #   array.sort
       class RedundantSortBy < Cop
-        MSG = 'Use `sort` instead of `sort_by { |%s| %s }`.'.freeze
+        include RangeHelp
+
+        MSG = 'Use `sort` instead of `sort_by { |%<var>s| %<var>s }`.'.freeze
 
         def_node_matcher :redundant_sort_by, <<-PATTERN
           (block $(send _ :sort_by) (args (arg $_x)) (lvar _x))
@@ -25,7 +27,10 @@ module RuboCop
         def on_block(node)
           redundant_sort_by(node) do |send, var_name|
             range = sort_by_range(send, node)
-            add_offense(node, range, format(MSG, var_name, var_name))
+
+            add_offense(node,
+                        location: range,
+                        message: format(MSG, var: var_name))
           end
         end
 

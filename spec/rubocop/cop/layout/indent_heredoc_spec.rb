@@ -1,7 +1,14 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::IndentHeredoc, :config do
+RSpec.describe RuboCop::Cop::Layout::IndentHeredoc, :config do
   subject(:cop) { described_class.new(config) }
+
+  let(:allow_heredoc) { true }
+  let(:other_cops) do
+    {
+      'Metrics/LineLength' => { 'Max' => 5, 'AllowHeredoc' => allow_heredoc }
+    }
+  end
 
   shared_examples :offense do |name, code, correction = nil|
     it "registers an offense for #{name}" do
@@ -18,7 +25,7 @@ describe RuboCop::Cop::Layout::IndentHeredoc, :config do
   shared_examples :accept do |name, code|
     it "accepts for #{name}" do
       inspect_source(code.strip_indent)
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 
@@ -142,6 +149,26 @@ describe RuboCop::Cop::Layout::IndentHeredoc, :config do
         RUBY2
       RUBY
 
+      context 'when Metrics/LineLength is configured' do
+        let(:allow_heredoc) { false }
+
+        include_examples :offense, 'short heredoc', <<-RUBY, <<-CORRECTION
+          <<#{quote}RUBY2#{quote}
+          12
+          RUBY2
+        RUBY
+          <<#{quote}RUBY2#{quote}.strip_indent
+            12
+          RUBY2
+        CORRECTION
+
+        include_examples :accept, 'long heredoc', <<-RUBY
+          <<#{quote}RUBY2#{quote}
+          12345678
+          RUBY2
+        RUBY
+      end
+
       include_examples :check_message, 'suggestion powerpack',
                        [
                          'Use 2 spaces for indentation in a heredoc by using ' \
@@ -248,8 +275,9 @@ describe RuboCop::Cop::Layout::IndentHeredoc, :config do
             something
           RUBY2
         RUBY
-        include_examples :accept, 'include empty line', <<-RUBY
+        include_examples :accept, 'include empty lines', <<-RUBY
           <<~#{quote}MSG#{quote}
+
             foo
 
               bar

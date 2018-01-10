@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Performance::RedundantMerge, :config do
+RSpec.describe RuboCop::Cop::Performance::RedundantMerge, :config do
   subject(:cop) { described_class.new(config) }
 
   let(:cop_config) do
@@ -118,7 +118,7 @@ describe RuboCop::Cop::Performance::RedundantMerge, :config do
       RUBY
       inspect_source(source)
 
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'autocorrects when receiver uses element reference to the object ' \

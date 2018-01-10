@@ -7,11 +7,11 @@ module RuboCop
       #
       # @example
       #
-      #   @bad
+      #   # bad
       #   bar = [foo.min, foo.max]
       #   return foo.min, foo.max
       #
-      #   @good
+      #   # good
       #   bar = foo.minmax
       #   return foo.minmax
       class MinMax < Cop
@@ -21,21 +21,11 @@ module RuboCop
           min_max_candidate(node) do |receiver|
             offender = offending_range(node)
 
-            add_offense(node, offender, message(offender, receiver))
+            add_offense(node, location: offender,
+                              message: message(offender, receiver))
           end
         end
         alias on_return on_array
-
-        private
-
-        def_node_matcher :min_max_candidate, <<-PATTERN
-          ({array return} (send $_receiver :min) (send $_receiver :max))
-        PATTERN
-
-        def message(offender, receiver)
-          format(MSG, offender: offender.source,
-                      receiver: receiver.source)
-        end
 
         def autocorrect(node)
           receiver = node.children.first.receiver
@@ -44,6 +34,17 @@ module RuboCop
             corrector.replace(offending_range(node),
                               "#{receiver.source}.minmax")
           end
+        end
+
+        private
+
+        def_node_matcher :min_max_candidate, <<-PATTERN
+          ({array return} (send [$_receiver !nil?] :min) (send [$_receiver !nil?] :max))
+        PATTERN
+
+        def message(offender, receiver)
+          format(MSG, offender: offender.source,
+                      receiver: receiver.source)
         end
 
         def offending_range(node)

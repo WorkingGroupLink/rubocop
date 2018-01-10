@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Lint::DuplicateMethods do
+RSpec.describe RuboCop::Cop::Lint::DuplicateMethods do
   subject(:cop) { described_class.new(config) }
+
   let(:config) { RuboCop::Config.new }
 
   shared_examples 'in scope' do |type, opening_line|
@@ -26,7 +27,7 @@ describe RuboCop::Cop::Lint::DuplicateMethods do
                       '    implement 2',
                       '  end',
                       'end'])
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it "registers an offense for duplicate class methods in #{type}" do
@@ -53,7 +54,7 @@ describe RuboCop::Cop::Lint::DuplicateMethods do
                       '    implement 2',
                       '  end',
                       'end'])
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it "recognizes difference between instance and class methods in #{type}" do
@@ -65,7 +66,7 @@ describe RuboCop::Cop::Lint::DuplicateMethods do
                       '    implement 2',
                       '  end',
                       'end'])
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it "registers an offense for duplicate private methods in #{type}" do
@@ -101,7 +102,7 @@ describe RuboCop::Cop::Lint::DuplicateMethods do
                       '    implement 2',
                       '  end',
                       'end'])
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it "registers an offense for duplicate protected methods in #{type}" do
@@ -224,7 +225,8 @@ describe RuboCop::Cop::Lint::DuplicateMethods do
       )
     end
 
-    it "doesn't register an offense when class << exp is used" do
+    it 'registers an offense when class << exp is used' do
+      pending
       inspect_source([opening_line,
                       '  class << blah',
                       '    def some_method',
@@ -235,7 +237,7 @@ describe RuboCop::Cop::Lint::DuplicateMethods do
                       '    end',
                       '  end',
                       'end'], 'test.rb')
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(false)
     end
 
     it "registers an offense for duplicate alias in #{type}" do

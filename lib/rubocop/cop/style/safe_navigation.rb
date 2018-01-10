@@ -45,6 +45,7 @@ module RuboCop
       #   foo.to_i if foo
       class SafeNavigation < Cop
         extend TargetRubyVersion
+        include RangeHelp
 
         MSG = 'Use safe navigation (`&.`) instead of checking if an object ' \
               'exists before calling the method.'.freeze
@@ -59,12 +60,12 @@ module RuboCop
             (if {
                   (send $_ {:nil? :!})
                   $_
-                } nil $_)
+                } nil? $_)
 
             (if {
                   (send (send $_ :nil?) :!)
                   $_
-                } $_ nil)
+                } $_ nil?)
           }
         PATTERN
 
@@ -150,9 +151,23 @@ module RuboCop
                        node.receiver
                      end
 
-          return receiver if receiver == checked_variable
+          if receiver == checked_variable
+            return nil if assignment_arithmetic_or_comparison?(node)
+
+            return receiver
+          end
 
           find_matching_receiver_invocation(receiver, checked_variable)
+        end
+
+        def assignment_arithmetic_or_comparison?(node)
+          node.assignment? ||
+            node.parent.arithmetic_operation? ||
+            comparison_node?(node.parent)
+        end
+
+        def comparison_node?(parent)
+          parent.send_type? && parent.comparison_method?
         end
 
         def unsafe_method?(send_node)
@@ -161,7 +176,11 @@ module RuboCop
         end
 
         def negated?(send_node)
-          send_node.parent.send_type? && send_node.parent.method?(:!)
+          if send_node.parent && send_node.parent.send_type?
+            negated?(send_node.parent)
+          else
+            send_node.send_type? && send_node.method?(:!)
+          end
         end
 
         def begin_range(node, method_call)

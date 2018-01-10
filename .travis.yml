@@ -3,15 +3,14 @@ cache: bundler
 language: ruby
 dist: trusty
 rvm:
-  - jruby-9.1.13.0
+  - jruby-9.1.15.0
   - jruby-head
-  - 2.0.0
   - 2.1.10
-  - 2.2.8
-  - 2.3.5
-  - 2.4.2
+  - 2.2.9
+  - 2.3.6
+  - 2.4.3
+  - 2.5.0
   - ruby-head
-  - rbx-3
 env:
   global:
     - JRUBY_OPTS='--debug -J-Xmx1000M' # get more accurate coverage data in JRuby
@@ -22,14 +21,11 @@ env:
 matrix:
   allow_failures:
     - rvm: ruby-head
-    - rvm: rbx-3
     - rvm: jruby-head
   fast_finish: true
 before_install:
-  - gem update --remote bundler
   - gem update --system
-  - rvm @global do gem uninstall bundler -a -x
-  - rvm @global do gem install bundler -v 1.13.7
+  - gem update --remote bundler
 install:
   - bundle install --retry=3
 script:

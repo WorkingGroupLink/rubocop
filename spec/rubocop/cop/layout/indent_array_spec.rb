@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::IndentArray do
+RSpec.describe RuboCop::Cop::Layout::IndentArray do
   subject(:cop) { described_class.new(config) }
+
   let(:config) do
     supported_styles = {
       'SupportedStyles' => %w[special_inside_parentheses consistent
@@ -57,7 +58,7 @@ describe RuboCop::Cop::Layout::IndentArray do
       expect(cop.messages)
         .to eq(['Indent the right bracket the same as the start of the line ' \
                 'where the left bracket is.'])
-      expect(cop.config_to_allow_offenses).to be_empty
+      expect(cop.config_to_allow_offenses.empty?).to be(true)
     end
 
     context 'when indentation width is overridden for this cop' do
@@ -297,7 +298,6 @@ describe RuboCop::Cop::Layout::IndentArray do
           expect(cop.messages)
             .to eq(['Use 2 spaces for indentation in an array, relative to ' \
                     'the start of the line where the left square bracket is.',
-
                     'Indent the right bracket the same as the start of the ' \
                     'line where the left bracket is.'])
           expect(cop.config_to_allow_offenses)
@@ -442,7 +442,7 @@ describe RuboCop::Cop::Layout::IndentArray do
       expect(cop.highlights).to eq([']'])
       expect(cop.messages)
         .to eq(['Indent the right bracket the same as the left bracket.'])
-      expect(cop.config_to_allow_offenses).to be_empty
+      expect(cop.config_to_allow_offenses.empty?).to be(true)
     end
 
     context 'when indentation width is overridden for this cop' do

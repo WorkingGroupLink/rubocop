@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Lint::RescueType do
-  let(:config) { RuboCop::Config.new }
+RSpec.describe RuboCop::Cop::Lint::RescueType do
   subject(:cop) { described_class.new(config) }
+
+  let(:config) { RuboCop::Config.new }
 
   it 'accepts rescue modifier' do
     expect_no_offenses('foo rescue nil')
@@ -28,7 +29,7 @@ describe RuboCop::Cop::Lint::RescueType do
     RUBY
   end
 
-  it 'accepts rescuing nothing' do
+  it 'accepts rescuing nothing within a method definition' do
     expect_no_offenses(<<-RUBY)
      def foobar
         foo

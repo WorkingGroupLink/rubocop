@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Performance::Caller do
+RSpec.describe RuboCop::Cop::Performance::Caller do
   subject(:cop) { described_class.new }
 
   it 'accepts `caller` without argument and method chain' do
@@ -13,10 +13,6 @@ describe RuboCop::Cop::Performance::Caller do
 
   it 'accepts `caller_locations` without argument and method chain' do
     expect_no_offenses('caller_locations')
-  end
-
-  it 'accepts `caller_locations` with arguments' do
-    expect_no_offenses('caller(1, 1).first')
   end
 
   it 'registers an offense when :first is called on caller' do

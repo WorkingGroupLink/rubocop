@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::MethodDefParentheses, :config do
+RSpec.describe RuboCop::Cop::Style::MethodDefParentheses, :config do
   subject(:cop) { described_class.new(config) }
 
   context 'require_parentheses' do
@@ -90,7 +90,7 @@ describe RuboCop::Cop::Style::MethodDefParentheses, :config do
         end
       RUBY
       inspect_source(src)
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'reports an offense for opposite + correct' do
@@ -120,7 +120,7 @@ describe RuboCop::Cop::Style::MethodDefParentheses, :config do
         end
       RUBY
       inspect_source(src)
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'reports an offense for def with no args and parens' do
@@ -138,7 +138,7 @@ describe RuboCop::Cop::Style::MethodDefParentheses, :config do
         end
       RUBY
       inspect_source(src)
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'auto-removes the parens' do

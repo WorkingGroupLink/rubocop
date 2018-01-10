@@ -48,16 +48,16 @@ module RuboCop
           invalid_exceptions = invalid_exceptions(exceptions)
           return if invalid_exceptions.empty?
 
-          add_offense(node,
-                      node.loc.keyword.join(rescued.loc.expression),
-                      format(MSG, invalid_exceptions.map(&:source).join(', ')))
+          add_offense(
+            node,
+            location: node.loc.keyword.join(rescued.loc.expression),
+            message: format(MSG, invalid_exceptions.map(&:source).join(', '))
+          )
         end
-
-        private
 
         def autocorrect(node)
           rescued, _, _body = *node
-          range = Parser::Source::Range.new(node.loc.expression,
+          range = Parser::Source::Range.new(node.loc.expression.source_buffer,
                                             node.loc.keyword.end_pos,
                                             rescued.loc.expression.end_pos)
 
@@ -65,6 +65,8 @@ module RuboCop
             corrector.replace(range, correction(*rescued))
           end
         end
+
+        private
 
         def correction(*exceptions)
           correction = valid_exceptions(exceptions).map(&:source).join(', ')

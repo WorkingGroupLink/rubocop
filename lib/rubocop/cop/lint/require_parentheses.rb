@@ -17,7 +17,7 @@ module RuboCop
       #   # bad
       #
       #   if day.is? :tuesday && month == :jan
-      #     ...
+      #     # ...
       #   end
       #
       # @example
@@ -25,7 +25,11 @@ module RuboCop
       #   # good
       #
       #   if day.is?(:tuesday) && month == :jan
+      #     # ...
+      #   end
       class RequireParentheses < Cop
+        include RangeHelp
+
         MSG = 'Use parentheses in the method call to avoid confusion about ' \
               'precedence.'.freeze
 
@@ -47,7 +51,7 @@ module RuboCop
           range = range_between(node.source_range.begin_pos,
                                 ternary.condition.source_range.end_pos)
 
-          add_offense(range, range)
+          add_offense(range, location: range)
         end
 
         def check_predicate(predicate, node)

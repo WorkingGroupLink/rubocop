@@ -8,10 +8,7 @@ module RuboCop
       # It is configurable to enforce one of the styles for both single line
       # and multiline lambdas as well.
       #
-      # @example
-      #
-      #   # EnforcedStyle: line_count_dependent (default)
-      #
+      # @example EnforcedStyle: line_count_dependent (default)
       #   # bad
       #   f = lambda { |x| x }
       #   f = ->(x) do
@@ -24,10 +21,7 @@ module RuboCop
       #         x
       #       end
       #
-      # @example
-      #
-      #   # EnforcedStyle: lambda
-      #
+      # @example EnforcedStyle: lambda
       #   # bad
       #   f = ->(x) { x }
       #   f = ->(x) do
@@ -40,10 +34,7 @@ module RuboCop
       #         x
       #       end
       #
-      # @example
-      #
-      #   # EnforcedStyle: literal
-      #
+      # @example EnforcedStyle: literal
       #   # bad
       #   f = lambda { |x| x }
       #   f = lambda do |x|
@@ -59,8 +50,9 @@ module RuboCop
         include ConfigurableEnforcedStyle
 
         LITERAL_MESSAGE = 'Use the `-> { ... }` lambda literal syntax for ' \
-                          '%s lambdas.'.freeze
-        METHOD_MESSAGE = 'Use the `lambda` method for %s lambdas.'.freeze
+                          '%<modifier>s lambdas.'.freeze
+        METHOD_MESSAGE = 'Use the `lambda` method for %<modifier>s ' \
+                         'lambdas.'.freeze
 
         OFFENDING_SELECTORS = {
           style: {
@@ -70,7 +62,7 @@ module RuboCop
           }
         }.freeze
 
-        def_node_matcher :lambda_node?, '(block $(send nil :lambda) ...)'
+        def_node_matcher :lambda_node?, '(block $(send nil? :lambda) ...)'
 
         def on_block(node)
           return unless node.lambda?
@@ -80,31 +72,8 @@ module RuboCop
           return unless offending_selector?(node, selector)
 
           add_offense(node,
-                      node.send_node.source_range,
-                      message(node, selector))
-        end
-
-        private
-
-        def offending_selector?(node, selector)
-          lines = node.multiline? ? :multiline : :single_line
-
-          selector == OFFENDING_SELECTORS[:style][style][lines]
-        end
-
-        def message(node, selector)
-          message = selector == '->' ? METHOD_MESSAGE : LITERAL_MESSAGE
-
-          format(message, message_line_modifier(node))
-        end
-
-        def message_line_modifier(node)
-          case style
-          when :line_count_dependent
-            node.multiline? ? 'multiline' : 'single line'
-          else
-            'all'
-          end
+                      location: node.send_node.source_range,
+                      message: message(node, selector))
         end
 
         def autocorrect(node)
@@ -120,6 +89,29 @@ module RuboCop
             else
               autocorrect_literal_to_method(corrector, node)
             end
+          end
+        end
+
+        private
+
+        def offending_selector?(node, selector)
+          lines = node.multiline? ? :multiline : :single_line
+
+          selector == OFFENDING_SELECTORS[:style][style][lines]
+        end
+
+        def message(node, selector)
+          message = selector == '->' ? METHOD_MESSAGE : LITERAL_MESSAGE
+
+          format(message, modifier: message_line_modifier(node))
+        end
+
+        def message_line_modifier(node)
+          case style
+          when :line_count_dependent
+            node.multiline? ? 'multiline' : 'single line'
+          else
+            'all'
           end
         end
 
@@ -181,7 +173,7 @@ module RuboCop
           end
 
           return false unless parent && parent.send_type?
-          return false if parenthesized_call?(parent)
+          return false if parent.parenthesized_call?
 
           arg_node.sibling_index > 1
         end

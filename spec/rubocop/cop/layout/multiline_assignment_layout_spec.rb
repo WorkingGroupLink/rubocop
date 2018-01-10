@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::MultilineAssignmentLayout, :config do
+RSpec.describe RuboCop::Cop::Layout::MultilineAssignmentLayout, :config do
   subject(:cop) { described_class.new(config) }
+
   let(:supported_types) { %w[if] }
 
   let(:cop_config) do

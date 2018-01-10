@@ -7,33 +7,40 @@ module RuboCop
       # `|| instead`. It can be configured to check only in conditions, or in
       # all contexts.
       #
-      # @example
-      #
-      #   # EnforcedStyle: always (default)
-      #
-      #   # good
-      #   foo.save && return
-      #   if foo && bar
-      #
+      # @example EnforcedStyle: always (default)
       #   # bad
       #   foo.save and return
-      #   if foo and bar
-      #
-      # @example
-      #
-      #   # EnforcedStyle: conditionals
-      #
-      #   # good
-      #   foo.save && return
-      #   foo.save and return
-      #   if foo && bar
       #
       #   # bad
       #   if foo and bar
+      #   end
+      #
+      #   # good
+      #   foo.save && return
+      #
+      #   # good
+      #   if foo && bar
+      #   end
+      #
+      # @example EnforcedStyle: conditionals
+      #   # bad
+      #   if foo and bar
+      #   end
+      #
+      #   # good
+      #   foo.save && return
+      #
+      #   # good
+      #   foo.save and return
+      #
+      #   # good
+      #   if foo && bar
+      #   end
       class AndOr < Cop
         include ConfigurableEnforcedStyle
+        include RangeHelp
 
-        MSG = 'Use `%s` instead of `%s`.'.freeze
+        MSG = 'Use `%<prefer>s` instead of `%<current>s`.'.freeze
 
         def on_and(node)
           process_logical_operator(node) if style == :always
@@ -47,24 +54,6 @@ module RuboCop
         alias on_while_post on_if
         alias on_until      on_if
         alias on_until_post on_if
-
-        private
-
-        def on_conditionals(node)
-          node.condition.each_node(*LOGICAL_OPERATOR_NODES) do |logical_node|
-            process_logical_operator(logical_node)
-          end
-        end
-
-        def process_logical_operator(node)
-          return if node.logical_operator?
-
-          add_offense(node, :operator)
-        end
-
-        def message(node)
-          format(MSG, node.alternate_operator, node.operator)
-        end
 
         def autocorrect(node)
           lambda do |corrector|
@@ -80,6 +69,24 @@ module RuboCop
 
             corrector.replace(node.loc.operator, node.alternate_operator)
           end
+        end
+
+        private
+
+        def on_conditionals(node)
+          node.condition.each_node(*LOGICAL_OPERATOR_NODES) do |logical_node|
+            process_logical_operator(logical_node)
+          end
+        end
+
+        def process_logical_operator(node)
+          return if node.logical_operator?
+
+          add_offense(node, location: :operator)
+        end
+
+        def message(node)
+          format(MSG, prefer: node.alternate_operator, current: node.operator)
         end
 
         def correct_send(node, corrector)

@@ -1,7 +1,14 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::AlignHash, :config do
+RSpec.describe RuboCop::Cop::Layout::AlignHash, :config do
   subject(:cop) { described_class.new(config) }
+
+  let(:cop_config) do
+    {
+      'EnforcedHashRocketStyle' => 'key',
+      'EnforcedColonStyle' => 'key'
+    }
+  end
 
   shared_examples 'not on separate lines' do
     it 'accepts single line hash' do
@@ -122,13 +129,6 @@ describe RuboCop::Cop::Layout::AlignHash, :config do
           b: 1})
       RUBY
     end
-  end
-
-  let(:cop_config) do
-    {
-      'EnforcedHashRocketStyle' => 'key',
-      'EnforcedColonStyle' => 'key'
-    }
   end
 
   context 'with default configuration' do
@@ -330,10 +330,18 @@ describe RuboCop::Cop::Layout::AlignHash, :config do
       RUBY
     end
 
-    it 'accepts hashes that use different separators and double splats' do
+    it 'accepts a symbol only hash followed by a keyword splat' do
       expect_no_offenses(<<-RUBY.strip_indent)
         hash = {
           a: 1,
+          **kw
+        }
+      RUBY
+    end
+
+    it 'accepts a keyword splat only hash' do
+      expect_no_offenses(<<-RUBY.strip_indent)
+        hash = {
           **kw
         }
       RUBY
@@ -421,6 +429,7 @@ describe RuboCop::Cop::Layout::AlignHash, :config do
         'EnforcedColonStyle' => 'junk'
       }
     end
+
     it 'fails' do
       src = <<-RUBY.strip_indent
         hash = {

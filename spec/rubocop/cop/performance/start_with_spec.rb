@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Performance::StartWith do
+RSpec.describe RuboCop::Cop::Performance::StartWith do
   subject(:cop) { described_class.new }
 
   shared_examples 'different match methods' do |method|
@@ -28,7 +28,7 @@ describe RuboCop::Cop::Performance::StartWith do
 
       it "doesn't register an error for #{method} /\\A#{str}/" do
         inspect_source("str#{method} /\\A#{str}/")
-        expect(cop.messages).to be_empty
+        expect(cop.messages.empty?).to be(true)
       end
     end
 
@@ -36,7 +36,7 @@ describe RuboCop::Cop::Performance::StartWith do
     %w[w W s S d D A Z z G b B h H R X S].each do |str|
       it "doesn't register an error for #{method} /\\A\\#{str}/" do
         inspect_source("str#{method} /\\A\\#{str}/")
-        expect(cop.messages).to be_empty
+        expect(cop.messages.empty?).to be(true)
       end
     end
 

@@ -6,49 +6,43 @@ module RuboCop
       # This cop checks that your heredocs are using the configured case.
       # By default it is configured to enforce uppercase heredocs.
       #
-      # @example
-      #
-      #   # EnforcedStyle: uppercase (default)
+      # @example EnforcedStyle: uppercase (default)
+      #   # bad
+      #   <<-sql
+      #     SELECT * FROM foo
+      #   sql
       #
       #   # good
       #   <<-SQL
       #     SELECT * FROM foo
       #   SQL
       #
+      # @example EnforcedStyle: lowercase
       #   # bad
-      #   <<-sql
+      #   <<-SQL
       #     SELECT * FROM foo
-      #   sql
-      #
-      # @example
-      #
-      #   # EnforcedStyle: lowercase
+      #   SQL
       #
       #   # good
       #   <<-sql
       #     SELECT * FROM foo
       #   sql
-      #
-      #   # bad
-      #   <<-SQL
-      #     SELECT * FROM foo
-      #   SQL
       class HeredocDelimiterCase < Cop
         include Heredoc
         include ConfigurableEnforcedStyle
 
-        MSG = 'Use %s heredoc delimiters.'.freeze
+        MSG = 'Use %<style>s heredoc delimiters.'.freeze
 
         def on_heredoc(node)
           return if correct_case_delimiters?(node)
 
-          add_offense(node, :heredoc_end)
+          add_offense(node, location: :heredoc_end)
         end
 
         private
 
         def message(_node)
-          format(MSG, style)
+          format(MSG, style: style)
         end
 
         def correct_case_delimiters?(node)

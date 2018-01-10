@@ -8,19 +8,14 @@ module RuboCop
       # with an single `#start_with?`/`#end_with?` call.
       #
       # @example
-      #
-      #   @bad
+      #   # bad
       #   str.start_with?("a") || str.start_with?(Some::CONST)
       #   str.start_with?("a", "b") || str.start_with?("c")
-      #   var1 = ...
-      #   var2 = ...
       #   str.end_with?(var1) || str.end_with?(var2)
       #
-      #   @good
+      #   # good
       #   str.start_with?("a", Some::CONST)
       #   str.start_with?("a", "b", "c")
-      #   var1 = ...
-      #   var2 = ...
       #   str.end_with?(var1, var2)
       class DoubleStartEndWith < Cop
         MSG = 'Use `%<receiver>s.%<method>s(%<combined_args>s)` ' \
@@ -68,15 +63,12 @@ module RuboCop
         end
 
         def add_offense_for_double_call(node, receiver, method, combined_args)
-          add_offense(node,
-                      :expression,
-                      format(
-                        MSG,
-                        receiver: receiver.source,
-                        method: method,
-                        combined_args: combined_args,
-                        original_code: node.source
-                      ))
+          msg = format(MSG, receiver: receiver.source,
+                            method: method,
+                            combined_args: combined_args,
+                            original_code: node.source)
+
+          add_offense(node, message: msg)
         end
 
         def check_for_active_support_aliases?

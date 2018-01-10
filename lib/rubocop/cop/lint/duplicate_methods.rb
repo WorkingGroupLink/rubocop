@@ -83,11 +83,11 @@ module RuboCop
         end
 
         def_node_matcher :alias_method?, <<-PATTERN
-          (send nil :alias_method (sym $_name) _)
+          (send nil? :alias_method (sym $_name) _)
         PATTERN
 
         def_node_matcher :attr?, <<-PATTERN
-          (send nil ${:attr_reader :attr_writer :attr_accessor :attr} $...)
+          (send nil? ${:attr_reader :attr_writer :attr_accessor :attr} $...)
         PATTERN
 
         def_node_matcher :sym_name, '(sym $_name)'
@@ -137,7 +137,9 @@ module RuboCop
         def found_method(node, method_name)
           if @definitions.key?(method_name)
             loc = node.send_type? ? node.loc.selector : node.loc.keyword
-            add_offense(node, loc, message_for_dup(node, method_name))
+            message = message_for_dup(node, method_name)
+
+            add_offense(node, location: loc, message: message)
           else
             @definitions[method_name] = source_location(node)
           end

@@ -7,10 +7,7 @@ module RuboCop
       # readability is reduced because the operands are not ordered the same
       # way as they would be ordered in spoken English.
       #
-      # @example
-      #
-      #   # EnforcedStyle: all_comparison_operators
-      #
+      # @example EnforcedStyle: all_comparison_operators (default)
       #   # bad
       #   99 == foo
       #   "bar" != foo
@@ -23,10 +20,7 @@ module RuboCop
       #   foo <= 42
       #   bar > 10
       #
-      # @example
-      #
-      #   # EnforcedStyle: equality_operators_only
-      #
+      # @example EnforcedStyle: equality_operators_only
       #   # bad
       #   99 == foo
       #   "bar" != foo
@@ -36,8 +30,9 @@ module RuboCop
       #   3 < a && a < 5
       class YodaCondition < Cop
         include ConfigurableEnforcedStyle
+        include RangeHelp
 
-        MSG = 'Reverse the order of the operands `%s`.'.freeze
+        MSG = 'Reverse the order of the operands `%<source>s`.'.freeze
 
         REVERSE_COMPARISON = {
           '<' => '>',
@@ -56,6 +51,12 @@ module RuboCop
           add_offense(node)
         end
 
+        def autocorrect(node)
+          lambda do |corrector|
+            corrector.replace(actual_code_range(node), corrected_code(node))
+          end
+        end
+
         private
 
         def yoda_condition?(node)
@@ -72,13 +73,7 @@ module RuboCop
         end
 
         def message(node)
-          format(MSG, node.source)
-        end
-
-        def autocorrect(node)
-          lambda do |corrector|
-            corrector.replace(actual_code_range(node), corrected_code(node))
-          end
+          format(MSG, source: node.source)
         end
 
         def corrected_code(node)

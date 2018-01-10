@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::MixinGrouping, :config do
+RSpec.describe RuboCop::Cop::Style::MixinGrouping, :config do
   subject(:cop) { described_class.new(config) }
 
   before do
@@ -32,7 +32,7 @@ describe RuboCop::Cop::Style::MixinGrouping, :config do
     let(:source) { code }
 
     it 'does not register an offense' do
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 
@@ -69,7 +69,7 @@ describe RuboCop::Cop::Style::MixinGrouping, :config do
                         'expect(foo).to include(bar, baz)'
       end
 
-      context 'with several mixins in seperate calls' do
+      context 'with several mixins in separate calls' do
         it_behaves_like 'code with offense',
                         ['class Foo',
                          '  include Bar, Baz',
@@ -193,7 +193,7 @@ describe RuboCop::Cop::Style::MixinGrouping, :config do
         RUBY
       end
 
-      context 'with several mixins in seperate calls' do
+      context 'with several mixins in separate calls' do
         let(:offenses) { 3 }
         let(:message) { 'Put `include` mixins in a single statement.' }
 
@@ -210,7 +210,7 @@ describe RuboCop::Cop::Style::MixinGrouping, :config do
     end
 
     context 'when using `extend`' do
-      context 'with single mixins in seperate calls' do
+      context 'with single mixins in separate calls' do
         let(:offenses) { 2 }
         let(:message) { 'Put `extend` mixins in a single statement.' }
 
@@ -245,6 +245,43 @@ describe RuboCop::Cop::Style::MixinGrouping, :config do
                          'end'].join("\n"),
                         ['class Foo',
                          '  prepend Baz, Bar',
+                         'end'].join("\n")
+      end
+
+      context 'with single mixins in separate calls, intersperced' do
+        let(:offenses) { 3 }
+        let(:message) { 'Put `prepend` mixins in a single statement.' }
+
+        it_behaves_like 'code with offense',
+                        ['class Foo',
+                         '  prepend Bar',
+                         '  prepend Baz',
+                         '  do_something_else',
+                         '  prepend Qux',
+                         'end'].join("\n"),
+                        ['class Foo',
+                         '  prepend Qux, Baz, Bar',
+                         '  do_something_else',
+                         '  ', # extra line left by prepend Qux
+                         'end'].join("\n")
+      end
+
+      context 'with mixins with receivers' do
+        let(:offenses) { 2 }
+        let(:message) { 'Put `prepend` mixins in a single statement.' }
+
+        it_behaves_like 'code with offense',
+                        ['class Foo',
+                         '  prepend Bar',
+                         '  Other.prepend Baz',
+                         '  do_something_else',
+                         '  prepend Qux',
+                         'end'].join("\n"),
+                        ['class Foo',
+                         '  prepend Qux, Bar',
+                         '  Other.prepend Baz',
+                         '  do_something_else',
+                         '  ', # extra line left by prepend Qux
                          'end'].join("\n")
       end
 

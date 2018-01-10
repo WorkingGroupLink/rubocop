@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::CommentConfig do
+RSpec.describe RuboCop::CommentConfig do
   subject(:comment_config) { described_class.new(parse_source(source)) }
 
   describe '#cop_enabled_at_line?' do
@@ -47,8 +47,8 @@ describe RuboCop::CommentConfig do
         'end',                                               # 38
         '# rubocop:enable Style/Not,Layout/Tab',
         '# rubocop:disable Style/Send, Lint/RandOne some comment why',
-        '# rubocop:disable Lint/BlockAlignment some comment why',
-        '# rubocop:enable Style/Send, Lint/BlockAlignment but why?',
+        '# rubocop:disable Layout/BlockAlignment some comment why',
+        '# rubocop:enable Style/Send, Layout/BlockAlignment but why?',
         '# rubocop:enable Lint/RandOne foo bar!',            # 43
         '# rubocop:disable FlatMap',
         '[1, 2, 3, 4].map { |e| [e, e] }.flatten(1)',
@@ -85,7 +85,7 @@ describe RuboCop::CommentConfig do
       {
         'Style/Send' => 40..42,
         'Lint/RandOne' => 40..43,
-        'Lint/BlockAlignment' => 41..42
+        'Layout/BlockAlignment' => 41..42
       }.each do |cop_name, expected|
         actual = disabled_lines_of_cop(cop_name)
         expect(actual & expected.to_a).to eq(expected.to_a)
@@ -109,7 +109,7 @@ describe RuboCop::CommentConfig do
     it 'just ignores unpaired enabling directives' do
       void_disabled_lines = disabled_lines_of_cop('Lint/Void')
       expected_part = (25..source.size).to_a
-      expect(void_disabled_lines & expected_part).to be_empty
+      expect((void_disabled_lines & expected_part).empty?).to be(true)
     end
 
     it 'supports disabling single line with a directive at end of line' do
@@ -130,12 +130,12 @@ describe RuboCop::CommentConfig do
       expect(loop_disabled_lines).not_to include(20)
     end
 
-    it 'supports disabling all cops except Lint/UnneededDisable with ' \
-       'keyword all' do
+    it 'supports disabling all cops except Lint/UnneededCopDisableDirective ' \
+       'with keyword all' do
       expected_part = (7..8).to_a
 
       cops = RuboCop::Cop::Cop.all.reject do |klass|
-        klass == RuboCop::Cop::Lint::UnneededDisable
+        klass == RuboCop::Cop::Lint::UnneededCopDisableDirective
       end
 
       cops.each do |cop|

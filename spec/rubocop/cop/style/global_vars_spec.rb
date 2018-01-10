@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::GlobalVars, :config do
+RSpec.describe RuboCop::Cop::Style::GlobalVars, :config do
   cop_config = {
     'AllowedVariables' => ['$allowed']
   }
 
   subject(:cop) { described_class.new(config) }
+
   let(:cop_config) { cop_config }
 
   it 'registers an offense for $custom' do
@@ -22,7 +23,7 @@ describe RuboCop::Cop::Style::GlobalVars, :config do
   described_class::BUILT_IN_VARS.each do |var|
     it "does not register an offense for built-in variable #{var}" do
       inspect_source("puts #{var}")
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 

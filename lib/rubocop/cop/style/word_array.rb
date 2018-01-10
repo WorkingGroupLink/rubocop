@@ -11,21 +11,17 @@ module RuboCop
       #
       # Configuration option: MinSize
       # If set, arrays with fewer elements than this value will not trigger the
-      # cop. For example, a `MinSize of `3` will not enforce a style on an array
-      # of 2 or fewer elements.
+      # cop. For example, a `MinSize` of `3` will not enforce a style on an
+      # array of 2 or fewer elements.
       #
-      # @example
-      #   EnforcedStyle: percent (default)
-      #
+      # @example EnforcedStyle: percent (default)
       #   # good
       #   %w[foo bar baz]
       #
       #   # bad
       #   ['foo', 'bar', 'baz']
       #
-      # @example
-      #   EnforcedStyle: brackets
-      #
+      # @example EnforcedStyle: brackets
       #   # good
       #   ['foo', 'bar', 'baz']
       #
@@ -56,8 +52,6 @@ module RuboCop
           end
         end
 
-        private
-
         def autocorrect(node)
           if style == :percent
             correct_percent(node, 'w')
@@ -65,6 +59,8 @@ module RuboCop
             correct_bracketed(node)
           end
         end
+
+        private
 
         def check_bracketed_array(node)
           return if allowed_bracket_array?(node)

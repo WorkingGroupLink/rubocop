@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::NonNilCheck, :config do
+RSpec.describe RuboCop::Cop::Style::NonNilCheck, :config do
   subject(:cop) { described_class.new(config) }
 
   context 'when not allowing semantic changes' do
@@ -83,7 +83,7 @@ describe RuboCop::Cop::Style::NonNilCheck, :config do
       corrected = autocorrect_source(source)
 
       expect(corrected).to eq(source)
-      expect(cop.corrections).to be_empty
+      expect(cop.corrections.empty?).to be(true)
     end
   end
 

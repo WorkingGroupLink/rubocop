@@ -15,18 +15,20 @@ module RuboCop
       #  # good
       #  Rails.root.join('app', 'models', 'goober')
       class FilePath < Cop
+        include RangeHelp
+
         MSG = 'Please use `Rails.root.join(\'path\', \'to\')` instead.'.freeze
 
         def_node_matcher :file_join_nodes?, <<-PATTERN
-          (send (const nil :File) :join ...)
+          (send (const nil? :File) :join ...)
         PATTERN
 
         def_node_search :rails_root_nodes?, <<-PATTERN
-          (send (const nil :Rails) :root)
+          (send (const nil? :Rails) :root)
         PATTERN
 
         def_node_matcher :rails_root_join_nodes?, <<-PATTERN
-          (send (send (const nil :Rails) :root) :join ...)
+          (send (send (const nil? :Rails) :root) :join ...)
         PATTERN
 
         def on_dstr(node)
@@ -62,11 +64,9 @@ module RuboCop
 
         def register_offense(node)
           line_range = node.loc.column...node.loc.last_column
-
-          add_offense(
-            node,
-            source_range(processed_source.buffer, node.loc.line, line_range)
-          )
+          source_range = source_range(processed_source.buffer, node.first_line,
+                                      line_range)
+          add_offense(node, location: source_range)
         end
       end
     end

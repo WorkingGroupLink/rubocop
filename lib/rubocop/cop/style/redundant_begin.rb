@@ -28,19 +28,29 @@ module RuboCop
         MSG = 'Redundant `begin` block detected.'.freeze
 
         def on_def(node)
-          return unless node.body && node.body.kwbegin_type?
-
-          add_offense(node.body, :begin)
+          check(node)
         end
         alias on_defs on_def
 
-        private
+        def on_block(node)
+          return if target_ruby_version < 2.5
+          return if node.braces?
+          check(node)
+        end
 
         def autocorrect(node)
           lambda do |corrector|
             corrector.remove(node.loc.begin)
             corrector.remove(node.loc.end)
           end
+        end
+
+        private
+
+        def check(node)
+          return unless node.body && node.body.kwbegin_type?
+
+          add_offense(node.body, location: :begin)
         end
       end
     end

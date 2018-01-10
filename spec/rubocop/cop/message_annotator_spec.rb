@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::MessageAnnotator do
+RSpec.describe RuboCop::Cop::MessageAnnotator do
   let(:options) { {} }
   let(:config) { RuboCop::Config.new({}) }
   let(:annotator) { described_class.new(config, config['Cop/Cop'], options) }
@@ -124,7 +124,7 @@ describe RuboCop::Cop::MessageAnnotator do
     end
 
     it 'returns an empty array without StyleGuide URL' do
-      expect(urls).to be_empty
+      expect(urls.empty?).to be(true)
     end
 
     it 'returns style guide url when it is specified' do

@@ -5,6 +5,8 @@ module RuboCop
     # Common functionality for checking whether an AST node/token is aligned
     # with something on a preceding or following line
     module PrecedingFollowingAlignment
+      private
+
       def allow_for_alignment?
         cop_config['AllowForAlignment']
       end
@@ -43,7 +45,7 @@ module RuboCop
 
       def aligned_with_line?(line_nos, range, indent = nil)
         line_nos.each do |lineno|
-          next if comment_lines.include?(lineno + 1)
+          next if aligned_comment_lines.include?(lineno + 1)
           line = processed_source.lines[lineno]
           index = line =~ /\S/
           next unless index
@@ -53,7 +55,7 @@ module RuboCop
         false
       end
 
-      def comment_lines
+      def aligned_comment_lines
         @comment_lines ||= processed_source.comments.map(&:loc).select do |r|
           begins_its_line?(r.expression)
         end.map(&:line)

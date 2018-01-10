@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::WhileUntilModifier do
+RSpec.describe RuboCop::Cop::Style::WhileUntilModifier do
   include StatementModifierHelper
 
   subject(:cop) { described_class.new(config) }
+
   let(:config) do
     hash = { 'Metrics/LineLength' => { 'Max' => 80 } }
     RuboCop::Config.new(hash)
@@ -107,24 +108,6 @@ describe RuboCop::Cop::Style::WhileUntilModifier do
             ^^^^^ Favor modifier `while` usage when having a single-line body.
           baz
       RUBY
-    end
-  end
-
-  context 'when the maximum line length is specified by the cop itself' do
-    let(:config) do
-      hash = {
-        'Metrics/LineLength' => { 'Max' => 100 },
-        'Style/WhileUntilModifier' => { 'MaxLineLength' => 80 }
-      }
-      RuboCop::Config.new(hash)
-    end
-
-    it "accepts multiline while that doesn't fit on one line" do
-      check_too_long(cop, 'while')
-    end
-
-    it "accepts multiline until that doesn't fit on one line" do
-      check_too_long(cop, 'until')
     end
   end
 end

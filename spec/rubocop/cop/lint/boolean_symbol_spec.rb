@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Lint::BooleanSymbol, :config do
+RSpec.describe RuboCop::Cop::Lint::BooleanSymbol, :config do
   subject(:cop) { described_class.new(config) }
 
   it 'registers an offense when using `:true`' do
@@ -15,6 +15,22 @@ describe RuboCop::Cop::Lint::BooleanSymbol, :config do
       :false
       ^^^^^^ Symbol with a boolean name - you probably meant to use `false`.
     RUBY
+  end
+
+  context 'when using the new hash syntax' do
+    it 'registers an offense when using `true:`' do
+      expect_offense(<<-RUBY.strip_indent)
+        { true: 'Foo' }
+          ^^^^ Symbol with a boolean name - you probably meant to use `true`.
+      RUBY
+    end
+
+    it 'registers an offense when using `false:`' do
+      expect_offense(<<-RUBY.strip_indent)
+        { false: 'Bar' }
+          ^^^^^ Symbol with a boolean name - you probably meant to use `false`.
+      RUBY
+    end
   end
 
   it 'does not register an offense when using regular symbol' do

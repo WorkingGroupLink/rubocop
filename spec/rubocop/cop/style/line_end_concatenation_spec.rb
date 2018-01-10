@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::LineEndConcatenation do
+RSpec.describe RuboCop::Cop::Style::LineEndConcatenation do
   subject(:cop) { described_class.new }
 
   it 'registers an offense for string concat at line end' do
@@ -97,7 +97,7 @@ describe RuboCop::Cop::Style::LineEndConcatenation do
         "\#{'a' + "\#{3}"}".reverse
     RUBY
     inspect_source(source)
-    expect(cop.offenses).to be_empty
+    expect(cop.offenses.empty?).to be(true)
   end
 
   it 'accepts string concat at line end when followed by comment' do

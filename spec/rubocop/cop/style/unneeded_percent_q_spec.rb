@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::UnneededPercentQ do
+RSpec.describe RuboCop::Cop::Style::UnneededPercentQ do
   subject(:cop) { described_class.new }
 
   context 'with %q strings' do
@@ -65,6 +65,17 @@ describe RuboCop::Cop::Style::UnneededPercentQ do
 
         expect(new_source).to eq("'hi'")
       end
+
+      it 'auto-corrects for strings that is concated with backslash' do
+        new_source = autocorrect_source(<<-RUBY.strip_indent)
+          %q(foo bar baz) \
+            'boogers'
+        RUBY
+        expect(new_source).to eq(<<-RUBY.strip_indent)
+          'foo bar baz' \
+            'boogers'
+        RUBY
+      end
     end
   end
 
@@ -128,6 +139,17 @@ describe RuboCop::Cop::Style::UnneededPercentQ do
 
         expect(new_source).to eq(%("hi\#{4}"))
       end
+
+      it 'auto-corrects for strings that is concated with backslash' do
+        new_source = autocorrect_source(<<-RUBY.strip_indent)
+          %Q(foo bar baz) \
+            'boogers'
+        RUBY
+        expect(new_source).to eq(<<-RUBY.strip_indent)
+          "foo bar baz" \
+            'boogers'
+        RUBY
+      end
     end
   end
 
@@ -144,28 +166,28 @@ describe RuboCop::Cop::Style::UnneededPercentQ do
      'with interpolation' do
     inspect_source("\"%q(a)\#{b}\"")
 
-    expect(cop.messages).to be_empty
+    expect(cop.messages.empty?).to be(true)
   end
 
   it 'accepts %Q at the beginning of a double quoted string ' \
      'with interpolation' do
     inspect_source("\"%Q(a)\#{b}\"")
 
-    expect(cop.messages).to be_empty
+    expect(cop.messages.empty?).to be(true)
   end
 
   it 'accepts %q at the beginning of a section of a double quoted string ' \
      'with interpolation' do
     inspect_source(%("%\#{b}%q(a)"))
 
-    expect(cop.messages).to be_empty
+    expect(cop.messages.empty?).to be(true)
   end
 
   it 'accepts %Q at the beginning of a section of a double quoted string ' \
      'with interpolation' do
     inspect_source(%("%\#{b}%Q(a)"))
 
-    expect(cop.messages).to be_empty
+    expect(cop.messages.empty?).to be(true)
   end
 
   it 'accepts %q containing string interpolation' do

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Rails::ReversibleMigration, :config do
+RSpec.describe RuboCop::Cop::Rails::ReversibleMigration, :config do
   subject(:cop) { described_class.new(config) }
 
   let(:source) do
@@ -19,7 +19,7 @@ describe RuboCop::Cop::Rails::ReversibleMigration, :config do
     it "accepts usages of #{name}" do
       inspect_source(source)
 
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 

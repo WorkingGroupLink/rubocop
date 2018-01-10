@@ -8,7 +8,7 @@ Enabled | No
 
 A Gem's requirements should be listed only once in a Gemfile.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -33,11 +33,11 @@ end
 gem 'rubocop', groups: [:development, :test]
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Include | \*\*/Gemfile, \*\*/gems.rb
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `**/*.gemfile`, `**/Gemfile`, `**/gems.rb` | Array
 
 ## Bundler/InsecureProtocolSource
 
@@ -58,7 +58,7 @@ For example, when specifying an internal gem server using HTTP on the
 intranet, a use case where HTTPS can not be specified was considered.
 Consider using HTTP only if you can not use HTTPS.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -71,11 +71,11 @@ source 'https://rubygems.org' # strongly recommended
 source 'http://rubygems.org'
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Include | \*\*/Gemfile, \*\*/gems.rb
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `**/*.gemfile`, `**/Gemfile`, `**/gems.rb` | Array
 
 ## Bundler/OrderedGems
 
@@ -85,7 +85,7 @@ Enabled | Yes
 
 Gems should be alphabetically sorted within groups.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -108,9 +108,9 @@ gem 'rubocop'
 gem 'rspec'
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Include | \*\*/Gemfile, \*\*/gems.rb
-TreatCommentsAsGroupSeparators | true
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `**/*.gemfile`, `**/Gemfile`, `**/gems.rb` | Array
+TreatCommentsAsGroupSeparators | `true` | Boolean

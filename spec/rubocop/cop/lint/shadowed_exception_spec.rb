@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Lint::ShadowedException do
+RSpec.describe RuboCop::Cop::Lint::ShadowedException do
   subject(:cop) { described_class.new }
 
   context 'modifier rescue' do
@@ -55,6 +55,21 @@ describe RuboCop::Cop::Lint::ShadowedException do
         begin
           something
         rescue CustomError, NonStandardException
+          handle_exception
+        end
+      RUBY
+    end
+
+    it 'accepts rescue containing multiple same error code exceptions' do
+      # System dependent error code depends on runtime environment.
+      stub_const('Errno::EAGAIN::Errno', 35)
+      stub_const('Errno::EWOULDBLOCK::Errno', 35)
+      stub_const('Errno::ECONNABORTED::Errno', 53)
+
+      expect_no_offenses(<<-RUBY.strip_indent)
+        begin
+          something
+        rescue Errno::EAGAIN, Errno::EWOULDBLOCK, Errno::ECONNABORTED
           handle_exception
         end
       RUBY
@@ -132,7 +147,7 @@ describe RuboCop::Cop::Lint::ShadowedException do
         end
       RUBY
 
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     context 'when there are multiple levels of exceptions in the same rescue' do
@@ -320,7 +335,7 @@ describe RuboCop::Cop::Lint::ShadowedException do
         end
       RUBY
 
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'accepts rescuing exceptions in order of level with multiple ' \
@@ -335,7 +350,7 @@ describe RuboCop::Cop::Lint::ShadowedException do
         end
       RUBY
 
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it 'accepts rescuing custom exceptions in multiple rescue groups' do
@@ -375,7 +390,7 @@ describe RuboCop::Cop::Lint::ShadowedException do
           end
         RUBY
 
-        expect(cop.offenses).to be_empty
+        expect(cop.offenses.empty?).to be(true)
       end
 
       it 'registers an offense for splat arguments rescued after ' \

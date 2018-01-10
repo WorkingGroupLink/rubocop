@@ -9,7 +9,7 @@ module RuboCop
         include OnNormalIfUnless
 
         MSG = 'Favor the ternary operator (`?:`) ' \
-              'over `%s/then/else/end` constructs.'.freeze
+              'over `%<keyword>s/then/else/end` constructs.'.freeze
 
         def on_normal_if_unless(node)
           return unless node.single_line? && node.else_branch
@@ -17,16 +17,16 @@ module RuboCop
           add_offense(node)
         end
 
-        private
-
         def autocorrect(node)
           lambda do |corrector|
             corrector.replace(node.source_range, replacement(node))
           end
         end
 
+        private
+
         def message(node)
-          format(MSG, node.keyword)
+          format(MSG, keyword: node.keyword)
         end
 
         def replacement(node)
@@ -63,7 +63,7 @@ module RuboCop
 
         def method_call_with_changed_precedence?(node)
           return false unless node.send_type? && node.arguments?
-          return false if parenthesized_call?(node)
+          return false if node.parenthesized_call?
 
           !operator?(node.method_name)
         end
@@ -72,7 +72,7 @@ module RuboCop
           return false unless node.keyword?
           return true if node.keyword_not?
 
-          !parenthesized_call?(node)
+          !node.parenthesized_call?
         end
       end
     end

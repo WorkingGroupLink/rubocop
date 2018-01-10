@@ -38,9 +38,10 @@ module RuboCop
       #       something
       #     end
       class Blank < Cop
-        MSG_NIL_OR_EMPTY = 'Use `%s` instead of `%s`.'.freeze
-        MSG_NOT_PRESENT = 'Use `%s` instead of `%s`.'.freeze
-        MSG_UNLESS_PRESENT = 'Use `if %s` instead of `%s`.'.freeze
+        MSG_NIL_OR_EMPTY = 'Use `%<prefer>s` instead of `%<current>s`.'.freeze
+        MSG_NOT_PRESENT = 'Use `%<prefer>s` instead of `%<current>s`.'.freeze
+        MSG_UNLESS_PRESENT = 'Use `if %<prefer>s` instead of ' \
+                             '`%<current>s`.'.freeze
 
         # `(send nil $_)` is not actually a valid match for an offense. Nodes
         # that have a single method call on the left hand side
@@ -51,9 +52,8 @@ module RuboCop
               {
                 (send $_ :!)
                 (send $_ :nil?)
-                (send $_ :== (:nil))
-                (send nil $_)
-                (send (:nil) :== $_)
+                (send $_ :== nil)
+                (send nil :== $_)
               }
               {
                 (send $_ :empty?)
@@ -65,7 +65,7 @@ module RuboCop
         def_node_matcher :not_present?, '(send (send $_ :present?) :!)'
 
         def_node_matcher :unless_present?, <<-PATTERN
-          (:if $(send $_ :present?) {nil (...)} ...)
+          (:if $(send $_ :present?) {nil? (...)} ...)
         PATTERN
 
         def on_send(node)
@@ -73,24 +73,22 @@ module RuboCop
 
           not_present?(node) do |receiver|
             add_offense(node,
-                        :expression,
-                        format(MSG_NOT_PRESENT,
-                               replacement(receiver),
-                               node.source))
+                        message: format(MSG_NOT_PRESENT,
+                                        prefer: replacement(receiver),
+                                        current: node.source))
           end
         end
 
         def on_or(node)
           return unless cop_config['NilOrEmpty']
 
-          nil_or_empty?(node) do |variable1, variable2|
-            return unless variable1 == variable2
+          nil_or_empty?(node) do |var1, var2|
+            return unless var1 == var2
 
             add_offense(node,
-                        :expression,
-                        format(MSG_NIL_OR_EMPTY,
-                               replacement(variable1),
-                               node.source))
+                        message: format(MSG_NIL_OR_EMPTY,
+                                        prefer: replacement(var1),
+                                        current: node.source))
           end
         end
 
@@ -102,10 +100,10 @@ module RuboCop
             range = unless_condition(node, method_call)
 
             add_offense(node,
-                        range,
-                        format(MSG_UNLESS_PRESENT,
-                               replacement(receiver),
-                               range.source))
+                        location: range,
+                        message: format(MSG_UNLESS_PRESENT,
+                                        prefer: replacement(receiver),
+                                        current: range.source))
           end
         end
 

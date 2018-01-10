@@ -20,13 +20,13 @@ module RuboCop
 
         def_node_matcher :uri_regexp_with_argument?, <<-PATTERN
           (send
-            (const ${nil cbase} :URI) :regexp
+            (const ${nil? cbase} :URI) :regexp
             (str $_))
         PATTERN
 
         def_node_matcher :uri_regexp_without_argument?, <<-PATTERN
           (send
-            (const ${nil cbase} :URI) :regexp)
+            (const ${nil? cbase} :URI) :regexp)
         PATTERN
 
         def on_send(node)
@@ -65,7 +65,7 @@ module RuboCop
         def register_offense(node, top_level: '', arg: '')
           format = format(MSG, top_level: top_level, arg: arg)
 
-          add_offense(node, :selector, format)
+          add_offense(node, location: :selector, message: format)
         end
       end
     end

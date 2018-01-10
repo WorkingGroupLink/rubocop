@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Lint::CircularArgumentReference do
+RSpec.describe RuboCop::Cop::Lint::CircularArgumentReference do
   subject(:cop) { described_class.new }
 
   describe 'circular argument references in ordinal arguments' do
@@ -93,6 +93,7 @@ describe RuboCop::Cop::Lint::CircularArgumentReference do
           end
         RUBY
       end
+
       it 'does not register an offense' do
         expect_no_offenses(<<-RUBY.strip_indent)
           def some_method(some_arg: some_method)
@@ -110,6 +111,7 @@ describe RuboCop::Cop::Lint::CircularArgumentReference do
           end
         RUBY
       end
+
       it 'registers an offense' do
         expect(cop.offenses.size).to eq(1)
         expect(cop.offenses.first.message)

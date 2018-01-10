@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::MultilineArrayBraceLayout, :config do
+RSpec.describe RuboCop::Cop::Layout::MultilineArrayBraceLayout, :config do
   subject(:cop) { described_class.new(config) }
+
   let(:cop_config) { { 'EnforcedStyle' => 'symmetrical' } }
 
   it 'ignores implicit arrays' do

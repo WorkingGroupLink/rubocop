@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Performance::CompareWithBlock do
+RSpec.describe RuboCop::Cop::Performance::CompareWithBlock do
   subject(:cop) { described_class.new }
 
   shared_examples 'compare with block' do |method|
@@ -31,7 +31,7 @@ describe RuboCop::Cop::Performance::CompareWithBlock do
 
     it "accepts valid #{method} usage" do
       inspect_source("array.#{method} { |a, b| b <=> a }")
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
 
     it "accepts #{method}_by" do

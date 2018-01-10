@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Style/FormatStringToken
-describe RuboCop::Cop::Style::FormatStringToken, :config do
+RSpec.describe RuboCop::Cop::Style::FormatStringToken, :config do
   subject(:cop) { described_class.new(config) }
 
   let(:enforced_style) { :annotated }
@@ -9,7 +8,7 @@ describe RuboCop::Cop::Style::FormatStringToken, :config do
   let(:cop_config) do
     {
       'EnforcedStyle' => enforced_style,
-      'SupportedStyles' => %i[annotated template]
+      'SupportedStyles' => %i[annotated template unannotated]
     }
   end
 
@@ -86,9 +85,39 @@ describe RuboCop::Cop::Style::FormatStringToken, :config do
     expect_no_offenses('`echo "%s %<annotated>s %{template}"`')
   end
 
+  it 'ignores regexp' do
+    expect_no_offenses('/foo bar %u/')
+  end
+
+  it 'ignores `%r` regexp' do
+    expect_no_offenses('%r{foo bar %u}')
+  end
+
+  %i[strptime strftime].each do |method_name|
+    it "ignores time format (when used as argument to #{method_name})" do
+      expect_no_offenses(<<-RUBY.strip_indent)
+        Time.#{method_name}('2017-12-13', '%Y-%m-%d')
+      RUBY
+    end
+  end
+
+  it 'ignores time format when it is stored in a variable' do
+    expect_no_offenses(<<-RUBY.strip_indent)
+      time_format = '%Y-%m-%d'
+      Time.strftime('2017-12-13', time_format)
+    RUBY
+  end
+
   it 'handles dstrs' do
     inspect_source('"c#{b}%{template}"')
     expect(cop.highlights).to eql(['%{template}'])
+  end
+
+  it 'ignores http links' do
+    expect_no_offenses(<<-RUBY.strip_indent)
+      'https://ru.wikipedia.org/wiki/%D0%90_'\
+        '(%D0%BA%D0%B8%D1%80%D0%B8%D0%BB%D0%BB%D0%B8%D1%86%D0%B0)'
+    RUBY
   end
 
   it 'handles __FILE__' do
@@ -128,5 +157,13 @@ describe RuboCop::Cop::Style::FormatStringToken, :config do
     '"%<foo>d"',
     'Prefer template tokens (like `%{foo}`) ' \
     'over annotated tokens (like `%<foo>s`).'
+  )
+
+  include_examples(
+    'offense message',
+    :unannotated,
+    '"%{foo}"',
+    'Prefer unannotated tokens (like `%s`) ' \
+    'over template tokens (like `%{foo}`).'
   )
 end

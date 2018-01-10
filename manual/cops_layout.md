@@ -9,11 +9,11 @@ Enabled | Yes
 Modifiers should be indented as deep as method definitions, or as deep
 as the class/module keyword, depending on configuration.
 
-### Example
+### Examples
+
+#### EnforcedStyle: indent (default)
 
 ```ruby
-# EnforcedStyle: indent (default)
-
 # bad
 class Plumbus
 private
@@ -25,9 +25,10 @@ class Plumbus
   private
   def smooth; end
 end
+```
+#### EnforcedStyle: outdent
 
-# EnforcedStyle: outdent
-
+```ruby
 # bad
 class Plumbus
   private
@@ -41,13 +42,12 @@ private
 end
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | indent
-SupportedStyles | outdent, indent
-IndentationWidth |
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `indent` | `outdent`, `indent`
+IndentationWidth | `<none>` | Integer
 
 ### References
 
@@ -62,7 +62,7 @@ Enabled | Yes
 Here we check if the elements of a multi-line array literal are
 aligned.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -106,95 +106,182 @@ can also be configured. The options are:
   - ignore_implicit (without curly braces)
   - ignore_explicit (with curly braces)
 
-### Example
+### Examples
+
+#### EnforcedHashRocketStyle: key (default)
 
 ```ruby
-# EnforcedHashRocketStyle: key (default)
-# EnforcedColonStyle: key (default)
+# bad
+{
+  :foo => bar,
+   :ba => baz
+}
+
+# good
+{
+  :foo => bar,
+  :ba => baz
+}
+```
+#### EnforcedHashRocketStyle: separator
+
+```ruby
+# bad
+{
+  :foo => bar,
+  :ba => baz
+}
+{
+  :foo => bar,
+  :ba  => baz
+}
+
+# good
+{
+  :foo => bar,
+   :ba => baz
+}
+```
+#### EnforcedHashRocketStyle: table
+
+```ruby
+# bad
+{
+  :foo => bar,
+   :ba => baz
+}
+
+# good
+{
+  :foo => bar,
+  :ba  => baz
+}
+```
+#### EnforcedColonStyle: key (default)
+
+```ruby
+# bad
+{
+  foo: bar,
+   ba: baz
+}
 
 # good
 {
   foo: bar,
   ba: baz
 }
-{
-  :foo => bar,
-  :ba => baz
-}
-
-# bad
-{
-  foo: bar,
-   ba: baz
-}
-{
-  :foo => bar,
-   :ba => baz
-}
 ```
+#### EnforcedColonStyle: separator
+
 ```ruby
-# EnforcedHashRocketStyle: separator
-# EnforcedColonStyle: separator
-
-#good
-{
-  foo: bar,
-   ba: baz
-}
-{
-  :foo => bar,
-   :ba => baz
-}
-
-#bad
+# bad
 {
   foo: bar,
   ba: baz
 }
+
+# good
 {
-  :foo => bar,
-  :ba => baz
-}
-{
-  :foo => bar,
-  :ba  => baz
+  foo: bar,
+   ba: baz
 }
 ```
-```ruby
-# EnforcedHashRocketStyle: table
-# EnforcedColonStyle: table
+#### EnforcedColonStyle: table
 
-#good
+```ruby
+# bad
+{
+  foo: bar,
+  ba: baz
+}
+
+# good
 {
   foo: bar,
   ba:  baz
 }
-{
-  :foo => bar,
-  :ba  => baz
-}
+```
+#### EnforcedLastArgumentHashStyle: always_inspect (default)
 
-#bad
-{
-  foo: bar,
-  ba: baz
-}
-{
-  :foo => bar,
-   :ba => baz
-}
+```ruby
+# Inspect both implicit and explicit hashes.
+
+# bad
+do_something(foo: 1,
+  bar: 2)
+
+# bad
+do_something({foo: 1,
+  bar: 2})
+
+# good
+do_something(foo: 1,
+             bar: 2)
+
+# good
+do_something(
+  foo: 1,
+  bar: 2
+)
+
+# good
+do_something({foo: 1,
+              bar: 2})
+
+# good
+do_something({
+  foo: 1,
+  bar: 2
+})
+```
+#### EnforcedLastArgumentHashStyle: always_ignore
+
+```ruby
+# Ignore both implicit and explicit hashes.
+
+# good
+do_something(foo: 1,
+  bar: 2)
+
+# good
+do_something({foo: 1,
+  bar: 2})
+```
+#### EnforcedLastArgumentHashStyle: ignore_implicit
+
+```ruby
+# Ignore only implicit hashes.
+
+# bad
+do_something({foo: 1,
+  bar: 2})
+
+# good
+do_something(foo: 1,
+  bar: 2)
+```
+#### EnforcedLastArgumentHashStyle: ignore_explicit
+
+```ruby
+# Ignore only explicit hashes.
+
+# bad
+do_something(foo: 1,
+  bar: 2)
+
+# good
+do_something({foo: 1,
+  bar: 2})
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedHashRocketStyle | key
-SupportedHashRocketStyles | key, separator, table
-EnforcedColonStyle | key
-SupportedColonStyles | key, separator, table
-EnforcedLastArgumentHashStyle | always_inspect
-SupportedLastArgumentHashStyles | always_inspect, always_ignore, ignore_implicit, ignore_explicit
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedHashRocketStyle | `key` | `key`, `separator`, `table`
+EnforcedColonStyle | `key` | `key`, `separator`, `table`
+EnforcedLastArgumentHashStyle | `always_inspect` | `always_inspect`, `always_ignore`, `ignore_implicit`, `ignore_explicit`
 
 ## Layout/AlignParameters
 
@@ -205,11 +292,11 @@ Enabled | Yes
 Here we check if the parameters on a multi-line method call or
 definition are aligned.
 
-### Example
+### Examples
+
+#### EnforcedStyle: with_first_parameter (default)
 
 ```ruby
-# EnforcedStyle: with_first_parameter
-
 # good
 
 foo :bar,
@@ -220,9 +307,9 @@ foo :bar,
 foo :bar,
   :baz
 ```
-```ruby
-# EnforcedStyle: with_fixed_indentation
+#### EnforcedStyle: with_fixed_indentation
 
+```ruby
 # good
 
 foo :bar,
@@ -234,17 +321,96 @@ foo :bar,
     :baz
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | with_first_parameter
-SupportedStyles | with_first_parameter, with_fixed_indentation
-IndentationWidth |
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `with_first_parameter` | `with_first_parameter`, `with_fixed_indentation`
+IndentationWidth | `<none>` | Integer
 
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#no-double-indent](https://github.com/bbatsov/ruby-style-guide#no-double-indent)
+
+## Layout/BlockAlignment
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks whether the end keywords are aligned properly for do
+end blocks.
+
+Three modes are supported through the `EnforcedStyleAlignWith`
+configuration parameter:
+
+`start_of_block` : the `end` shall be aligned with the
+start of the line where the `do` appeared.
+
+`start_of_line` : the `end` shall be aligned with the
+start of the line where the expression started.
+
+`either` (which is the default) : the `end` is allowed to be in either
+location. The autofixer will default to `start_of_line`.
+
+### Examples
+
+#### EnforcedStyleAlignWith: either (default)
+
+```ruby
+# bad
+
+foo.bar
+   .each do
+     baz
+       end
+
+# good
+
+variable = lambda do |i|
+  i
+end
+```
+#### EnforcedStyleAlignWith: start_of_block
+
+```ruby
+# bad
+
+foo.bar
+   .each do
+     baz
+       end
+
+# good
+
+foo.bar
+  .each do
+     baz
+   end
+```
+#### EnforcedStyleAlignWith: start_of_line
+
+```ruby
+# bad
+
+foo.bar
+   .each do
+     baz
+       end
+
+# good
+
+foo.bar
+  .each do
+     baz
+end
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyleAlignWith | `either` | `either`, `start_of_block`, `start_of_line`
 
 ## Layout/BlockEndNewline
 
@@ -255,7 +421,7 @@ Enabled | Yes
 This cop checks whether the end statement of a do..end block
 is on its own line.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -288,7 +454,7 @@ are indented in relation to its *case* or *end* keyword.
 
 It will register a separate offense for each misaligned *when*.
 
-### Example
+### Examples
 
 ```ruby
 # If Layout/EndAlignment is set to keyword style (default)
@@ -312,12 +478,12 @@ else
   y / 3
 end
 ```
+#### EnforcedStyle: case (default)
+
 ```ruby
 # if EndAlignment is set to other style such as
 # start_of_line (as shown below), then *when* alignment
 # configuration does have an effect.
-
-# EnforcedStyle: case (default)
 
 # bad
 a = case n
@@ -334,9 +500,10 @@ a = case n
     else
       y / 3
 end
+```
+#### EnforcedStyle: end
 
-# EnforcedStyle: end
-
+```ruby
 # bad
 a = case n
     when 0
@@ -354,18 +521,137 @@ else
 end
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | case
-SupportedStyles | case, end
-IndentOneStep | false
-IndentationWidth |
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `case` | `case`, `end`
+IndentOneStep | `false` | Boolean
+IndentationWidth | `<none>` | Integer
 
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#indent-when-to-case](https://github.com/bbatsov/ruby-style-guide#indent-when-to-case)
+
+## Layout/ClassStructure
+
+Enabled by default | Supports autocorrection
+--- | ---
+Disabled | Yes
+
+Checks if the code style follows the ExpectedOrder configuration:
+
+`Categories` allows us to map macro names into a category.
+
+Consider an example of code style that covers the following order:
+- Constants
+- Associations (has_one, has_many)
+- Attributes (attr_accessor, attr_writer, attr_reader)
+- Initializer
+- Instance methods
+- Protected methods
+- Private methods
+
+You can configure the following order:
+
+```yaml
+ Layout/ClassStructure:
+   Categories:
+     module_inclusion:
+       - include
+       - prepend
+       - extend
+   ExpectedOrder:
+       - module_inclusion
+       - constants
+       - public_class_methods
+       - initializer
+       - public_methods
+       - protected_methods
+       - private_methods
+
+```
+Instead of putting all literals in the expected order, is also
+possible to group categories of macros.
+
+```yaml
+ Layout/ClassStructure:
+   Categories:
+     association:
+       - has_many
+       - has_one
+     attribute:
+       - attr_accessor
+       - attr_reader
+       - attr_writer
+```
+
+### Examples
+
+```ruby
+# bad
+# Expect extend be before constant
+class Person < ApplicationRecord
+  has_many :orders
+  ANSWER = 42
+
+  extend SomeModule
+  include AnotherModule
+end
+
+# good
+class Person
+  # extend and include go first
+  extend SomeModule
+  include AnotherModule
+
+  # inner classes
+  CustomError = Class.new(StandardError)
+
+  # constants are next
+  SOME_CONSTANT = 20
+
+  # afterwards we have attribute macros
+  attr_reader :name
+
+  # followed by other macros (if any)
+  validates :name
+
+  # public class methods are next in line
+  def self.some_method
+  end
+
+  # initialization goes between class methods and instance methods
+  def initialize
+  end
+
+  # followed by other public instance methods
+  def some_method
+  end
+
+  # protected and private methods are grouped near the end
+  protected
+
+  def some_protected_method
+  end
+
+  private
+
+  def some_private_method
+  end
+end
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+Categories | `{"module_inclusion"=>["include", "prepend", "extend"]}` | 
+ExpectedOrder | `module_inclusion`, `constants`, `public_class_methods`, `initializer`, `public_methods`, `protected_methods`, `private_methods` | Array
+
+### References
+
+* [https://github.com/bbatsov/ruby-style-guide#consistent-classes](https://github.com/bbatsov/ruby-style-guide#consistent-classes)
 
 ## Layout/ClosingParenthesisIndentation
 
@@ -377,7 +663,7 @@ This cops checks the indentation of hanging closing parentheses in
 method calls, method definitions, and grouped expressions. A hanging
 closing parenthesis means `)` preceded by a line break.
 
-### Example
+### Examples
 
 ```ruby
 # good: when x is on its own line, indent this way
@@ -396,6 +682,7 @@ def func(
   x,
   y
   )
+end
 ```
 
 ## Layout/CommentIndentation
@@ -406,6 +693,119 @@ Enabled | Yes
 
 This cops checks the indentation of comments.
 
+### Examples
+
+```ruby
+# bad
+  # comment here
+def method_name
+end
+
+  # comment here
+a = 'hello'
+
+# yet another comment
+  if true
+    true
+  end
+
+# good
+# comment here
+def method_name
+end
+
+# comment here
+a = 'hello'
+
+# yet another comment
+if true
+  true
+end
+```
+
+## Layout/ConditionPosition
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | No
+
+This cop checks for conditions that are not on the same line as
+if/while/until.
+
+### Examples
+
+```ruby
+# bad
+
+if
+  some_condition
+  do_something
+end
+```
+```ruby
+# good
+
+if some_condition
+  do_something
+end
+```
+
+### References
+
+* [https://github.com/bbatsov/ruby-style-guide#same-line-condition](https://github.com/bbatsov/ruby-style-guide#same-line-condition)
+
+## Layout/DefEndAlignment
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks whether the end keywords of method definitions are
+aligned properly.
+
+Two modes are supported through the EnforcedStyleAlignWith configuration
+parameter. If it's set to `start_of_line` (which is the default), the
+`end` shall be aligned with the start of the line where the `def`
+keyword is. If it's set to `def`, the `end` shall be aligned with the
+`def` keyword.
+
+### Examples
+
+#### EnforcedStyleAlignWith: start_of_line (default)
+
+```ruby
+# bad
+
+private def foo
+            end
+
+# good
+
+private def foo
+end
+```
+#### EnforcedStyleAlignWith: def
+
+```ruby
+# bad
+
+private def foo
+            end
+
+# good
+
+private def foo
+        end
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyleAlignWith | `start_of_line` | `start_of_line`, `def`
+AutoCorrect | `false` | Boolean
+Severity | `warning` | String
+
 ## Layout/DotPosition
 
 Enabled by default | Supports autocorrection
@@ -414,7 +814,9 @@ Enabled | Yes
 
 This cop checks the . position in multi-line method calls.
 
-### Example
+### Examples
+
+#### EnforcedStyle: leading (default)
 
 ```ruby
 # bad
@@ -425,13 +827,23 @@ something.
 something
   .method
 ```
+#### EnforcedStyle: trailing
 
-### Important attributes
+```ruby
+# bad
+something
+  .method
 
-Attribute | Value
---- | ---
-EnforcedStyle | leading
-SupportedStyles | leading, trailing
+# good
+something.
+  mehod
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `leading` | `leading`, `trailing`
 
 ### References
 
@@ -448,7 +860,7 @@ be aligned with an if/unless/while/until/begin/def keyword, but there
 are special cases when they should follow the same rules as the
 alignment of end.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -481,7 +893,7 @@ Enabled | Yes
 
 Checks for a newline after the final magic comment.
 
-### Example
+### Examples
 
 ```ruby
 # good
@@ -520,7 +932,7 @@ empty lines.
 `AllowAdjacentOneLineDefs` can be used to configure is adjacent
 one line methods definitions are an offense
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -538,12 +950,12 @@ def b
 end
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-AllowAdjacentOneLineDefs | false
-NumberOfEmptyLines | 1
+Name | Default value | Configurable values
+--- | --- | ---
+AllowAdjacentOneLineDefs | `false` | Boolean
+NumberOfEmptyLines | `1` | Integer
 
 ### References
 
@@ -557,6 +969,21 @@ Enabled | Yes
 
 This cops checks for two or more consecutive blank lines.
 
+### Examples
+
+```ruby
+# bad - It has two empty lines.
+some_method
+# one empty line
+# two empty lines
+some_method
+
+# good
+some_method
+# one empty line
+some_method
+```
+
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#two-or-more-empty-lines](https://github.com/bbatsov/ruby-style-guide#two-or-more-empty-lines)
@@ -569,7 +996,7 @@ Enabled | Yes
 
 Access modifiers should be surrounded by blank lines.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -593,6 +1020,50 @@ end
 
 * [https://github.com/bbatsov/ruby-style-guide#empty-lines-around-access-modifier](https://github.com/bbatsov/ruby-style-guide#empty-lines-around-access-modifier)
 
+## Layout/EmptyLinesAroundArguments
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cops checks if empty lines exist around the arguments
+of a method invocation.
+
+### Examples
+
+```ruby
+# bad
+do_something(
+  foo
+
+)
+
+process(bar,
+
+        baz: qux,
+        thud: fred)
+
+some_method(
+
+  [1,2,3],
+  x: y
+)
+
+# good
+do_something(
+  foo
+)
+
+process(bar,
+        baz: qux,
+        thud: fred)
+
+some_method(
+  [1,2,3],
+  x: y
+)
+```
+
 ## Layout/EmptyLinesAroundBeginBody
 
 Enabled by default | Supports autocorrection
@@ -602,20 +1073,20 @@ Enabled | Yes
 This cops checks if empty lines exist around the bodies of begin-end
 blocks.
 
-### Example
+### Examples
 
 ```ruby
 # good
 
 begin
-  ...
+  # ...
 end
 
 # bad
 
 begin
 
-  ...
+  # ...
 
 end
 ```
@@ -633,34 +1104,34 @@ Enabled | Yes
 This cops checks if empty lines around the bodies of blocks match
 the configuration.
 
-### Example
+### Examples
+
+#### EnforcedStyle: empty_lines
 
 ```ruby
-# EnforcedStyle: empty_lines
-
 # good
 
 foo do |bar|
 
-  ...
+  # ...
 
 end
+```
+#### EnforcedStyle: no_empty_lines (default)
 
-# EnforcedStyle: no_empty_lines
-
+```ruby
 # good
 
 foo do |bar|
-  ...
+  # ...
 end
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | no_empty_lines
-SupportedStyles | empty_lines, no_empty_lines
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `no_empty_lines` | `empty_lines`, `no_empty_lines`
 
 ### References
 
@@ -675,28 +1146,61 @@ Enabled | Yes
 This cops checks if empty lines around the bodies of classes match
 the configuration.
 
-### Example
+### Examples
+
+#### EnforcedStyle: empty_lines
 
 ```ruby
-EnforcedStyle: empty_lines
-
 # good
 
 class Foo
 
-   def bar
-     ...
-   end
+  def bar
+    # ...
+  end
 
 end
 ```
+#### EnforcedStyle: empty_lines_except_namespace
 
-### Important attributes
+```ruby
+# good
 
-Attribute | Value
---- | ---
-EnforcedStyle | no_empty_lines
-SupportedStyles | empty_lines, empty_lines_except_namespace, empty_lines_special, no_empty_lines
+class Foo
+  class Bar
+
+    # ...
+
+  end
+end
+```
+#### EnforcedStyle: empty_lines_special
+
+```ruby
+# good
+class Foo
+
+  def bar; end
+
+end
+```
+#### EnforcedStyle: no_empty_lines (default)
+
+```ruby
+# good
+
+class Foo
+  def bar
+    # ...
+  end
+end
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `no_empty_lines` | `empty_lines`, `empty_lines_except_namespace`, `empty_lines_special`, `no_empty_lines`
 
 ### References
 
@@ -714,7 +1218,7 @@ beginning/end and around method definition body.
 `Style/EmptyLinesAroundBeginBody` or `Style/EmptyLinesAroundMethodBody`
 can be used for this purpose.
 
-### Example
+### Examples
 
 ```ruby
 # good
@@ -778,20 +1282,20 @@ Enabled | Yes
 
 This cops checks if empty lines exist around the bodies of methods.
 
-### Example
+### Examples
 
 ```ruby
 # good
 
 def foo
-  ...
+  # ...
 end
 
 # bad
 
 def bar
 
-  ...
+  # ...
 
 end
 ```
@@ -809,42 +1313,135 @@ Enabled | Yes
 This cops checks if empty lines around the bodies of modules match
 the configuration.
 
-### Example
+### Examples
+
+#### EnforcedStyle: empty_lines
 
 ```ruby
-EnforcedStyle: empty_lines
-
 # good
 
 module Foo
 
   def bar
-    ...
+    # ...
   end
 
 end
+```
+#### EnforcedStyle: empty_lines_except_namespace
 
-EnforcedStyle: no_empty_lines
+```ruby
+# good
 
+module Foo
+  module Bar
+
+    # ...
+
+  end
+end
+```
+#### EnforcedStyle: empty_lines_special
+
+```ruby
+# good
+module Foo
+
+  def bar; end
+
+end
+```
+#### EnforcedStyle: no_empty_lines (default)
+
+```ruby
 # good
 
 module Foo
   def bar
-    ...
+    # ...
   end
 end
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | no_empty_lines
-SupportedStyles | empty_lines, empty_lines_except_namespace, empty_lines_special, no_empty_lines
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `no_empty_lines` | `empty_lines`, `empty_lines_except_namespace`, `empty_lines_special`, `no_empty_lines`
 
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#empty-lines-around-bodies](https://github.com/bbatsov/ruby-style-guide#empty-lines-around-bodies)
+
+## Layout/EndAlignment
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks whether the end keywords are aligned properly.
+
+Three modes are supported through the `EnforcedStyleAlignWith`
+configuration parameter:
+
+If it's set to `keyword` (which is the default), the `end`
+shall be aligned with the start of the keyword (if, class, etc.).
+
+If it's set to `variable` the `end` shall be aligned with the
+left-hand-side of the variable assignment, if there is one.
+
+If it's set to `start_of_line`, the `end` shall be aligned with the
+start of the line where the matching keyword appears.
+
+### Examples
+
+#### EnforcedStyleAlignWith: keyword (default)
+
+```ruby
+# bad
+
+variable = if true
+    end
+
+# good
+
+variable = if true
+           end
+```
+#### EnforcedStyleAlignWith: variable
+
+```ruby
+# bad
+
+variable = if true
+    end
+
+# good
+
+variable = if true
+end
+```
+#### EnforcedStyleAlignWith: start_of_line
+
+```ruby
+# bad
+
+variable = if true
+    end
+
+# good
+
+puts(if true
+end)
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyleAlignWith | `keyword` | `keyword`, `variable`, `start_of_line`
+AutoCorrect | `false` | Boolean
+Severity | `warning` | String
 
 ## Layout/EndOfLine
 
@@ -854,12 +1451,11 @@ Enabled | No
 
 This cop checks for Windows-style line endings in the source code.
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | native
-SupportedStyles | native, lf, crlf
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `native` | `native`, `lf`, `crlf`
 
 ### References
 
@@ -873,7 +1469,7 @@ Enabled | Yes
 
 This cop checks for extra/unnecessary whitespace.
 
-### Example
+### Examples
 
 ```ruby
 # good if AllowForAlignment is true
@@ -888,12 +1484,12 @@ set_app("RuboCop")
 website  = "https://github.com/bbatsov/rubocop"
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-AllowForAlignment | true
-ForceEqualSignAlignment | false
+Name | Default value | Configurable values
+--- | --- | ---
+AllowForAlignment | `true` | Boolean
+ForceEqualSignAlignment | `false` | Boolean
 
 ## Layout/FirstArrayElementLineBreak
 
@@ -904,7 +1500,7 @@ Disabled | Yes
 This cop checks for a line break before the first element in a
 multi-line array.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -926,7 +1522,7 @@ Disabled | Yes
 This cop checks for a line break before the first element in a
 multi-line hash.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -948,7 +1544,7 @@ Disabled | Yes
 This cop checks for a line break before the first argument in a
 multi-line method call.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -974,7 +1570,7 @@ Disabled | Yes
 This cop checks for a line break before the first parameter in a
 multi-line method parameter definition.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1007,7 +1603,7 @@ This cop checks the indentation of the first parameter in a method call.
 Parameters after the first one are checked by Style/AlignParameters, not
 by this cop.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1021,13 +1617,12 @@ some_method(
 second_param)
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | special_for_inner_method_call_in_parentheses
-SupportedStyles | consistent, special_for_inner_method_call, special_for_inner_method_call_in_parentheses
-IndentationWidth |
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `special_for_inner_method_call_in_parentheses` | `consistent`, `special_for_inner_method_call`, `special_for_inner_method_call_in_parentheses`
+IndentationWidth | `<none>` | Integer
 
 ## Layout/IndentArray
 
@@ -1051,32 +1646,82 @@ more than the start of the line where the opening square bracket is.
 This default style is called 'special_inside_parentheses'. Alternative
 styles are 'consistent' and 'align_brackets'. Here are examples:
 
-    # special_inside_parentheses
-    array = [
-      :value
-    ]
-    but_in_a_method_call([
-                           :its_like_this
-                         ])
-    # consistent
-    array = [
-      :value
-    ]
-    and_in_a_method_call([
-      :no_difference
-    ])
-    # align_brackets
-    and_now_for_something = [
-                              :completely_different
-                            ]
+### Examples
 
-### Important attributes
+#### EnforcedStyle: special_inside_parentheses (default)
 
-Attribute | Value
---- | ---
-EnforcedStyle | special_inside_parentheses
-SupportedStyles | special_inside_parentheses, consistent, align_brackets
-IndentationWidth |
+```ruby
+# The `special_inside_parentheses` style enforces that the first
+# element in an array literal where the opening bracket and first
+# element are on seprate lines is indented one step (two spaces) more
+# than the position inside the opening parenthesis.
+
+#bad
+array = [
+  :value
+]
+and_in_a_method_call([
+  :no_difference
+                     ])
+
+#good
+array = [
+  :value
+]
+but_in_a_method_call([
+                       :its_like_this
+                     ])
+```
+#### EnforcedStyle: consistent
+
+```ruby
+# The `consistent` style enforces that the first element in an array
+# literal where the opening bracket and the first element are on
+# seprate lines is indented the same as an array literal which is not
+# defined inside a method call.
+
+#bad
+# consistent
+array = [
+  :value
+]
+but_in_a_method_call([
+                       :its_like_this
+])
+
+#good
+array = [
+  :value
+]
+and_in_a_method_call([
+  :no_difference
+])
+```
+#### EnforcedStyle: align_brackets
+
+```ruby
+# The `align_brackets` style enforces that the opening and closing
+# brackets are indented to the same position.
+
+#bad
+# align_brackets
+and_now_for_something = [
+                          :completely_different
+]
+
+#good
+# align_brackets
+and_now_for_something = [
+                          :completely_different
+                        ]
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `special_inside_parentheses` | `special_inside_parentheses`, `consistent`, `align_brackets`
+IndentationWidth | `<none>` | Integer
 
 ## Layout/IndentAssignment
 
@@ -1090,7 +1735,7 @@ right-hand-side of a multi-line assignment.
 The indentation of the remaining lines can be corrected with
 other cops such as `IndentationConsistency` and `EndAlignment`.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1106,11 +1751,11 @@ value =
   end
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-IndentationWidth |
+Name | Default value | Configurable values
+--- | --- | ---
+IndentationWidth | `<none>` | Integer
 
 ## Layout/IndentHash
 
@@ -1134,32 +1779,80 @@ than the start of the line where the opening curly brace is.
 This default style is called 'special_inside_parentheses'. Alternative
 styles are 'consistent' and 'align_braces'. Here are examples:
 
-    # special_inside_parentheses
-    hash = {
-      key: :value
-    }
-    but_in_a_method_call({
-                           its_like: :this
-                         })
-    # consistent
-    hash = {
-      key: :value
-    }
-    and_in_a_method_call({
-      no: :difference
-    })
-    # align_braces
-    and_now_for_something = {
-                              completely: :different
-                            }
+### Examples
 
-### Important attributes
+#### EnforcedStyle: special_inside_parentheses (default)
 
-Attribute | Value
---- | ---
-EnforcedStyle | special_inside_parentheses
-SupportedStyles | special_inside_parentheses, consistent, align_braces
-IndentationWidth |
+```ruby
+# The `special_inside_parentheses` style enforces that the first key
+# in a hash literal where the opening brace and the first key are on
+# separate lines is indented one step (two spaces) more than the
+# position inside the opening parentheses.
+
+# bad
+hash = {
+  key: :value
+}
+and_in_a_method_call({
+  no: :difference
+                     })
+
+# good
+special_inside_parentheses
+hash = {
+  key: :value
+}
+but_in_a_method_call({
+                       its_like: :this
+                     })
+```
+#### EnforcedStyle: consistent
+
+```ruby
+# The `consistent` style enforces that the first key in a hash
+# literal where the opening brace and the first key are on
+# seprate lines is indented the same as a hash literal which is not
+# defined inside a method call.
+
+# bad
+hash = {
+  key: :value
+}
+but_in_a_method_call({
+                       its_like: :this
+                      })
+
+# good
+hash = {
+  key: :value
+}
+and_in_a_method_call({
+  no: :difference
+})
+```
+#### EnforcedStyle: align_braces
+
+```ruby
+# The `align_brackets` style enforces that the opening and closing
+# braces are indented to the same position.
+
+# bad
+and_now_for_something = {
+                          completely: :different
+}
+
+# good
+and_now_for_something = {
+                          completely: :different
+                        }
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `special_inside_parentheses` | `special_inside_parentheses`, `consistent`, `align_braces`
+IndentationWidth | `<none>` | Integer
 
 ## Layout/IndentHeredoc
 
@@ -1172,8 +1865,11 @@ are indented one step.
 In Ruby 2.3 or newer, squiggly heredocs (`<<~`) should be used. If you
 use the older rubies, you should introduce some library to your project
 (e.g. ActiveSupport, Powerpack or Unindent).
+Note: When `Metrics/LineLength`'s `AllowHeredoc` is false(not default),
+      this cop does not add any offenses for long here documents to
+      avoid `Metrics/LineLength`'s offenses.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1196,12 +1892,11 @@ RUBY
 RUBY
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | auto_detection
-SupportedStyles | auto_detection, squiggly, active_support, powerpack, unindent
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `auto_detection` | `auto_detection`, `squiggly`, `active_support`, `powerpack`, `unindent`
 
 ### References
 
@@ -1215,7 +1910,7 @@ Enabled | Yes
 
 This cops checks for inconsistent indentation.
 
-### Example
+### Examples
 
 ```ruby
 class A
@@ -1226,12 +1921,11 @@ class A
 end
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | normal
-SupportedStyles | normal, rails
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `normal` | `normal`, `rails`
 
 ### References
 
@@ -1249,19 +1943,27 @@ of spaces.
 See also the IndentationConsistency cop which is the companion to this
 one.
 
-### Example
+### Examples
 
 ```ruby
-# bad, Width: 2
+# bad
 class A
  def test
   puts 'hello'
  end
 end
 
-# bad, Width: 2,
-       IgnoredPatterns:
-         - '^\s*module'
+# good
+class A
+  def test
+    puts 'hello'
+  end
+end
+```
+#### IgnoredPatterns: ['^\s*module']
+
+```ruby
+# bad
 module A
 class B
   def test
@@ -1270,16 +1972,7 @@ class B
 end
 end
 
-# good, Width: 2
-class A
-  def test
-    puts 'hello'
-  end
-end
-
-# good, Width: 2,
-        IgnoredPatterns:
-          - '^\s*module'
+# good
 module A
 class B
   def test
@@ -1289,12 +1982,12 @@ end
 end
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-Width | 2
-IgnoredPatterns |
+Name | Default value | Configurable values
+--- | --- | ---
+Width | `2` | Integer
+IgnoredPatterns | `[]` | Array
 
 ### References
 
@@ -1321,7 +2014,7 @@ required for some RDoc special syntax, like `#++`, `#--`,
 `#:nodoc`, `=begin`- and `=end` comments, "shebang" directives,
 or rackup options.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1364,44 +2057,83 @@ When using the `same_line` style:
 The closing brace of a multi-line array literal must be on the same
 line as the last element of the array.
 
-### Example
+### Examples
+
+#### EnforcedStyle: symmetrical (default)
 
 ```ruby
-# symmetrical: bad
-# new_line: good
-# same_line: bad
+# bad
 [ :a,
   :b
 ]
 
-# symmetrical: bad
-# new_line: bad
-# same_line: good
+# bad
 [
   :a,
   :b ]
 
-# symmetrical: good
-# new_line: bad
-# same_line: good
+# good
 [ :a,
   :b ]
 
-# symmetrical: good
-# new_line: good
-# same_line: bad
+# good
 [
   :a,
   :b
 ]
 ```
+#### EnforcedStyle: new_line
 
-### Important attributes
+```ruby
+# bad
+[
+  :a,
+  :b ]
 
-Attribute | Value
---- | ---
-EnforcedStyle | symmetrical
-SupportedStyles | symmetrical, new_line, same_line
+# bad
+[ :a,
+  :b ]
+
+# good
+[ :a,
+  :b
+]
+
+# good
+[
+  :a,
+  :b
+]
+```
+#### EnforcedStyle: same_line
+
+```ruby
+# bad
+[ :a,
+  :b
+]
+
+# bad
+[
+  :a,
+  :b
+]
+
+# good
+[
+  :a,
+  :b ]
+
+# good
+[ :a,
+  :b ]
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `symmetrical` | `symmetrical`, `new_line`, `same_line`
 
 ## Layout/MultilineAssignmentLayout
 
@@ -1412,26 +2144,23 @@ Disabled | Yes
 This cop checks whether the multiline assignments have a newline
 after the assignment operator.
 
-### Example
+### Examples
+
+#### EnforcedStyle: new_line (default)
 
 ```ruby
-# bad (with EnforcedStyle set to new_line)
+# bad
 foo = if expression
   'bar'
 end
 
-# good (with EnforcedStyle set to same_line)
-foo = if expression
-  'bar'
-end
-
-# good (with EnforcedStyle set to new_line)
+# good
 foo =
   if expression
     'bar'
   end
 
-# good (with EnforcedStyle set to new_line)
+# good
 foo =
   begin
     compute
@@ -1439,14 +2168,20 @@ foo =
     nil
   end
 ```
+#### EnforcedStyle: same_line
 
-### Important attributes
+```ruby
+# good
+foo = if expression
+  'bar'
+end
+```
 
-Attribute | Value
---- | ---
-SupportedTypes | block, case, class, if, kwbegin, module
-EnforcedStyle | new_line
-SupportedStyles | same_line, new_line
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `new_line` | `same_line`, `new_line`
 
 ### References
 
@@ -1462,7 +2197,7 @@ This cop checks whether the multiline do end blocks have a newline
 after the start of the block. Additionally, it checks whether the block
 arguments, if any, are on the same line as the start of the block.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1523,44 +2258,82 @@ When using the `same_line` style:
 The closing brace of a multi-line hash literal must be on the same
 line as the last element of the hash.
 
-### Example
+### Examples
+
+#### EnforcedStyle: symmetrical (default)
 
 ```ruby
-# symmetrical: bad
-# new_line: good
-# same_line: bad
+# bad
 { a: 1,
   b: 2
 }
-
-# symmetrical: bad
-# new_line: bad
-# same_line: good
+# bad
 {
   a: 1,
   b: 2 }
 
-# symmetrical: good
-# new_line: bad
-# same_line: good
+# good
 { a: 1,
   b: 2 }
 
-# symmetrical: good
-# new_line: good
-# same_line: bad
+# good
 {
   a: 1,
   b: 2
 }
 ```
+#### EnforcedStyle: new_line
 
-### Important attributes
+```ruby
+# bad
+{
+  a: 1,
+  b: 2 }
 
-Attribute | Value
---- | ---
-EnforcedStyle | symmetrical
-SupportedStyles | symmetrical, new_line, same_line
+# bad
+{ a: 1,
+  b: 2 }
+
+# good
+{ a: 1,
+  b: 2
+}
+
+# good
+{
+  a: 1,
+  b: 2
+}
+```
+#### EnforcedStyle: same_line
+
+```ruby
+# bad
+{ a: 1,
+  b: 2
+}
+
+# bad
+{
+  a: 1,
+  b: 2
+}
+
+# good
+{
+  a: 1,
+  b: 2 }
+
+# good
+{ a: 1,
+  b: 2 }
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `symmetrical` | `symmetrical`, `new_line`, `same_line`
 
 ## Layout/MultilineMethodCallBraceLayout
 
@@ -1591,44 +2364,83 @@ When using the `same_line` style:
 The closing brace of a multi-line method call must be on the same
 line as the last argument of the call.
 
-### Example
+### Examples
+
+#### EnforcedStyle: symmetrical (default)
 
 ```ruby
-# symmetrical: bad
-# new_line: good
-# same_line: bad
+# bad
 foo(a,
   b
 )
 
-# symmetrical: bad
-# new_line: bad
-# same_line: good
+# bad
 foo(
   a,
   b)
 
-# symmetrical: good
-# new_line: bad
-# same_line: good
+# good
 foo(a,
   b)
 
-# symmetrical: good
-# new_line: good
-# same_line: bad
+# good
 foo(
   a,
   b
 )
 ```
+#### EnforcedStyle: new_line
 
-### Important attributes
+```ruby
+# bad
+foo(
+  a,
+  b)
 
-Attribute | Value
---- | ---
-EnforcedStyle | symmetrical
-SupportedStyles | symmetrical, new_line, same_line
+# bad
+foo(a,
+  b)
+
+# good
+foo(a,
+  b
+)
+
+# good
+foo(
+  a,
+  b
+)
+```
+#### EnforcedStyle: same_line
+
+```ruby
+# bad
+foo(a,
+  b
+)
+
+# bad
+foo(
+  a,
+  b
+)
+
+# good
+foo(
+  a,
+  b)
+
+# good
+foo(a,
+  b)
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `symmetrical` | `symmetrical`, `new_line`, `same_line`
 
 ## Layout/MultilineMethodCallIndentation
 
@@ -1639,7 +2451,9 @@ Enabled | Yes
 This cop checks the indentation of the method name part in method calls
 that span more than one line.
 
-### Example
+### Examples
+
+#### EnforcedStyle: aligned (default)
 
 ```ruby
 # bad
@@ -1648,27 +2462,31 @@ while myvariable
   # do something
 end
 
-# good, EnforcedStyle: aligned
+# good
 while myvariable
       .b
   # do something
 end
 
-# good, EnforcedStyle: aligned
+# good
 Thing.a
      .b
      .c
+```
+#### EnforcedStyle: indented
 
-# good, EnforcedStyle:    indented,
-        IndentationWidth: 2
+```ruby
+# good
 while myvariable
   .b
 
   # do something
 end
+```
+#### EnforcedStyle: indented_relative_to_receiver
 
-# good, EnforcedStyle:    indented_relative_to_receiver,
-        IndentationWidth: 2
+```ruby
+# good
 while myvariable
         .a
         .b
@@ -1676,21 +2494,19 @@ while myvariable
   # do something
 end
 
-# good, EnforcedStyle:    indented_relative_to_receiver,
-        IndentationWidth: 2
+# good
 myvariable = Thing
                .a
                .b
                .c
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | aligned
-SupportedStyles | aligned, indented, indented_relative_to_receiver
-IndentationWidth |
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `aligned` | `aligned`, `indented`, `indented_relative_to_receiver`
+IndentationWidth | `<none>` | Integer
 
 ## Layout/MultilineMethodDefinitionBraceLayout
 
@@ -1721,44 +2537,95 @@ When using the `same_line` style:
 The closing brace of a multi-line method definition must be on the same
 line as the last parameter of the definition.
 
-### Example
+### Examples
+
+#### EnforcedStyle: symmetrical (default)
 
 ```ruby
-# symmetrical: bad
-# new_line: good
-# same_line: bad
+# bad
 def foo(a,
   b
 )
+end
 
-# symmetrical: bad
-# new_line: bad
-# same_line: good
+# bad
 def foo(
   a,
   b)
+end
 
-# symmetrical: good
-# new_line: bad
-# same_line: good
+# good
 def foo(a,
   b)
+end
 
-# symmetrical: good
-# new_line: good
-# same_line: bad
+# good
 def foo(
   a,
   b
 )
+end
+```
+#### EnforcedStyle: new_line
+
+```ruby
+# bad
+def foo(
+  a,
+  b)
+end
+
+# bad
+def foo(a,
+  b)
+end
+
+# good
+def foo(a,
+  b
+)
+end
+
+# good
+def foo(
+  a,
+  b
+)
+end
+```
+#### EnforcedStyle: same_line
+
+```ruby
+# bad
+def foo(a,
+  b
+)
+end
+
+# bad
+def foo(
+  a,
+  b
+)
+end
+
+# good
+def foo(
+  a,
+  b)
+end
+
+# good
+def foo(a,
+  b)
+end
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | symmetrical
-SupportedStyles | symmetrical, new_line, same_line
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `symmetrical` | `symmetrical`, `new_line`, `same_line`
 
 ## Layout/MultilineOperationIndentation
 
@@ -1769,12 +2636,14 @@ Enabled | Yes
 This cop checks the indentation of the right hand side operand in
 binary operations that span more than one line.
 
-### Example
+### Examples
+
+#### EnforcedStyle: aligned (default)
 
 ```ruby
 # bad
 if a +
-b
+    b
   something
 end
 
@@ -1784,14 +2653,28 @@ if a +
   something
 end
 ```
+#### EnforcedStyle: indented
 
-### Important attributes
+```ruby
+# bad
+if a +
+   b
+  something
+end
 
-Attribute | Value
---- | ---
-EnforcedStyle | aligned
-SupportedStyles | aligned, indented
-IndentationWidth |
+# good
+if a +
+    b
+  something
+end
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `aligned` | `aligned`, `indented`
+IndentationWidth | `<none>` | Integer
 
 ## Layout/RescueEnsureAlignment
 
@@ -1802,7 +2685,7 @@ Enabled | Yes
 This cop checks whether the rescue and ensure keywords are aligned
 properly.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1830,7 +2713,7 @@ Checks for colon (:) not followed by some kind of space.
 N.B. this cop does not handle spaces after a ternary operator, which are
 instead handled by Layout/SpaceAroundOperators.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1852,15 +2735,15 @@ Enabled | Yes
 
 Checks for comma (,) not followed by some kind of space.
 
-### Example
+### Examples
 
 ```ruby
 # bad
-1,2
+[1,2]
 { foo:bar,}
 
 # good
-1, 2
+[1, 2]
 { foo:bar, }
 ```
 
@@ -1876,14 +2759,16 @@ Enabled | Yes
 
 Checks for space between a method name and a left parenthesis in defs.
 
-### Example
+### Examples
 
 ```ruby
 # bad
-def func (x) ... end
+def func (x) end
+def method= (y) end
 
 # good
-def func(x) ... end
+def func(x) end
+def method=(y) end
 ```
 
 ### References
@@ -1898,7 +2783,7 @@ Enabled | Yes
 
 This cop checks for space after `!`.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -1920,6 +2805,16 @@ Enabled | Yes
 
 Checks for semicolon (;) not followed by some kind of space.
 
+### Examples
+
+```ruby
+# bad
+x = 1;y = 2
+
+# good
+x = 1; y = 2
+```
+
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#spaces-operators](https://github.com/bbatsov/ruby-style-guide#spaces-operators)
@@ -1932,11 +2827,11 @@ Enabled | Yes
 
 Checks the spacing inside and after block parameters pipes.
 
-### Example
+### Examples
+
+#### EnforcedStyleInsidePipes: no_space (default)
 
 ```ruby
-# EnforcedStyleInsidePipes: no_space (default)
-
 # bad
 {}.each { | x,  y |puts x }
 ->( x,  y ) { puts x }
@@ -1945,9 +2840,9 @@ Checks the spacing inside and after block parameters pipes.
 {}.each { |x, y| puts x }
 ->(x, y) { puts x }
 ```
-```ruby
-# EnforcedStyleInsidePipes: space
+#### EnforcedStyleInsidePipes: space
 
+```ruby
 # bad
 {}.each { |x,  y| puts x }
 ->(x,  y) { puts x }
@@ -1957,12 +2852,11 @@ Checks the spacing inside and after block parameters pipes.
 ->( x, y ) { puts x }
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyleInsidePipes | no_space
-SupportedStylesInsidePipes | space, no_space
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyleInsidePipes | `no_space` | `space`, `no_space`
 
 ## Layout/SpaceAroundEqualsInParameterDefault
 
@@ -1973,12 +2867,40 @@ Enabled | Yes
 Checks that the equals signs in parameter default assignments
 have or don't have surrounding space depending on configuration.
 
-### Important attributes
+### Examples
 
-Attribute | Value
---- | ---
-EnforcedStyle | space
-SupportedStyles | space, no_space
+#### EnforcedStyle: space (default)
+
+```ruby
+# bad
+def some_method(arg1=:default, arg2=nil, arg3=[])
+  # do something...
+end
+
+# good
+def some_method(arg1 = :default, arg2 = nil, arg3 = [])
+  # do something...
+end
+```
+#### EnforcedStyle: no_space
+
+```ruby
+# bad
+def some_method(arg1 = :default, arg2 = nil, arg3 = [])
+  # do something...
+end
+
+# good
+def some_method(arg1=:default, arg2=nil, arg3=[])
+  # do something...
+end
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `space` | `space`, `no_space`
 
 ### References
 
@@ -1992,7 +2914,7 @@ Enabled | Yes
 
 Checks the spacing around the keywords.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -2023,11 +2945,27 @@ Enabled | Yes
 Checks that operators have space around them, except for **
 which should not have surrounding space.
 
-### Important attributes
+### Examples
 
-Attribute | Value
---- | ---
-AllowForAlignment | true
+```ruby
+# bad
+total = 3*4
+"apple"+"juice"
+my_number = 38/4
+a ** b
+
+# good
+total = 3 * 4
+"apple" + "juice"
+my_number = 38 / 4
+a**b
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+AllowForAlignment | `true` | Boolean
 
 ### References
 
@@ -2042,7 +2980,9 @@ Enabled | Yes
 Checks that block braces have or don't have a space before the opening
 brace depending on configuration.
 
-### Example
+### Examples
+
+#### EnforcedStyle: space (default)
 
 ```ruby
 # bad
@@ -2055,14 +2995,26 @@ foo.map { |a|
   a.bar.to_s
 }
 ```
+#### EnforcedStyle: no_space
 
-### Important attributes
+```ruby
+# bad
+foo.map { |a|
+  a.bar.to_s
+}
 
-Attribute | Value
---- | ---
-EnforcedStyle | space
-SupportedStyles | space, no_space
-SupportedStylesForEmptyBraces | space, no_space
+# good
+foo.map{ |a|
+  a.bar.to_s
+}
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `space` | `space`, `no_space`
+EnforcedStyleForEmptyBraces | `space` | `space`, `no_space`
 
 ## Layout/SpaceBeforeComma
 
@@ -2071,6 +3023,20 @@ Enabled by default | Supports autocorrection
 Enabled | Yes
 
 Checks for comma (,) preceded by space.
+
+### Examples
+
+```ruby
+# bad
+[1 , 2 , 3]
+a(1 , 2)
+each { |a , b| }
+
+# good
+[1, 2, 3]
+a(1, 2)
+each { |a, b| }
+```
 
 ## Layout/SpaceBeforeComment
 
@@ -2081,7 +3047,7 @@ Enabled | Yes
 This cop checks for missing space between a token and a comment on the
 same line.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -2104,7 +3070,7 @@ Alternatively, extra spaces can be added to align the argument with
 something on a preceding or following line, if the AllowForAlignment
 config parameter is true.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -2118,11 +3084,11 @@ something y, z
 something 'hello'
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-AllowForAlignment | true
+Name | Default value | Configurable values
+--- | --- | ---
+AllowForAlignment | `true` | Boolean
 
 ## Layout/SpaceBeforeSemicolon
 
@@ -2132,7 +3098,7 @@ Enabled | Yes
 
 Checks for semicolon (;) preceded by space.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -2151,33 +3117,116 @@ Enabled | Yes
 This cop checks for spaces between -> and opening parameter
 brace in lambda literals.
 
-### Example
+### Examples
+
+#### EnforcedStyle: require_no_space (default)
 
 ```ruby
-EnforcedStyle: require_no_space (default)
+# bad
+a = -> (x, y) { x + y }
 
-  # bad
-  a = -> (x, y) { x + y }
-
-  # good
-  a = ->(x, y) { x + y }
+# good
+a = ->(x, y) { x + y }
 ```
+#### EnforcedStyle: require_space
+
 ```ruby
-EnforcedStyle: require_space
+# bad
+a = ->(x, y) { x + y }
 
-  # bad
-  a = ->(x, y) { x + y }
-
-  # good
-  a = -> (x, y) { x + y }
+# good
+a = -> (x, y) { x + y }
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `require_no_space` | `require_no_space`, `require_space`
+
+## Layout/SpaceInsideArrayLiteralBrackets
+
+Enabled by default | Supports autocorrection
 --- | ---
-EnforcedStyle | require_no_space
-SupportedStyles | require_no_space, require_space
+Enabled | Yes
+
+Checks that brackets used for array literals have or don't have
+surrounding space depending on configuration.
+
+### Examples
+
+#### EnforcedStyle: space
+
+```ruby
+# The `space` style enforces that array literals have
+# surrounding space.
+
+# bad
+array = [a, b, c, d]
+
+# good
+array = [ a, b, c, d ]
+```
+#### EnforcedStyle: no_space (default)
+
+```ruby
+# The `no_space` style enforces that array literals have
+# no surrounding space.
+
+# bad
+array = [ a, b, c, d ]
+
+# good
+array = [a, b, c, d]
+```
+#### EnforcedStyle: compact
+
+```ruby
+# The `compact` style normally requires a space inside
+# array brackets, with the exception that successive left
+# or right brackets are collapsed together in nested arrays.
+
+# bad
+array = [ a, [ b, c ] ]
+
+# good
+array = [ a, [ b, c ]]
+```
+#### EnforcedStyleForEmptyBrackets: no_space (default)
+
+```ruby
+# The `no_space` EnforcedStyleForEmptyBrackets style enforces that
+# empty array brackets do not contain spaces.
+
+# bad
+foo = [ ]
+bar = [     ]
+
+# good
+foo = []
+bar = []
+```
+#### EnforcedStyleForEmptyBrackets: space
+
+```ruby
+# The `space` EnforcedStyleForEmptyBrackets style enforces that
+# empty array brackets contain exactly one space.
+
+# bad
+foo = []
+bar = [    ]
+
+# good
+foo = [ ]
+bar = [ ]
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `no_space` | `space`, `no_space`, `compact`
+EnforcedStyleForEmptyBrackets | `no_space` | `space`, `no_space`
 
 ## Layout/SpaceInsideArrayPercentLiteral
 
@@ -2188,14 +3237,13 @@ Enabled | Yes
 Checks for unnecessary additional spaces inside array percent literals
 (i.e. %i/%w).
 
-### Example
+### Examples
 
 ```ruby
-# good
-%i(foo bar baz)
-
 # bad
 %w(foo  bar  baz)
+# good
+%i(foo bar baz)
 ```
 
 ## Layout/SpaceInsideBlockBraces
@@ -2209,27 +3257,94 @@ them on configuration. For blocks taking parameters, it checks that the
 left brace has or doesn't have trailing space depending on
 configuration.
 
-### Important attributes
+### Examples
 
-Attribute | Value
---- | ---
-EnforcedStyle | space
-SupportedStyles | space, no_space
-EnforcedStyleForEmptyBraces | no_space
-SupportedStylesForEmptyBraces | space, no_space
-SpaceBeforeBlockParameters | true
+#### EnforcedStyle: space (default)
 
-## Layout/SpaceInsideBrackets
+```ruby
+# The `space` style enforces that block braces have
+# surrounding space.
 
-Enabled by default | Supports autocorrection
---- | ---
-Enabled | Yes
+# bad
+some_array.each {puts e}
 
-Checks for spaces inside square brackets.
+# good
+some_array.each { puts e }
+```
+#### EnforcedStyle: no_space
 
-### References
+```ruby
+# The `no_space` style enforces that block braces don't
+# have surrounding space.
 
-* [https://github.com/bbatsov/ruby-style-guide#no-spaces-braces](https://github.com/bbatsov/ruby-style-guide#no-spaces-braces)
+# bad
+some_array.each { puts e }
+
+# good
+some_array.each {puts e}
+```
+#### EnforcedStyleForEmptyBraces: no_space (default)
+
+```ruby
+# The `no_space` EnforcedStyleForEmptyBraces style enforces that
+# block braces don't have a space in between when empty.
+
+# bad
+some_array.each {   }
+some_array.each {  }
+some_array.each { }
+
+# good
+some_array.each {}
+```
+#### EnforcedStyleForEmptyBraces: space
+
+```ruby
+# The `space` EnforcedStyleForEmptyBraces style enforces that
+# block braces have at least a space in between when empty.
+
+# bad
+some_array.each {}
+
+# good
+some_array.each { }
+some_array.each {  }
+some_array.each {   }
+```
+#### SpaceBeforeBlockParameters: true (default)
+
+```ruby
+# The SpaceBeforeBlockParameters style set to `true` enforces that
+# there is a space between `{` and `|`. Overrides `EnforcedStyle`
+# if there is a conflict.
+
+# bad
+[1, 2, 3].each {|n| n * 2 }
+
+# good
+[1, 2, 3].each { |n| n * 2 }
+```
+#### SpaceBeforeBlockParameters: false
+
+```ruby
+# The SpaceBeforeBlockParameters style set to `false` enforces that
+# there is no space between `{` and `|`. Overrides `EnforcedStyle`
+# if there is a conflict.
+
+# bad
+[1, 2, 3].each { |n| n * 2 }
+
+# good
+[1, 2, 3].each {|n| n * 2 }
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `space` | `space`, `no_space`
+EnforcedStyleForEmptyBraces | `no_space` | `space`, `no_space`
+SpaceBeforeBlockParameters | `true` | Boolean
 
 ## Layout/SpaceInsideHashLiteralBraces
 
@@ -2240,14 +3355,80 @@ Enabled | Yes
 Checks that braces used for hash literals have or don't have
 surrounding space depending on configuration.
 
-### Important attributes
+### Examples
 
-Attribute | Value
---- | ---
-EnforcedStyle | space
-SupportedStyles | space, no_space, compact
-EnforcedStyleForEmptyBraces | no_space
-SupportedStylesForEmptyBraces | space, no_space
+#### EnforcedStyle: space (default)
+
+```ruby
+# The `space` style enforces that hash literals have
+# surrounding space.
+
+# bad
+h = {a: 1, b: 2}
+
+# good
+h = { a: 1, b: 2 }
+```
+#### EnforcedStyle: no_space
+
+```ruby
+# The `no_space` style enforces that hash literals have
+# no surrounding space.
+
+# bad
+h = { a: 1, b: 2 }
+
+# good
+h = {a: 1, b: 2}
+```
+#### EnforcedStyle: compact
+
+```ruby
+# The `compact` style normally requires a space inside
+# hash braces, with the exception that successive left
+# braces or right braces are collapsed together in nested hashes.
+
+# bad
+h = { a: { b: 2 } }
+
+# good
+h = { a: { b: 2 }}
+```
+#### EnforcedStyleForEmptyBraces: no_space (default)
+
+```ruby
+# The `no_space` EnforcedStyleForEmptyBraces style enforces that
+# empty hash braces do not contain spaces.
+
+# bad
+foo = { }
+bar = {    }
+
+# good
+foo = {}
+bar = {}
+```
+#### EnforcedStyleForEmptyBraces: space
+
+```ruby
+# The `space` EnforcedStyleForEmptyBraces style enforces that
+# empty hash braces contain space.
+
+# bad
+foo = {}
+
+# good
+foo = { }
+foo = {  }
+foo = {     }
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `space` | `space`, `no_space`, `compact`
+EnforcedStyleForEmptyBraces | `no_space` | `space`, `no_space`
 
 ### References
 
@@ -2261,9 +3442,21 @@ Enabled | Yes
 
 Checks for spaces inside ordinary round parentheses.
 
+### Examples
+
+```ruby
+# bad
+f( 3)
+g = (a + 3 )
+
+# good
+f(3)
+g = (a + 3)
+```
+
 ### References
 
-* [https://github.com/bbatsov/ruby-style-guide#no-spaces-braces](https://github.com/bbatsov/ruby-style-guide#no-spaces-braces)
+* [https://github.com/bbatsov/ruby-style-guide#spaces-braces](https://github.com/bbatsov/ruby-style-guide#spaces-braces)
 
 ## Layout/SpaceInsidePercentLiteralDelimiters
 
@@ -2274,7 +3467,7 @@ Enabled | Yes
 Checks for unnecessary additional spaces inside the delimiters of
 %i/%w/%x literals.
 
-### Example
+### Examples
 
 ```ruby
 # good
@@ -2295,7 +3488,7 @@ Enabled | Yes
 
 Checks for spaces inside range literals.
 
-### Example
+### Examples
 
 ```ruby
 # bad
@@ -2315,6 +3508,79 @@ Checks for spaces inside range literals.
 
 * [https://github.com/bbatsov/ruby-style-guide#no-space-inside-range-literals](https://github.com/bbatsov/ruby-style-guide#no-space-inside-range-literals)
 
+## Layout/SpaceInsideReferenceBrackets
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+Checks that reference brackets have or don't have
+surrounding space depending on configuration.
+
+### Examples
+
+#### EnforcedStyle: no_space (default)
+
+```ruby
+# The `no_space` style enforces that reference brackets have
+# no surrounding space.
+
+# bad
+hash[ :key ]
+array[ index ]
+
+# good
+hash[:key]
+array[index]
+```
+#### EnforcedStyle: space
+
+```ruby
+# The `space` style enforces that reference brackets have
+# surrounding space.
+
+# bad
+hash[:key]
+array[index]
+
+# good
+hash[ :key ]
+array[ index ]
+```
+#### EnforcedStyleForEmptyBrackets: no_space (default)
+
+```ruby
+# The `no_space` EnforcedStyleForEmptyBrackets style enforces that
+# empty reference brackets do not contain spaces.
+
+# bad
+foo[ ]
+foo[     ]
+
+# good
+foo[]
+```
+#### EnforcedStyleForEmptyBrackets: space
+
+```ruby
+# The `space` EnforcedStyleForEmptyBrackets style enforces that
+# empty reference brackets contain exactly one space.
+
+# bad
+foo[]
+foo[    ]
+
+# good
+foo[ ]
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `no_space` | `space`, `no_space`
+EnforcedStyleForEmptyBrackets | `no_space` | `space`, `no_space`
+
 ## Layout/SpaceInsideStringInterpolation
 
 Enabled by default | Supports autocorrection
@@ -2323,22 +3589,32 @@ Enabled | Yes
 
 This cop checks for whitespace within string interpolations.
 
-### Example
+### Examples
+
+#### EnforcedStyle: no_space (default)
 
 ```ruby
-# Good if EnforcedStyle is no_space, bad if space.
+# bad
+   var = "This is the #{ space } example"
+
+# good
+   var = "This is the #{no_space} example"
+```
+#### EnforcedStyle: space
+
+```ruby
+# bad
    var = "This is the #{no_space} example"
 
-# Good if EnforceStyle is space, bad if no_space.
+# good
    var = "This is the #{ space } example"
 ```
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | no_space
-SupportedStyles | space, no_space
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `no_space` | `space`, `no_space`
 
 ### References
 
@@ -2351,6 +3627,12 @@ Enabled by default | Supports autocorrection
 Enabled | Yes
 
 This cop checks for tabs inside the source code.
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+IndentationWidth | `<none>` | Integer
 
 ### References
 
@@ -2365,12 +3647,11 @@ Enabled | Yes
 This cop looks for trailing blank lines and a final newline in the
 source code.
 
-### Important attributes
+### Configurable attributes
 
-Attribute | Value
---- | ---
-EnforcedStyle | final_newline
-SupportedStyles | final_newline, final_blank_line
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `final_newline` | `final_newline`, `final_blank_line`
 
 ### References
 

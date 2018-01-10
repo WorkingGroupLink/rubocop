@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::NumericPredicate, :config do
+RSpec.describe RuboCop::Cop::Style::NumericPredicate, :config do
   subject(:cop) { described_class.new(config) }
 
   before do
@@ -34,7 +34,7 @@ describe RuboCop::Cop::Style::NumericPredicate, :config do
     let(:source) { code }
 
     it 'does not register an offense' do
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 
@@ -96,7 +96,7 @@ describe RuboCop::Cop::Style::NumericPredicate, :config do
     end
 
     context 'when checking if a number is positive' do
-      context 'when target ruby version is 2.3 or higher', :ruby23, :ruby24 do
+      context 'when target ruby version is 2.3 or higher', :ruby23 do
         it_behaves_like 'code with offense',
                         'number > 0',
                         'number.positive?'
@@ -126,7 +126,7 @@ describe RuboCop::Cop::Style::NumericPredicate, :config do
     end
 
     context 'when checking if a number is negative' do
-      context 'when target ruby version is 2.3 or higher', :ruby23, :ruby24 do
+      context 'when target ruby version is 2.3 or higher', :ruby23 do
         it_behaves_like 'code with offense',
                         'number < 0',
                         'number.negative?'

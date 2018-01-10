@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::MinMax, :config do
+RSpec.describe RuboCop::Cop::Style::MinMax, :config do
   subject(:cop) { described_class.new(config) }
 
   context 'with an array literal containing calls to `#min` and `#max`' do
@@ -21,6 +21,12 @@ describe RuboCop::Cop::Style::MinMax, :config do
       it 'does not register an offense if there are additional elements' do
         expect_no_offenses(<<-RUBY.strip_indent)
           [foo.min, foo.baz, foo.max]
+        RUBY
+      end
+
+      it 'does not register an offense if the receiver is implicit' do
+        expect_no_offenses(<<-RUBY.strip_indent)
+          [min, max]
         RUBY
       end
 
@@ -55,6 +61,12 @@ describe RuboCop::Cop::Style::MinMax, :config do
         RUBY
       end
 
+      it 'does not register an offense if the receiver is implicit' do
+        expect_no_offenses(<<-RUBY.strip_indent)
+          bar = min, max
+        RUBY
+      end
+
       it 'auto-corrects an offense to use `#minmax`' do
         corrected = autocorrect_source(<<-RUBY.strip_indent)
           baz = foo.bar.min, foo.bar.max
@@ -83,6 +95,12 @@ describe RuboCop::Cop::Style::MinMax, :config do
       it 'does not register an offense if there are additional elements' do
         expect_no_offenses(<<-RUBY.strip_indent)
           return foo.min, foo.baz, foo.max
+        RUBY
+      end
+
+      it 'does not register an offense if the receiver is implicit' do
+        expect_no_offenses(<<-RUBY.strip_indent)
+          return min, max
         RUBY
       end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::SpaceInsidePercentLiteralDelimiters do
+RSpec.describe RuboCop::Cop::Layout::SpaceInsidePercentLiteralDelimiters do
   subject(:cop) { described_class.new }
 
   let(:message) do
@@ -50,12 +50,12 @@ describe RuboCop::Cop::Layout::SpaceInsidePercentLiteralDelimiters do
 
         it 'accepts literals without additional spaces' do
           inspect_source(code_example('a b c'))
-          expect(cop.messages).to be_empty
+          expect(cop.messages.empty?).to be(true)
         end
 
         it 'accepts literals with escaped spaces' do
           inspect_source(code_example('\ a b c\ '))
-          expect(cop.messages).to be_empty
+          expect(cop.messages.empty?).to be(true)
         end
 
         it 'accepts multi-line literals' do
@@ -66,7 +66,7 @@ describe RuboCop::Cop::Layout::SpaceInsidePercentLiteralDelimiters do
               c
             )
           RUBY
-          expect(cop.messages).to be_empty
+          expect(cop.messages.empty?).to be(true)
         end
 
         it 'accepts multi-line literals within a method' do
@@ -79,7 +79,7 @@ describe RuboCop::Cop::Layout::SpaceInsidePercentLiteralDelimiters do
               )
             end
           RUBY
-          expect(cop.messages).to be_empty
+          expect(cop.messages.empty?).to be(true)
         end
 
         it 'accepts newlines and additional following alignment spaces' do
@@ -87,12 +87,12 @@ describe RuboCop::Cop::Layout::SpaceInsidePercentLiteralDelimiters do
             %#{type}(a b
                c)
           RUBY
-          expect(cop.messages).to be_empty
+          expect(cop.messages.empty?).to be(true)
         end
 
         it 'accepts spaces between entries' do
           inspect_source(code_example('a  b  c'))
-          expect(cop.messages).to be_empty
+          expect(cop.messages.empty?).to be(true)
         end
       end
     end

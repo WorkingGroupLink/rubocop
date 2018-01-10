@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
-describe RuboCop::AST::UntilNode do
+RSpec.describe RuboCop::AST::UntilNode do
   let(:until_node) { parse_source(source).ast }
 
   describe '.new' do
     context 'with a statement until' do
       let(:source) { 'until foo; bar; end' }
 
-      it { expect(until_node).to be_a(described_class) }
+      it { expect(until_node.is_a?(described_class)).to be(true) }
     end
 
     context 'with a modifier until' do
       let(:source) { 'begin foo; end until bar' }
 
-      it { expect(until_node).to be_a(described_class) }
+      it { expect(until_node.is_a?(described_class)).to be(true) }
     end
   end
 

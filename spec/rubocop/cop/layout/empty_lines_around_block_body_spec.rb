@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Layout::EmptyLinesAroundBlockBody, :config do
+RSpec.describe RuboCop::Cop::Layout::EmptyLinesAroundBlockBody, :config do
   subject(:cop) { described_class.new(config) }
 
   # Test blocks using both {} and do..end
@@ -39,7 +39,7 @@ describe RuboCop::Cop::Layout::EmptyLinesAroundBlockBody, :config do
                         '  ',
                         '  do_something',
                         close])
-        expect(cop.offenses).to be_empty
+        expect(cop.offenses.empty?).to be(true)
       end
 
       it 'is not fooled by single line blocks' do

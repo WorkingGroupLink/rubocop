@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Cop do
+RSpec.describe RuboCop::Cop::Cop do
   subject(:cop) { described_class.new }
+
   let(:location) do
     source_buffer = Parser::Source::Buffer.new('test', 1)
     source_buffer.source = "a\n"
@@ -9,7 +10,7 @@ describe RuboCop::Cop::Cop do
   end
 
   it 'initially has 0 offenses' do
-    expect(cop.offenses).to be_empty
+    expect(cop.offenses.empty?).to be(true)
   end
 
   describe '.qualified_cop_name' do
@@ -57,26 +58,26 @@ describe RuboCop::Cop::Cop do
   end
 
   it 'keeps track of offenses' do
-    cop.add_offense(nil, location, 'message')
+    cop.add_offense(nil, location: location, message: 'message')
 
     expect(cop.offenses.size).to eq(1)
   end
 
   it 'will report registered offenses' do
-    cop.add_offense(nil, location, 'message')
+    cop.add_offense(nil, location: location, message: 'message')
 
-    expect(cop.offenses).not_to be_empty
+    expect(cop.offenses.empty?).to be(false)
   end
 
   it 'will set default severity' do
-    cop.add_offense(nil, location, 'message')
+    cop.add_offense(nil, location: location, message: 'message')
 
     expect(cop.offenses.first.severity).to eq(:convention)
   end
 
   it 'will set custom severity if present' do
     cop.config[cop.name] = { 'Severity' => 'warning' }
-    cop.add_offense(nil, location, 'message')
+    cop.add_offense(nil, location: location, message: 'message')
 
     expect(cop.offenses.first.severity).to eq(:warning)
   end
@@ -84,12 +85,12 @@ describe RuboCop::Cop::Cop do
   it 'will warn if custom severity is invalid' do
     cop.config[cop.name] = { 'Severity' => 'superbad' }
     expect(cop).to receive(:warn)
-    cop.add_offense(nil, location, 'message')
+    cop.add_offense(nil, location: location, message: 'message')
   end
 
   it 'registers offense with its name' do
     cop = RuboCop::Cop::Style::For.new
-    cop.add_offense(nil, location, 'message')
+    cop.add_offense(nil, location: location, message: 'message')
     expect(cop.offenses.first.cop_name).to eq('Style/For')
   end
 
@@ -100,7 +101,7 @@ describe RuboCop::Cop::Cop do
       end
 
       it 'is not specified (set to nil)' do
-        cop.add_offense(nil, location, 'message')
+        cop.add_offense(nil, location: location, message: 'message')
         expect(cop.offenses.first.corrected?).to be(false)
       end
     end
@@ -115,7 +116,7 @@ describe RuboCop::Cop::Cop do
         end
 
         it 'is set to true' do
-          cop.add_offense(nil, location, 'message')
+          cop.add_offense(nil, location: location, message: 'message')
           expect(cop.offenses.first.corrected?).to eq(true)
         end
       end
@@ -126,7 +127,7 @@ describe RuboCop::Cop::Cop do
         end
 
         it 'is set to false' do
-          cop.add_offense(nil, location, 'message')
+          cop.add_offense(nil, location: location, message: 'message')
           expect(cop.offenses.first.corrected?).to eq(false)
         end
       end
@@ -138,7 +139,7 @@ describe RuboCop::Cop::Cop do
         end
 
         it 'is set to false' do
-          cop.add_offense(nil, location, 'message')
+          cop.add_offense(nil, location: location, message: 'message')
           expect(cop.offenses.first.corrected?).to eq(false)
         end
       end
@@ -147,24 +148,28 @@ describe RuboCop::Cop::Cop do
 
   context 'with no submodule' do
     subject(:cop) { described_class }
+
     it('has right name') { expect(cop.cop_name).to eq('Cop/Cop') }
     it('has right department') { expect(cop.department).to eq(:Cop) }
   end
 
   context 'with style cops' do
     subject(:cop) { RuboCop::Cop::Style::For }
+
     it('has right name') { expect(cop.cop_name).to eq('Style/For') }
     it('has right department') { expect(cop.department).to eq(:Style) }
   end
 
   context 'with lint cops' do
     subject(:cop) { RuboCop::Cop::Lint::Loop }
+
     it('has right name') { expect(cop.cop_name).to eq('Lint/Loop') }
     it('has right department') { expect(cop.department).to eq(:Lint) }
   end
 
   context 'with rails cops' do
     subject(:cop) { RuboCop::Cop::Rails::Validation }
+
     it('has right name') { expect(cop.cop_name).to eq('Rails/Validation') }
     it('has right department') { expect(cop.department).to eq(:Rails) }
   end
@@ -172,6 +177,7 @@ describe RuboCop::Cop::Cop do
   describe 'Registry' do
     context '#departments' do
       subject(:departments) { described_class.registry.departments }
+
       it('has departments') { expect(departments.length).not_to eq(0) }
       it { is_expected.to include(:Lint) }
       it { is_expected.to include(:Rails) }
@@ -207,10 +213,11 @@ describe RuboCop::Cop::Cop do
 
   describe '#autocorrect?' do
     # dummy config for a generic cop instance
+    subject { cop.autocorrect? }
+
     let(:config) { RuboCop::Config.new({}) }
     let(:cop) { described_class.new(config, options) }
     let(:support_autocorrect) { true }
-    subject { cop.autocorrect? }
 
     before do
       allow(cop).to receive(:support_autocorrect?) { support_autocorrect }
@@ -218,15 +225,18 @@ describe RuboCop::Cop::Cop do
 
     context 'when the option is not given' do
       let(:options) { {} }
+
       it { is_expected.to be(false) }
     end
 
     context 'when the option is given' do
       let(:options) { { auto_correct: true } }
+
       it { is_expected.to be(true) }
 
       context 'when cop does not support autocorrection' do
         let(:support_autocorrect) { false }
+
         it { is_expected.to be(false) }
       end
 
@@ -234,6 +244,7 @@ describe RuboCop::Cop::Cop do
         let(:config) do
           RuboCop::Config.new('Cop/Cop' => { 'AutoCorrect' => false })
         end
+
         it { is_expected.to be(false) }
       end
     end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe RuboCop::Cop::Style::DocumentationMethod, :config do
+RSpec.describe RuboCop::Cop::Style::DocumentationMethod, :config do
   subject(:cop) { described_class.new(config) }
 
   before do
@@ -22,7 +22,7 @@ describe RuboCop::Cop::Style::DocumentationMethod, :config do
     let(:source) { code }
 
     it 'does not register an offense' do
-      expect(cop.offenses).to be_empty
+      expect(cop.offenses.empty?).to be(true)
     end
   end
 

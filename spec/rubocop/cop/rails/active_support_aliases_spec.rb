@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
-describe RuboCop::Cop::Rails::ActiveSupportAliases do
+RSpec.describe RuboCop::Cop::Rails::ActiveSupportAliases do
   subject(:cop) { described_class.new }
 
   describe 'String' do
@@ -29,7 +27,7 @@ describe RuboCop::Cop::Rails::ActiveSupportAliases do
     end
 
     describe '#ends_with?' do
-      it 'it is registered as an offense' do
+      it 'is registered as an offense' do
         expect_offense(<<-RUBY.strip_indent)
           'some_string'.ends_with?('prefix')
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Use `end_with?` instead of `ends_with?`.

@@ -10,14 +10,14 @@ module RuboCop
       #   # good
       #
       #   def foo
-      #     ...
+      #     # ...
       #   end
       #
       #   # bad
       #
       #   def bar
       #
-      #     ...
+      #     # ...
       #
       #   end
       class EmptyLinesAroundMethodBody < Cop
@@ -29,6 +29,10 @@ module RuboCop
           check(node, node.body)
         end
         alias on_defs on_def
+
+        def autocorrect(node)
+          EmptyLineCorrector.correct(node)
+        end
 
         private
 
