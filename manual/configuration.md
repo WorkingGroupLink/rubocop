@@ -34,7 +34,8 @@ parameter that are hashes, for example `PreferredMethods` in
 configuration, while other parameter, such as `AllCops` / `Include`, are
 simply replaced by the local setting. If arrays were merged, there would
 be no way to remove elements through overriding them in local
-configuration.
+configuration. There is a way to have specific array settings merged using
+the `inherit_mode` setting.
 
 #### Inheriting from another configuration file in the project
 
@@ -121,6 +122,68 @@ dependency's installation path at runtime:
 $ bundle exec rubocop <options...>
 ```
 
+#### Merging arrays using inherit_mode
+
+The optional directive `inherit_mode` is used to specify which configuration
+keys that have array values should be merged together instead of overriding the
+inherited value.
+
+This applies to explicit inheritance using `inherit_from` as well as implicit
+inheritance from the default configuration.
+
+Given the following config:
+```yaml
+# .rubocop.yml
+inherit_from:
+  - shared.yml
+
+inherit_mode:
+  merge:
+    - Exclude 
+
+AllCops:
+  Exclude:
+    - 'generated/**/*.rb'
+
+Style/For:
+  Exclude:
+    - bar.rb
+```
+
+```yaml
+# .shared.yml
+Style/For:
+  Exclude:
+    - foo.rb
+```
+
+The list of `Exclude`s for the `Style/For` cop in this example will be
+`['foo.rb', 'bar.rb']`. Similarly, the `AllCops:Exclude` list will contain all
+the default patterns plus the `generated/**/*.rb` entry that was added locally.
+
+The directive can also be used on individual cop configurations to override
+the global setting.
+
+
+```yaml
+inherit_from:
+  - shared.yml
+
+inherit_mode:
+  merge:
+    - Exclude 
+
+Style/For:
+  inherit_mode:
+    override:
+      - Exclude
+  Exclude:
+    - bar.rb
+```
+
+In this example the `Exclude` would only include `bar.rb`.
+
+
 ### Defaults
 
 The file
@@ -133,23 +196,22 @@ directory, `config/default.yml` will be used.
 
 ### Including/Excluding files
 
-RuboCop checks all files found by a recursive search starting from the
-directory it is run in, or directories given as command line
-arguments.  However, it only recognizes files ending with `.rb` or
-extensionless files with a `#!.*ruby` declaration as Ruby files.
-Hidden directories (i.e., directories whose names start with a dot)
-are not searched by default.  If you'd like it to check files that are
-not included by default, you'll need to pass them in on the command
-line, or to add entries for them under `AllCops`/`Include`.  Files and
-directories can also be ignored through `AllCops`/`Exclude`.
+RuboCop does a recursive file search starting from the directory it is
+run in, or directories given as command line arguments.  Files that
+match any pattern listed under `AllCops`/`Include` and extensionless
+files with a hash-bang (`#!`) declaration containing one of the known
+ruby interpreters listed under `AllCops`/`RubyInterpreters` are
+inspected, unless the file also matches a pattern in
+`AllCops`/`Exclude`. Hidden directories (i.e., directories whose names
+start with a dot) are not searched by default.  If you'd like RuboCop
+to check files that are not included by default, you'll need to pass
+them in on the command line, or to add entries for them under
+`AllCops`/`Include`.
 
 Here is an example that might be used for a Rails project:
 
 ```yaml
 AllCops:
-  Include:
-    - '**/Rakefile'
-    - '**/config.ru'
   Exclude:
     - 'db/**/*'
     - 'config/**/*'

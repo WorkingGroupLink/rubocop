@@ -82,10 +82,6 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
       expect_no_offenses('%w(one two three)')
     end
 
-    it 'does not register an offense for array with one element' do
-      expect_no_offenses('["three"]')
-    end
-
     it 'does not register an offense for array with empty strings' do
       expect_no_offenses('["", "two", "three"]')
     end
@@ -134,6 +130,11 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
       expect(new_source).to eq('%w(one two three)')
     end
 
+    it 'auto-corrects an array with one element' do
+      new_source = autocorrect_source("['one']")
+      expect(new_source).to eq('%w(one)')
+    end
+
     it 'auto-corrects an array of words and character constants' do
       new_source = autocorrect_source('[%|one|, %Q(two), ?\n, ?\t]')
       expect(new_source).to eq('%W(one two \n \t)')
@@ -160,6 +161,19 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
         bar
         baz
         )
+      RUBY
+    end
+
+    it 'auto-corrects an array of words using partial newlines' do
+      new_source = autocorrect_source(<<-RUBY)
+        ["foo", "bar", "baz",
+        "boz", "buz",
+        "biz"]
+      RUBY
+      expect(new_source).to eq(<<-RUBY)
+        %w(foo bar baz
+        boz buz
+        biz)
       RUBY
     end
 
@@ -330,6 +344,18 @@ RSpec.describe RuboCop::Cop::Style::WordArray, :config do
         new_source = autocorrect_source("[')', ']', '(', '[']")
         expect(new_source).to eq('%w[) \\] ( \\[]')
       end
+    end
+  end
+
+  context 'with non-default MinSize' do
+    let(:cop_config) do
+      { 'MinSize' => 2,
+        'WordRegex' => /\A[\p{Word}\n\t]+\z/,
+        'EnforcedStyle' => 'percent' }
+    end
+
+    it 'does not autocorrects arrays of one symbol if MinSize > 1' do
+      expect_no_offenses('["one"]')
     end
   end
 end

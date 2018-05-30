@@ -10,7 +10,7 @@ RSpec.describe RuboCop::Cop::Layout::IndentHeredoc, :config do
     }
   end
 
-  shared_examples :offense do |name, code, correction = nil|
+  shared_examples :offense do |name, code, correction = nil, strip_fix = true|
     it "registers an offense for #{name}" do
       inspect_source(code.strip_indent)
       expect(cop.offenses.size).to eq(1)
@@ -18,7 +18,11 @@ RSpec.describe RuboCop::Cop::Layout::IndentHeredoc, :config do
 
     it "autocorrects for #{name}" do
       corrected = autocorrect_source_with_loop(code.strip_indent)
-      expect(corrected).to eq(correction.strip_indent)
+      if strip_fix
+        expect(corrected).to eq(correction.strip_indent)
+      else
+        expect(corrected).to eq(correction)
+      end
     end
   end
 
@@ -29,13 +33,17 @@ RSpec.describe RuboCop::Cop::Layout::IndentHeredoc, :config do
     end
   end
 
-  shared_examples :check_message do |name, message|
+  shared_examples :check_message do |name, message, code = nil|
     it "displays a message with #{name}" do
-      inspect_source(<<-RUBY.strip_indent)
-        <<-RUBY2
-        foo
-        RUBY2
-      RUBY
+      if code
+        inspect_source(code.strip_indent)
+      else
+        inspect_source(<<-RUBY.strip_indent)
+          <<-RUBY2
+          foo
+          RUBY2
+        RUBY
+      end
       expect(cop.messages).to eq(message)
     end
   end
@@ -188,9 +196,19 @@ RSpec.describe RuboCop::Cop::Layout::IndentHeredoc, :config do
         include_examples :warning, warning
 
         context 'Ruby 2.3', :ruby23 do
-          message = 'Use 2 spaces for indentation in a heredoc by using ' \
-                    '`<<~` instead of `<<-`.'
-          include_examples :check_message, 'squiggly heredoc', [message]
+          width_message = 'Use 2 spaces for indentation in a heredoc.'
+          include_examples :check_message, 'squiggly heredoc, with ~',
+                           [width_message], <<-RUBY
+            <<~#{quote}RUBY2#{quote}
+            \#{foo}
+            bar
+            RUBY2
+          RUBY
+
+          type_message = 'Use 2 spaces for indentation in a heredoc by using ' \
+                         '`<<~` instead of `<<-`.'
+          include_examples :check_message, 'squiggly heredoc, without ~',
+                           [type_message]
           include_examples :offense, 'not indented', <<-RUBY, <<-CORRECTION
             <<#{quote}RUBY2#{quote}
             \#{foo}
@@ -270,7 +288,33 @@ RSpec.describe RuboCop::Cop::Layout::IndentHeredoc, :config do
           RUBY2
         CORRECTION
 
-        include_examples :accept, 'indentaed, with `~`', <<-RUBY
+        include_examples :offense, 'not indented, with `~`',
+                         <<-RUBY, <<-CORRECTION
+          <<~#{quote}RUBY2#{quote}
+          foo
+          RUBY2
+        RUBY
+          <<~#{quote}RUBY2#{quote}
+            foo
+          RUBY2
+        CORRECTION
+
+        include_examples :offense, 'first line minus-level indented, with `-`',
+                         <<-RUBY, <<-CORRECTION, false
+                  puts <<-#{quote}RUBY2#{quote}
+          def foo
+            bar
+          end
+          RUBY2
+        RUBY
+        puts <<~#{quote}RUBY2#{quote}
+          def foo
+            bar
+          end
+        RUBY2
+        CORRECTION
+
+        include_examples :accept, 'indented, with `~`', <<-RUBY
           <<~#{quote}RUBY2#{quote}
             something
           RUBY2

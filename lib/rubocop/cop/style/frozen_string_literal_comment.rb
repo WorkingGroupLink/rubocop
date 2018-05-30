@@ -74,20 +74,12 @@ module RuboCop
           end
         end
 
-        def autocorrect(node) # rubocop:disable Metrics/MethodLength
+        def autocorrect(node)
           lambda do |corrector|
             if style == :never
-              corrector.remove(range_with_surrounding_space(range: node.pos,
-                                                            side: :right))
+              remove_comment(corrector, node)
             else
-              last_special_comment = last_special_comment(processed_source)
-              if last_special_comment.nil?
-                corrector.insert_before(processed_source.tokens[0].pos,
-                                        "#{FROZEN_STRING_LITERAL_ENABLED}\n")
-              else
-                corrector.insert_after(last_special_comment.pos,
-                                       "\n#{FROZEN_STRING_LITERAL_ENABLED}")
-              end
+              insert_comment(corrector)
             end
           end
         end
@@ -137,6 +129,48 @@ module RuboCop
           add_offense(frozen_string_literal_comment,
                       location: frozen_string_literal_comment.pos,
                       message: MSG_UNNECESSARY)
+        end
+
+        def remove_comment(corrector, node)
+          corrector.remove(range_with_surrounding_space(range: node.pos,
+                                                        side: :right))
+        end
+
+        def insert_comment(corrector)
+          last_special_comment = last_special_comment(processed_source)
+          if last_special_comment.nil?
+            corrector.insert_before(correction_range, preceeding_comment)
+          else
+            corrector.insert_after(correction_range, proceeding_comment)
+          end
+        end
+
+        def preceeding_comment
+          if processed_source.tokens[0].space_before?
+            "#{FROZEN_STRING_LITERAL_ENABLED}\n"
+          else
+            "#{FROZEN_STRING_LITERAL_ENABLED}\n\n"
+          end
+        end
+
+        def proceeding_comment
+          last_special_comment = last_special_comment(processed_source)
+          if processed_source.following_line(last_special_comment).empty?
+            "\n#{FROZEN_STRING_LITERAL_ENABLED}"
+          else
+            "\n#{FROZEN_STRING_LITERAL_ENABLED}\n"
+          end
+        end
+
+        def correction_range
+          last_special_comment = last_special_comment(processed_source)
+
+          if last_special_comment.nil?
+            range_with_surrounding_space(range: processed_source.tokens[0],
+                                         side: :left)
+          else
+            last_special_comment.pos
+          end
         end
       end
     end

@@ -10,11 +10,11 @@ module RuboCop
       #
       #   # bad
       #
-      #   def duplicated
+      #   def foo
       #     1
       #   end
       #
-      #   def duplicated
+      #   def foo
       #     2
       #   end
       #
@@ -22,25 +22,36 @@ module RuboCop
       #
       #   # bad
       #
-      #   def duplicated
+      #   def foo
       #     1
       #   end
       #
-      #   alias duplicated other_duplicated
+      #   alias foo bar
       #
       # @example
       #
       #   # good
       #
-      #   def duplicated
+      #   def foo
       #     1
       #   end
       #
-      #   def other_duplicated
+      #   def bar
       #     2
       #   end
+      #
+      # @example
+      #
+      #   # good
+      #
+      #   def foo
+      #     1
+      #   end
+      #
+      #   alias bar foo
       class DuplicateMethods < Cop
-        MSG = 'Method `%s` is defined at both %s and %s.'.freeze
+        MSG = 'Method `%<method>s` is defined at both %<defined>s and ' \
+              '%<current>s.'.freeze
 
         def initialize(config = nil, options = nil)
           super
@@ -121,8 +132,8 @@ module RuboCop
         end
 
         def message_for_dup(node, method_name)
-          format(MSG, method_name, @definitions[method_name],
-                 source_location(node))
+          format(MSG, method: method_name, defined: @definitions[method_name],
+                      current: source_location(node))
         end
 
         def found_instance_method(node, name)

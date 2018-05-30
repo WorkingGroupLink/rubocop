@@ -119,7 +119,7 @@ array literal or the second is a string literal.
 %w(foo bar baz) * ","
 
 # good
-%w(foo bar bax).join(",")
+%w(foo bar baz).join(",")
 ```
 
 ### References
@@ -610,6 +610,32 @@ Enabled | No
 This cop checks for uses of class variables. Offenses
 are signaled only on assignment to class variables to
 reduce the number of offenses that would be reported.
+
+You have to be careful when setting a value for a class
+variable; if a class has been inherited, changing the
+value of a class variable also affects the inheriting
+classes. This means that it's almost always better to
+use a class instance variable instead.
+
+### Examples
+
+```ruby
+# bad
+class A
+  @@test = 10
+end
+
+# good
+class A
+  @test = 10
+end
+
+class A
+  def test
+    @@test # you can access class variable without offence
+  end
+end
+```
 
 ### References
 
@@ -1672,6 +1698,52 @@ end
 
 * [https://github.com/bbatsov/ruby-style-guide#predicate-methods](https://github.com/bbatsov/ruby-style-guide#predicate-methods)
 
+## Style/ExpandPathArguments
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks for use of the `File.expand_path` arguments.
+Likewise, it also checks for the `Pathname.new` argument.
+
+Contrastive bad case and good case are alternately shown in
+the following examples.
+
+### Examples
+
+```ruby
+# bad
+File.expand_path('..', __FILE__)
+
+# good
+File.expand_path(__dir__)
+
+# bad
+File.expand_path('../..', __FILE__)
+
+# good
+File.expand_path('..', __dir__)
+
+# bad
+File.expand_path('.', __FILE__)
+
+# good
+File.expand_path(__FILE__)
+
+# bad
+Pathname(__FILE__).parent.expand_path
+
+# good
+Pathname(__dir__).expand_path
+
+# bad
+Pathname.new(__FILE__).parent.expand_path
+
+# good
+Pathname.new(__dir__).expand_path
+```
+
 ## Style/FlipFlop
 
 Enabled by default | Supports autocorrection
@@ -2396,6 +2468,7 @@ foo.any? { |f| f.even? }
 foo != bar
 foo == bar
 !!('foo' =~ /^\w+$/)
+!(foo.class < Numeric) # Checking class hierarchy is allowed
 ```
 
 ### Configurable attributes
@@ -2611,6 +2684,12 @@ object.some_method()
 object.some_method
 ```
 
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+IgnoredMethods | `[]` | Array
+
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#method-invocation-parens](https://github.com/bbatsov/ruby-style-guide#method-invocation-parens)
@@ -2744,14 +2823,14 @@ EnforcedStyle | `require_parentheses` | `require_parentheses`, `require_no_paren
 
 * [https://github.com/bbatsov/ruby-style-guide#method-parens](https://github.com/bbatsov/ruby-style-guide#method-parens)
 
-## Style/MethodMissing
+## Style/MethodMissingSuper
 
 Enabled by default | Supports autocorrection
 --- | ---
 Enabled | No
 
-This cop checks for the presence of `method_missing` without also
-defining `respond_to_missing?` and falling back on `super`.
+This cop checks for the presence of `method_missing` without
+falling back on `super`.
 
 ### Examples
 
@@ -2762,9 +2841,6 @@ def method_missing(name, *args)
 end
 
 #good
-def respond_to_missing?(name, include_private)
-  # ...
-end
 
 def method_missing(name, *args)
   # ...
@@ -2908,6 +2984,37 @@ Name | Default value | Configurable values
 --- | --- | ---
 EnforcedStyle | `both` | `if`, `case`, `both`
 
+## Style/MissingRespondToMissing
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | No
+
+This cop checks for the presence of `method_missing` without also
+defining `respond_to_missing?`.
+
+### Examples
+
+```ruby
+#bad
+def method_missing(name, *args)
+  # ...
+end
+
+#good
+def respond_to_missing?(name, include_private)
+  # ...
+end
+
+def method_missing(name, *args)
+  # ...
+end
+```
+
+### References
+
+* [https://github.com/bbatsov/ruby-style-guide#no-method-missing](https://github.com/bbatsov/ruby-style-guide#no-method-missing)
+
 ## Style/MixinGrouping
 
 Enabled by default | Supports autocorrection
@@ -2965,11 +3072,9 @@ Enabled by default | Supports autocorrection
 --- | ---
 Enabled | No
 
-This cop checks that `include`, `extend` and `prepend` exists at
-the top level.
-Using these at the top level affects the behavior of `Object`.
-There will not be using `include`, `extend` and `prepend` at
-the top level. Let's use it inside `class` or `module`.
+This cop checks that `include`, `extend` and `prepend` statements appear
+inside classes and modules, not at the top level, so as to not affect
+the behavior of `Object`.
 
 ### Examples
 
@@ -3012,7 +3117,7 @@ end
 
 Enabled by default | Supports autocorrection
 --- | ---
-Enabled | No
+Enabled | Yes
 
 This cops checks for use of `extend self` or `module_function` in a
 module.
@@ -3258,6 +3363,11 @@ CONST = [1, 2, 3]
 
 # good
 CONST = [1, 2, 3].freeze
+
+# good
+CONST = <<~TESTING.freeze
+This is a heredoc
+TESTING
 ```
 
 ## Style/NegatedIf
@@ -3359,6 +3469,27 @@ Enabled | Yes
 
 Checks for uses of while with a negated condition.
 
+### Examples
+
+```ruby
+# bad
+while !foo
+  bar
+end
+
+# good
+until foo
+  bar
+end
+
+# bad
+bar until !foo
+
+# good
+bar while foo
+bar while !foo && baz
+```
+
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#until-for-negatives](https://github.com/bbatsov/ruby-style-guide#until-for-negatives)
@@ -3418,6 +3549,20 @@ Enabled by default | Supports autocorrection
 Enabled | No
 
 This cop checks for nested ternary op expressions.
+
+### Examples
+
+```ruby
+# bad
+a ? (b ? b1 : b2) : a2
+
+# good
+if a
+  b ? b1 : b2
+else
+  a2
+end
+```
 
 ### References
 
@@ -3659,7 +3804,7 @@ but not `true` and `false`, and thus not always interchangeable with
 
 The cop ignores comparisons to global variables, since they are often
 populated with objects which can be compared with integers, but are
-not themselves `Interger` polymorphic.
+not themselves `Integer` polymorphic.
 
 ### Examples
 
@@ -3714,6 +3859,26 @@ Enabled | Yes
 
 TODO: Make configurable.
 Checks for uses of if/then/else/end on a single line.
+
+### Examples
+
+```ruby
+# bad
+if foo then boo else doo end
+unless foo then boo else goo end
+
+# good
+foo ? boo : doo
+boo if foo
+if foo then boo end
+
+# good
+if foo
+  boo
+else
+  doo
+end
+```
 
 ### References
 
@@ -3873,12 +4038,34 @@ if x > 10
 elsif x < 3
 end
 ```
+#### AllowInMultilineConditions: false (default)
+
+```ruby
+# bad
+if (x > 10 &&
+   y > 10)
+end
+
+# good
+ if x > 10 &&
+    y > 10
+ end
+```
+#### AllowInMultilineConditions: true
+
+```ruby
+# good
+if (x > 10 &&
+   y > 10)
+end
+```
 
 ### Configurable attributes
 
 Name | Default value | Configurable values
 --- | --- | ---
 AllowSafeAssignment | `true` | Boolean
+AllowInMultilineConditions | `false` | Boolean
 
 ### References
 
@@ -4158,6 +4345,7 @@ Currently it checks for code like this:
 ### Examples
 
 ```ruby
+# bad
 def redundant
   begin
     ala
@@ -4167,11 +4355,30 @@ def redundant
   end
 end
 
+# good
 def preferred
   ala
   bala
 rescue StandardError => e
   something
+end
+
+# bad
+# When using Ruby 2.5 or later.
+do_something do
+  begin
+    something
+  rescue => ex
+    anything
+  end
+end
+
+# good
+# In Ruby 2.5 or later, you can omit `begin` in `do-end` block.
+do_something do
+  something
+rescue => ex
+  anything
 end
 ```
 
@@ -4281,21 +4488,36 @@ Enabled | Yes
 
 This cop checks for redundant `return` expressions.
 
-It should be extended to handle methods whose body is if/else
-or a case expression with a default branch.
-
 ### Examples
 
 ```ruby
+# These bad cases should be extended to handle methods whose body is
+# if/else or a case expression with a default branch.
+
+# bad
 def test
   return something
 end
 
+# bad
 def test
   one
   two
   three
   return something
+end
+
+# good
+def test
+  return something if something_else
+end
+
+# good
+def test
+  if x
+  elsif y
+  else
+  end
 end
 ```
 
@@ -4635,7 +4857,10 @@ Enabled | Yes
 
 This cop transforms usages of a method call safeguarded by a non `nil`
 check for the variable whose method is being called to
-safe navigation (`&.`).
+safe navigation (`&.`). If there is a method chain, all of the methods
+in the chain need to be checked for safety, and all of the methods will
+need to be changed to use safe navigation. We have limited the cop to
+not register an offense for method chains that exceed 2 methods.
 
 Configuration option: ConvertCodeThatCanStartToReturnNil
 The default for this is `false`. When configured to `true`, this will
@@ -4650,6 +4875,7 @@ returns.
 ```ruby
 # bad
 foo.bar if foo
+foo.bar.baz if foo
 foo.bar(param1, param2) if foo
 foo.bar { |e| e.something } if foo
 foo.bar(param) { |e| e.something } if foo
@@ -4659,22 +4885,33 @@ foo.bar unless !foo
 foo.bar unless foo.nil?
 
 foo && foo.bar
+foo && foo.bar.baz
 foo && foo.bar(param1, param2)
 foo && foo.bar { |e| e.something }
 foo && foo.bar(param) { |e| e.something }
 
 # good
 foo&.bar
+foo&.bar&.baz
 foo&.bar(param1, param2)
 foo&.bar { |e| e.something }
 foo&.bar(param) { |e| e.something }
+foo && foo.bar.baz.qux # method chain with more than 2 methods
+foo && foo.nil? # method that `nil` responds to
 
+# Method calls that do not use `.`
+foo && foo < bar
+foo < bar if foo
+
+# This could start returning `nil` as well as the return of the method
 foo.nil? || foo.bar
 !foo || foo.bar
 
-# Methods that `nil` will `respond_to?` should not be converted to
-# use safe navigation
-foo.to_i if foo
+# Methods that are used on assignment, arithmetic operation or
+# comparison should not be converted to use safe navigation
+foo.baz = bar if foo
+foo.baz + bar if foo
+foo.bar > 2 if foo
 ```
 
 ### Configurable attributes
@@ -4682,6 +4919,7 @@ foo.to_i if foo
 Name | Default value | Configurable values
 --- | --- | ---
 ConvertCodeThatCanStartToReturnNil | `false` | Boolean
+Whitelist | `present?`, `blank?`, `presence`, `try`, `try!` | Array
 
 ## Style/SelfAssignment
 
@@ -4900,6 +5138,31 @@ method accepting a block match the names specified via configuration.
 For instance one can configure `reduce`(`inject`) to use |a, e| as
 parameters.
 
+Configuration option: Methods
+Should be set to use this cop. Array of hashes, where each key is the
+method name and value - array of argument names.
+
+### Examples
+
+#### Methods: [{reduce: %w[a b]}]
+
+```ruby
+# bad
+foo.reduce { |c, d| c + d }
+foo.reduce { |_, _d| 1 }
+
+# good
+foo.reduce { |a, b| a + b }
+foo.reduce { |a, _b| a }
+foo.reduce { |a, (id, _)| a + id }
+foo.reduce { true }
+
+# good
+foo.reduce do |c, d|
+  c + d
+end
+```
+
 ### Configurable attributes
 
 Name | Default value | Configurable values
@@ -4946,6 +5209,63 @@ Enabled by default | Supports autocorrection
 Enabled | Yes
 
 This cop looks for uses of Perl-style global variables.
+
+### Examples
+
+#### EnforcedStyle: use_english_names (default)
+
+```ruby
+# good
+puts $LOAD_PATH
+puts $LOADED_FEATURES
+puts $PROGRAM_NAME
+puts $ERROR_INFO
+puts $ERROR_POSITION
+puts $FIELD_SEPARATOR # or $FS
+puts $OUTPUT_FIELD_SEPARATOR # or $OFS
+puts $INPUT_RECORD_SEPARATOR # or $RS
+puts $OUTPUT_RECORD_SEPARATOR # or $ORS
+puts $INPUT_LINE_NUMBER # or $NR
+puts $LAST_READ_LINE
+puts $DEFAULT_OUTPUT
+puts $DEFAULT_INPUT
+puts $PROCESS_ID # or $PID
+puts $CHILD_STATUS
+puts $LAST_MATCH_INFO
+puts $IGNORECASE
+puts $ARGV # or ARGV
+puts $MATCH
+puts $PREMATCH
+puts $POSTMATCH
+puts $LAST_PAREN_MATCH
+```
+#### EnforcedStyle: use_perl_names
+
+```ruby
+# good
+puts $:
+puts $"
+puts $0
+puts $!
+puts $@
+puts $;
+puts $,
+puts $/
+puts $\
+puts $.
+puts $_
+puts $>
+puts $<
+puts $$
+puts $?
+puts $~
+puts $=
+puts $*
+puts $&
+puts $`
+puts $'
+puts $+
+```
 
 ### Configurable attributes
 
@@ -5221,7 +5541,7 @@ of 2 or fewer elements.
 Name | Default value | Configurable values
 --- | --- | ---
 EnforcedStyle | `percent` | `percent`, `brackets`
-MinSize | `0` | Integer
+MinSize | `2` | Integer
 
 ### References
 
@@ -5329,6 +5649,27 @@ Name | Default value | Configurable values
 EnforcedStyle | `require_no_parentheses` | `require_parentheses`, `require_no_parentheses`, `require_parentheses_when_complex`
 AllowSafeAssignment | `true` | Boolean
 
+## Style/TrailingBodyOnClass
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks for trailing code after the class definition.
+
+### Examples
+
+```ruby
+# bad
+class Foo; def foo; end
+end
+
+# good
+class Foo
+  def foo; end
+end
+```
+
 ## Style/TrailingBodyOnMethodDefinition
 
 Enabled by default | Supports autocorrection
@@ -5356,6 +5697,27 @@ end
 def f(x)
   b = foo
   b[c: x]
+end
+```
+
+## Style/TrailingBodyOnModule
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks for trailing code after the module definition.
+
+### Examples
+
+```ruby
+# bad
+module Foo extend self
+end
+
+# good
+module Foo
+  extend self
 end
 ```
 
@@ -5746,9 +6108,41 @@ Enabled | Yes
 
 This cop checks for usage of the %q/%Q syntax when '' or "" would do.
 
+# bad
+name = %q(Bruce Wayne)
+time = %q(8 o'clock)
+question = %q("What did you say?")
+
+# good
+name = 'Bruce Wayne'
+time = "8 o'clock"
+question = '"What did you say?"'
+
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#percent-q](https://github.com/bbatsov/ruby-style-guide#percent-q)
+
+## Style/UnpackFirst
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks for accessing the first element of `String#unpack`
+which can be replaced with the shorter method `unpack1`.
+
+### Examples
+
+```ruby
+# bad
+'foo'.unpack('h*').first
+'foo'.unpack('h*')[0]
+'foo'.unpack('h*').slice(0)
+'foo'.unpack('h*').at(0)
+
+# good
+'foo'.unpack1('h*')
+```
 
 ## Style/VariableInterpolation
 
@@ -5919,7 +6313,7 @@ array of 2 or fewer elements.
 Name | Default value | Configurable values
 --- | --- | ---
 EnforcedStyle | `percent` | `percent`, `brackets`
-MinSize | `0` | Integer
+MinSize | `2` | Integer
 WordRegex | `(?-mix:\A[\p{Word}\n\t]+\z)` | 
 
 ### References

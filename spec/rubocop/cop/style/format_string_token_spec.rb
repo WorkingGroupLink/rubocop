@@ -108,6 +108,13 @@ RSpec.describe RuboCop::Cop::Style::FormatStringToken, :config do
     RUBY
   end
 
+  it 'ignores time format and unrelated `format` method using' do
+    expect_no_offenses(<<-RUBY.strip_indent)
+      Time.now.strftime('%Y-%m-%d-%H-%M-%S')
+      format
+    RUBY
+  end
+
   it 'handles dstrs' do
     inspect_source('"c#{b}%{template}"')
     expect(cop.highlights).to eql(['%{template}'])
@@ -117,6 +124,17 @@ RSpec.describe RuboCop::Cop::Style::FormatStringToken, :config do
     expect_no_offenses(<<-RUBY.strip_indent)
       'https://ru.wikipedia.org/wiki/%D0%90_'\
         '(%D0%BA%D0%B8%D1%80%D0%B8%D0%BB%D0%BB%D0%B8%D1%86%D0%B0)'
+    RUBY
+  end
+
+  it 'ignores placeholder argumetns' do
+    expect_no_offenses(<<-RUBY.strip_indent)
+      format(
+        '%<day>s %<start>s-%<end>s',
+        day: open_house.starts_at.strftime('%a'),
+        start: open_house.starts_at.strftime('%l'),
+        end: open_house.ends_at.strftime('%l %p').strip
+      )
     RUBY
   end
 

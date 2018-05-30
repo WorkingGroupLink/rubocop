@@ -4,7 +4,8 @@ module RuboCop
   module Cop
     module Rails
       # This cop is used to identify usages of file path joining process
-      # to use `Rails.root.join` clause.
+      # to use `Rails.root.join` clause. This is to avoid bugs on operating
+      # system that don't use '/' as the path separator.
       #
       # @example
       #  # bad
@@ -33,6 +34,9 @@ module RuboCop
 
         def on_dstr(node)
           return unless rails_root_nodes?(node)
+          return unless node.children.last.source.start_with?('.') ||
+                        node.children.last.source.include?(File::SEPARATOR)
+
           register_offense(node)
         end
 

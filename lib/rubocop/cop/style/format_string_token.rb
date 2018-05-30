@@ -51,6 +51,7 @@ module RuboCop
         }.freeze
 
         def on_str(node)
+          return if placeholder_argument?(node)
           return if node.each_ancestor(:xstr, :regexp).any?
 
           tokens(node) do |detected_style, token_range|
@@ -68,11 +69,8 @@ module RuboCop
         private
 
         def includes_format_methods?(node)
-          root_node = node.ancestors.last
-          return unless root_node
-
-          root_node.descendants.any? do |desc_node|
-            FORMAT_STRING_METHODS.include?(desc_node.method_name)
+          node.each_ancestor.any? do |ancestor|
+            FORMAT_STRING_METHODS.include?(ancestor.method_name)
           end
         end
 
@@ -84,6 +82,7 @@ module RuboCop
           "Prefer #{message_text(style)} over #{message_text(detected_style)}."
         end
 
+        # rubocop:disable Style/FormatStringToken
         def message_text(style)
           case style
           when :annotated then 'annotated tokens (like `%<foo>s`)'
@@ -91,6 +90,7 @@ module RuboCop
           when :unannotated then 'unannotated tokens (like `%s`)'
           end
         end
+        # rubocop:enable Style/FormatStringToken
 
         def tokens(str_node, &block)
           return if str_node.source == '__FILE__'
@@ -156,6 +156,13 @@ module RuboCop
             new_begin,
             new_end
           )
+        end
+
+        def placeholder_argument?(node)
+          return false unless node.parent
+          return true if node.parent.pair_type?
+
+          placeholder_argument?(node.parent)
         end
       end
     end

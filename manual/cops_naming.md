@@ -275,11 +275,49 @@ EOS
 
 Name | Default value | Configurable values
 --- | --- | ---
-Blacklist | `END`, `(?-mix:EO[A-Z]{1})` | Array
+Blacklist | `(?-mix:(^|\s)(EO[A-Z]{1}|END)(\s|$))` | Array
 
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#heredoc-delimiters](https://github.com/bbatsov/ruby-style-guide#heredoc-delimiters)
+
+## Naming/MemoizedInstanceVariableName
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | No
+
+This cop checks for memoized methods whose instance variable name
+does not match the method name.
+
+### Examples
+
+```ruby
+# bad
+# Method foo is memoized using an instance variable that is
+# not `@foo`. This can cause confusion and bugs.
+def foo
+  @something ||= calculate_expensive_thing
+end
+
+# good
+def foo
+  @foo ||= calculate_expensive_thing
+end
+
+# good
+def foo
+  @foo ||= begin
+    calculate_expensive_thing
+  end
+end
+
+# good
+def foo
+  helper_variable = something_we_need_to_calculate_foo
+  @foo ||= calculate_expensive_thing(helper_variable)
+end
+```
 
 ## Naming/MethodName
 
@@ -414,13 +452,13 @@ AllowNamesEndingInNumbers | `true` | Boolean
 AllowedNames | `[]` | Array
 ForbiddenNames | `[]` | Array
 
-## Naming/UncommunicativeMethodArgName
+## Naming/UncommunicativeMethodParamName
 
 Enabled by default | Supports autocorrection
 --- | ---
 Enabled | No
 
-This cop checks method argument names for how descriptive they
+This cop checks method parameter names for how descriptive they
 are. It is highly configurable.
 
 The `MinNameLength` config option takes an integer. It represents
@@ -470,7 +508,7 @@ Name | Default value | Configurable values
 --- | --- | ---
 MinNameLength | `3` | Integer
 AllowNamesEndingInNumbers | `true` | Boolean
-AllowedNames | `[]` | Array
+AllowedNames | `io`, `id`, `to`, `by`, `on`, `in`, `at` | Array
 ForbiddenNames | `[]` | Array
 
 ## Naming/VariableName

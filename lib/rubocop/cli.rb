@@ -41,19 +41,23 @@ module RuboCop
       execute_runners(paths)
     rescue RuboCop::ConfigNotFoundError => e
       warn e.message
-      return e.status
+      STATUS_ERROR
     rescue RuboCop::Error => e
       warn Rainbow("Error: #{e.message}").red
-      return STATUS_ERROR
+      STATUS_ERROR
     rescue Finished
-      return STATUS_SUCCESS
+      STATUS_SUCCESS
     rescue IncorrectCopNameError => e
       warn e.message
-      return STATUS_ERROR
+      STATUS_ERROR
+    rescue OptionParser::InvalidOption => e
+      warn e.message
+      warn 'For usage information, use --help'
+      STATUS_ERROR
     rescue StandardError, SyntaxError, LoadError => e
       warn e.message
       warn e.backtrace
-      return STATUS_ERROR
+      STATUS_ERROR
     end
     # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
@@ -178,8 +182,12 @@ module RuboCop
       # This must be done after the options have already been processed,
       # because they can affect how ConfigStore behaves
       @options[:formatters] ||= begin
-        cfg = @config_store.for(Dir.pwd).for_all_cops
-        formatter = cfg['DefaultFormatter'] || 'progress'
+        if @options[:auto_gen_config]
+          formatter = 'autogenconf'
+        else
+          cfg = @config_store.for(Dir.pwd).for_all_cops
+          formatter = cfg['DefaultFormatter'] || 'progress'
+        end
         [[formatter, @options[:output_path]]]
       end
 
@@ -258,6 +266,8 @@ module RuboCop
       warn <<-WARNING.strip_indent
         Errors are usually caused by RuboCop bugs.
         Please, report your problems to RuboCop's issue tracker.
+        #{Gem.loaded_specs['rubocop'].metadata['bug_tracker_uri']}
+
         Mention the following information in the issue report:
         #{RuboCop::Version.version(true)}
       WARNING

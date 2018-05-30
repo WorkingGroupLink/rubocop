@@ -74,10 +74,10 @@ module RuboCop
   # You can nest arbitrarily deep:
   #
   #     # matches node parsed from 'Const = Class.new' or 'Const = Module.new':
-  #     '(casgn nil const (send (const nil {:Class :Module}) :new)))'
+  #     '(casgn nil? :Const (send (const nil? {:Class :Module}) :new))'
   #     # matches a node parsed from an 'if', with a '==' comparison,
   #     # and no 'else' branch:
-  #     '(if (send _ :== _) _ nil)'
+  #     '(if (send _ :== _) _ nil?)'
   #
   # Note that patterns like 'send' are implemented by calling `#send_type?` on
   # the node being matched, 'const' by `#const_type?`, 'int' by `#int_type?`,
@@ -369,7 +369,7 @@ module RuboCop
         if method.end_with?('(') # is there an arglist?
           args = compile_args(tokens)
           method = method[0..-2] # drop the trailing (
-          "(#{method}(#{cur_node}#{'.type' if seq_head}),#{args.join(',')})"
+          "(#{method}(#{cur_node}#{'.type' if seq_head},#{args.join(',')}))"
         else
           "(#{method}(#{cur_node}#{'.type' if seq_head}))"
         end
@@ -384,10 +384,13 @@ module RuboCop
       end
 
       def compile_args(tokens)
-        args = []
-        args << compile_arg(tokens.shift) until tokens.first == ')'
-        tokens.shift # drop the )
-        args
+        index = tokens.find_index { |token| token == ')' }
+
+        tokens.slice!(0..index).each_with_object([]) do |token, args|
+          next if [')', ','].include?(token)
+
+          args << compile_arg(token)
+        end
       end
 
       def compile_arg(token)

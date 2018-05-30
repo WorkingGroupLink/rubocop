@@ -37,8 +37,8 @@ module RuboCop
       #     puts foo
       #   end
       class ShadowedArgument < Cop
-        MSG = 'Argument `%s` was shadowed by a local variable before it was ' \
-              'used.'.freeze
+        MSG = 'Argument `%<argument>s` was shadowed by a local variable ' \
+              'before it was used.'.freeze
 
         def_node_search :uses_var?, '(lvar %)'
 
@@ -58,7 +58,7 @@ module RuboCop
           return unless argument.method_argument? || argument.block_argument?
 
           shadowing_assignment(argument) do |node|
-            message = format(MSG, argument.name)
+            message = format(MSG, argument: argument.name)
 
             add_offense(node, message: message)
           end
@@ -94,6 +94,9 @@ module RuboCop
         def assignment_without_argument_usage(argument)
           argument.assignments.reduce(true) do |location_known, assignment|
             assignment_node = assignment.meta_assignment_node || assignment.node
+
+            # Shorthand assignments always use their arguments
+            next false if assignment_node.shorthand_asgn?
 
             node_within_block_or_conditional =
               node_within_block_or_conditional?(assignment_node.parent,

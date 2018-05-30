@@ -119,6 +119,10 @@ Layout/ElseAlignment:
   Description: 'Align elses and elsifs correctly.'
   Enabled: true
 
+Layout/EmptyComment:
+  Description: 'Checks empty comment.'
+  Enabled: true
+
 Layout/EmptyLineAfterMagicComment:
   Description: 'Add an empty line after magic comments to separate them from code.'
   StyleGuide: '#separate-magic-comments-from-code'
@@ -509,6 +513,10 @@ Lint/EnsureReturn:
   StyleGuide: '#no-return-ensure'
   Enabled: true
 
+Lint/ErbNewArguments:
+  Description: 'Use `:trim_mode` and `:eoutvar` keyword arguments to `ERB.new`.'
+  Enabled: true
+
 Lint/FloatOutOfRange:
   Description: >-
                  Catches floating-point literals too large or small for Ruby to
@@ -586,6 +594,10 @@ Lint/NonLocalExitFromIterator:
   Description: 'Do not use return in iterator to cause non-local exit.'
   Enabled: true
 
+Lint/OrderedMagicComments:
+  Description: 'Checks the proper ordering of magic comments and whether a magic comment is not placed before a shebang.'
+  Enabled: true
+
 Lint/ParenthesesAsGroupedExpression:
   Description: >-
                  Checks for method calls with a space before the opening
@@ -644,6 +656,13 @@ Lint/ReturnInVoidContext:
 
 Lint/SafeNavigationChain:
   Description: 'Do not chain ordinary method call after safe navigation operator.'
+  Enabled: true
+
+Lint/SafeNavigationConsistency:
+  Description: >-
+                 Check to make sure that if safe navigation is used for a method
+                 call in an `&&` or `||` condition that safe navigation is used
+                 for all method calls on that same object.
   Enabled: true
 
 Lint/ScriptPermission:
@@ -853,6 +872,11 @@ Naming/HeredocDelimiterNaming:
   StyleGuide: '#heredoc-delimiters'
   Enabled: true
 
+Naming/MemoizedInstanceVariableName:
+  Description: >-
+    Memoized method name should match memo instance variable name.
+  Enabled: true
+
 Naming/MethodName:
   Description: 'Use the configured style when naming methods.'
   StyleGuide: '#snake-case-symbols-methods-vars'
@@ -869,9 +893,9 @@ Naming/UncommunicativeBlockParamName:
                 end in numbers, or do not meet a minimal length.
   Enabled: true
 
-Naming/UncommunicativeMethodArgName:
+Naming/UncommunicativeMethodParamName:
   Description: >-
-                Checks for method argument names that contain capital letters,
+                Checks for method parameter names that contain capital letters,
                 end in numbers, or do not meet a minimal length.
   Enabled: true
 
@@ -963,13 +987,10 @@ Performance/FlatMap:
   # This can be dangerous since `flat_map` will only flatten 1 level, and
   # `flatten` without any parameters can flatten multiple levels.
 
-Performance/HashEachMethods:
-  Description: >-
-                 Use `Hash#each_key` and `Hash#each_value` instead of
-                 `Hash#keys.each` and `Hash#values.each`.
-  StyleGuide: '#hash-each'
+Performance/InefficientHashSearch:
+  Description: 'Use `key?` or `value?` instead of `keys.include?` or `values.include?`'
+  Reference: 'https://github.com/JuanitoFatas/fast-ruby#hashkey-instead-of-hashkeysinclude-code'
   Enabled: true
-  AutoCorrect: false
 
 Performance/LstripRstrip:
   Description: 'Use `strip` instead of `lstrip.rstrip`.'
@@ -1051,6 +1072,12 @@ Performance/UnfreezeString:
   Description: 'Use unary plus to get an unfrozen string literal.'
   Enabled: true
 
+Performance/UnneededSort:
+  Description: >-
+                  Use `min` instead of `sort.first`,
+                  `max_by` instead of `sort_by...last`, etc.
+  Enabled: true
+
 Performance/UriDefaultParser:
   Description: 'Use `URI::DEFAULT_PARSER` instead of `URI::Parser.new`.'
   Enabled: true
@@ -1059,6 +1086,13 @@ Performance/UriDefaultParser:
 
 Rails/ActionFilter:
   Description: 'Enforces consistent use of action filter methods.'
+  Enabled: true
+
+Rails/ActiveRecordAliases:
+  Description: >-
+                  Avoid Active Record aliases:
+                  Use `update` instead of `update_attributes`.
+                  Use `update!` instead of `update_attributes!`.
   Enabled: true
 
 Rails/ActiveSupportAliases:
@@ -1076,15 +1110,13 @@ Rails/ApplicationRecord:
   Description: 'Check that models subclass ApplicationRecord.'
   Enabled: true
 
-Rails/Blank:
-  Description: 'Enforce using `blank?` and `present?`.'
+Rails/AssertNot:
+  Description: 'Use `assert_not` instead of `assert !`.'
   Enabled: true
-  # Convert checks for `nil` or `empty?` to `blank?`
-  NilOrEmpty: true
-  # Convert usages of not `present?` to `blank?`
-  NotPresent: true
-  # Convert usages of `unless` `present?` to `if` `blank?`
-  UnlessPresent: true
+
+Rails/Blank:
+  Description: 'Enforces use of `blank?`.'
+  Enabled: true
 
 Rails/CreateTableWithTimestamps:
   Description: >-
@@ -1157,6 +1189,10 @@ Rails/HttpPositionalArguments:
     - 'spec/**/*'
     - 'test/**/*'
 
+Rails/HttpStatus:
+  Description: 'Enforces use of symbolic or numeric value to define HTTP status.'
+  Enabled: true
+
 Rails/InverseOf:
   Description: 'Checks for associations where the inverse cannot be determined automatically.'
   Enabled: true
@@ -1187,14 +1223,8 @@ Rails/Presence:
   Enabled: true
 
 Rails/Present:
-  Description: 'Enforce using `blank?` and `present?`.'
+  Description: 'Enforces use of `present?`.'
   Enabled: true
-  NotNilAndNotEmpty: true
-  # Convert checks for not `nil` and not `empty?` to `present?`
-  NotBlank: true
-  # Convert usages of not `blank?` to `present?`
-  UnlessBlank: true
-  # Convert usages of `unless` `blank?` to `if` `present?`
 
 Rails/ReadWriteAttribute:
   Description: >-
@@ -1205,6 +1235,10 @@ Rails/ReadWriteAttribute:
 
 Rails/RedundantReceiverInWithOptions:
   Description: 'Checks for redundant receiver in `with_options`.'
+  Enabled: true
+
+Rails/RefuteMethods:
+  Description: 'Use `assert_not` methods instead of `refute` methods.'
   Enabled: true
 
 Rails/RelativeDateConstant:
@@ -1493,6 +1527,10 @@ Style/EvenOdd:
   StyleGuide: '#predicate-methods'
   Enabled: true
 
+Style/ExpandPathArguments:
+  Description: "Use `expand_path(__dir__)` instead of `expand_path('..', __FILE__)`."
+  Enabled: true
+
 Style/FlipFlop:
   Description: 'Checks for flip flops'
   StyleGuide: '#no-flip-flops'
@@ -1603,8 +1641,8 @@ Style/MethodDefParentheses:
   StyleGuide: '#method-parens'
   Enabled: true
 
-Style/MethodMissing:
-  Description: 'Avoid using `method_missing`.'
+Style/MethodMissingSuper:
+  Description: Checks for `method_missing` to call `super`.
   StyleGuide: '#no-method-missing'
   Enabled: true
 
@@ -1612,6 +1650,13 @@ Style/MinMax:
   Description: >-
                  Use `Enumerable#minmax` instead of `Enumerable#min`
                  and `Enumerable#max` in conjunction.'
+  Enabled: true
+
+Style/MissingRespondToMissing:
+  Description: >-
+                  Checks if `method_missing` is implemented
+                  without implementing `respond_to_missing`.
+  StyleGuide: '#no-method-missing'
   Enabled: true
 
 Style/MixinGrouping:
@@ -1928,8 +1973,16 @@ Style/TernaryParentheses:
   Description: 'Checks for use of parentheses around ternary conditions.'
   Enabled: true
 
+Style/TrailingBodyOnClass:
+  Description: 'Class body goes below class statement.'
+  Enabled: true
+
 Style/TrailingBodyOnMethodDefinition:
   Description: 'Method body goes below definition.'
+  Enabled: true
+
+Style/TrailingBodyOnModule:
+  Description: 'Module body goes below module statement.'
   Enabled: true
 
 Style/TrailingCommaInArguments:
@@ -1980,6 +2033,12 @@ Style/UnneededInterpolation:
 Style/UnneededPercentQ:
   Description: 'Checks for %q/%Q when single quotes or double quotes would do.'
   StyleGuide: '#percent-q'
+  Enabled: true
+
+Style/UnpackFirst:
+  Description: >-
+                 Checks for accessing the first element of `String#unpack`
+                 instead of using `unpack1`
   Enabled: true
 
 Style/VariableInterpolation:

@@ -9,6 +9,8 @@ RSpec.describe RuboCop::Cop::Lint::ScriptPermission do
 
   let(:file) { Tempfile.new('') }
   let(:filename) { file.path.split('/').last }
+  # HACK: extra empty line to bypass Parser 2.5.0.2 issue:
+  let(:source) { "#!/usr/bin/ruby\n\n" }
 
   after do
     file.close
@@ -16,8 +18,6 @@ RSpec.describe RuboCop::Cop::Lint::ScriptPermission do
   end
 
   context 'with file permission 0644' do
-    let(:source) { '#!/usr/bin/ruby' }
-
     before do
       File.write(file.path, source)
       FileUtils.chmod(0644, file.path)
@@ -28,6 +28,7 @@ RSpec.describe RuboCop::Cop::Lint::ScriptPermission do
         it 'allows any file permissions' do
           expect_no_offenses(<<-RUBY.strip_indent, file)
         #!/usr/bin/ruby
+
           RUBY
         end
       end
@@ -36,6 +37,7 @@ RSpec.describe RuboCop::Cop::Lint::ScriptPermission do
         expect_offense(<<-RUBY.strip_indent, file)
         #!/usr/bin/ruby
         ^^^^^^^^^^^^^^^ Script file #{filename} doesn't have execute permission.
+
           RUBY
       end
     end
@@ -47,7 +49,7 @@ RSpec.describe RuboCop::Cop::Lint::ScriptPermission do
     end
 
     it 'accepts with shebang line' do
-      File.write(file.path, '#!/usr/bin/ruby')
+      File.write(file.path, source)
 
       expect_no_offenses(file.read, file)
     end
@@ -69,14 +71,14 @@ RSpec.describe RuboCop::Cop::Lint::ScriptPermission do
     let(:options) { { stdin: '' } }
 
     it 'skips investigation' do
-      expect_no_offenses('#!/usr/bin/ruby')
+      expect_no_offenses(source)
     end
   end
 
   unless RuboCop::Platform.windows?
     context 'auto-correct' do
       it 'adds execute permissions to the file' do
-        File.write(file.path, '#!/usr/bin/ruby')
+        File.write(file.path, source)
 
         autocorrect_source(file.read, file)
 

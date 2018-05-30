@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'rubygems'
 require 'bundler'
 require 'bundler/gem_tasks'
 begin
@@ -64,6 +63,8 @@ YARD::Rake::YardocTask.new
 
 desc 'Open a REPL for experimentation'
 task :repl do
+  warn 'DEPRECATION WARNING: `rake repl` is deprecated and ' \
+       'will be removed in RuboCop 0.58.0. Please use `bin/console`.'
   require 'pry'
   require 'rubocop'
   ARGV.clear
@@ -118,15 +119,12 @@ end
 
 desc 'Syntax check for the documentation comments'
 task documentation_syntax_check: :yard_for_generate_documentation do
-  require 'parser/ruby24'
+  require 'parser/ruby25'
 
   ok = true
   YARD::Registry.load!
   cops = RuboCop::Cop::Cop.registry
   cops.each do |cop|
-    # TODO: parser cannot parse the example, so skip it.
-    #       https://github.com/whitequark/parser/issues/407
-    next if cop == RuboCop::Cop::Layout::SpaceAroundKeyword
     next if %i[RSpec Capybara FactoryBot].include?(cop.department)
     examples = YARD::Registry.all(:class).find do |code_object|
       next unless RuboCop::Cop::Badge.for(code_object.to_s) == cop.badge
@@ -137,7 +135,7 @@ task documentation_syntax_check: :yard_for_generate_documentation do
       begin
         buffer = Parser::Source::Buffer.new('<code>', 1)
         buffer.source = example.text
-        parser = Parser::Ruby24.new(RuboCop::AST::Builder.new)
+        parser = Parser::Ruby25.new(RuboCop::AST::Builder.new)
         parser.diagnostics.all_errors_are_fatal = true
         parser.parse(buffer)
       rescue Parser::SyntaxError => ex

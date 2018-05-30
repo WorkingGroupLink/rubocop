@@ -5,7 +5,10 @@ module RuboCop
     module Style
       # This cop transforms usages of a method call safeguarded by a non `nil`
       # check for the variable whose method is being called to
-      # safe navigation (`&.`).
+      # safe navigation (`&.`). If there is a method chain, all of the methods
+      # in the chain need to be checked for safety, and all of the methods will
+      # need to be changed to use safe navigation. We have limited the cop to
+      # not register an offense for method chains that exceed 2 methods.
       #
       # Configuration option: ConvertCodeThatCanStartToReturnNil
       # The default for this is `false`. When configured to `true`, this will
@@ -18,6 +21,7 @@ module RuboCop
       # @example
       #   # bad
       #   foo.bar if foo
+      #   foo.bar.baz if foo
       #   foo.bar(param1, param2) if foo
       #   foo.bar { |e| e.something } if foo
       #   foo.bar(param) { |e| e.something } if foo
@@ -27,29 +31,40 @@ module RuboCop
       #   foo.bar unless foo.nil?
       #
       #   foo && foo.bar
+      #   foo && foo.bar.baz
       #   foo && foo.bar(param1, param2)
       #   foo && foo.bar { |e| e.something }
       #   foo && foo.bar(param) { |e| e.something }
       #
       #   # good
       #   foo&.bar
+      #   foo&.bar&.baz
       #   foo&.bar(param1, param2)
       #   foo&.bar { |e| e.something }
       #   foo&.bar(param) { |e| e.something }
+      #   foo && foo.bar.baz.qux # method chain with more than 2 methods
+      #   foo && foo.nil? # method that `nil` responds to
       #
+      #   # Method calls that do not use `.`
+      #   foo && foo < bar
+      #   foo < bar if foo
+      #
+      #   # This could start returning `nil` as well as the return of the method
       #   foo.nil? || foo.bar
       #   !foo || foo.bar
       #
-      #   # Methods that `nil` will `respond_to?` should not be converted to
-      #   # use safe navigation
-      #   foo.to_i if foo
+      #   # Methods that are used on assignment, arithmetic operation or
+      #   # comparison should not be converted to use safe navigation
+      #   foo.baz = bar if foo
+      #   foo.baz + bar if foo
+      #   foo.bar > 2 if foo
       class SafeNavigation < Cop
         extend TargetRubyVersion
+        include NilMethods
         include RangeHelp
 
         MSG = 'Use safe navigation (`&.`) instead of checking if an object ' \
               'exists before calling the method.'.freeze
-        NIL_METHODS = nil.methods.freeze
 
         minimum_target_ruby_version 2.3
 
@@ -82,9 +97,12 @@ module RuboCop
 
         def check_node(node)
           return if target_ruby_version < 2.3
-          checked_variable, receiver, method = extract_parts(node)
+          checked_variable, receiver, method_chain, method = extract_parts(node)
           return unless receiver == checked_variable
-          return if unsafe_method?(method)
+          # method is already a method call so this is actually checking for a
+          # chain greater than 2
+          return if chain_size(method_chain, method) > 1
+          return if unsafe_method_used?(method_chain, method)
 
           add_offense(node)
         end
@@ -97,7 +115,9 @@ module RuboCop
           lambda do |corrector|
             corrector.remove(begin_range(node, body))
             corrector.remove(end_range(node, body))
-            corrector.insert_before((method_call || body).loc.dot, '&')
+            corrector.insert_before(method_call.loc.dot, '&')
+
+            add_safe_nav_to_all_methods_in_chain(corrector, method_call, body)
           end
         end
 
@@ -117,10 +137,12 @@ module RuboCop
         end
 
         def extract_parts_from_if(node)
-          checked_variable, receiver =
+          variable, receiver =
             modifier_if_safe_navigation_candidate?(node)
 
-          extract_common_parts(receiver, checked_variable)
+          checked_variable, matching_receiver, method =
+            extract_common_parts(receiver, variable)
+          [checked_variable, matching_receiver, receiver, method]
         end
 
         def extract_parts_from_and(node)
@@ -130,49 +152,56 @@ module RuboCop
               not_nil_check?(checked_variable) || checked_variable
           end
 
-          extract_common_parts(rhs, checked_variable)
+          checked_variable, matching_receiver, method =
+            extract_common_parts(rhs, checked_variable)
+          [checked_variable, matching_receiver, rhs, method]
         end
 
-        def extract_common_parts(continuation, checked_variable)
+        def extract_common_parts(method_chain, checked_variable)
           matching_receiver =
-            find_matching_receiver_invocation(continuation, checked_variable)
+            find_matching_receiver_invocation(method_chain, checked_variable)
 
           method = matching_receiver.parent if matching_receiver
 
           [checked_variable, matching_receiver, method]
         end
 
-        def find_matching_receiver_invocation(node, checked_variable)
-          return nil unless node
+        def find_matching_receiver_invocation(method_chain, checked_variable)
+          return nil unless method_chain
 
-          receiver = if node.block_type?
-                       node.send_node.receiver
+          receiver = if method_chain.block_type?
+                       method_chain.send_node.receiver
                      else
-                       node.receiver
+                       method_chain.receiver
                      end
 
-          if receiver == checked_variable
-            return nil if assignment_arithmetic_or_comparison?(node)
-
-            return receiver
-          end
-
+          return receiver if receiver == checked_variable
           find_matching_receiver_invocation(receiver, checked_variable)
         end
 
-        def assignment_arithmetic_or_comparison?(node)
-          node.assignment? ||
-            node.parent.arithmetic_operation? ||
-            comparison_node?(node.parent)
+        def chain_size(method_chain, method)
+          method.each_ancestor(:send).inject(0) do |total, ancestor|
+            break total + 1 if ancestor == method_chain
+            total + 1
+          end
         end
 
-        def comparison_node?(parent)
-          parent.send_type? && parent.comparison_method?
+        def unsafe_method_used?(method_chain, method)
+          return true if unsafe_method?(method)
+
+          method.each_ancestor(:send).any? do |ancestor|
+            unless config.for_cop('Lint/SafeNavigationChain')['Enabled']
+              break true
+            end
+
+            break true if unsafe_method?(ancestor)
+            break true if nil_methods.include?(ancestor.method_name)
+            break false if ancestor == method_chain
+          end
         end
 
         def unsafe_method?(send_node)
-          NIL_METHODS.include?(send_node.method_name) ||
-            negated?(send_node) || !send_node.dot?
+          negated?(send_node) || send_node.assignment? || !send_node.dot?
         end
 
         def negated?(send_node)
@@ -191,6 +220,19 @@ module RuboCop
         def end_range(node, method_call)
           range_between(method_call.loc.expression.end_pos,
                         node.loc.expression.end_pos)
+        end
+
+        def add_safe_nav_to_all_methods_in_chain(corrector,
+                                                 start_method,
+                                                 method_chain)
+          start_method.each_ancestor do |ancestor|
+            break unless %i[send block].include?(ancestor.type)
+            next unless ancestor.send_type?
+
+            corrector.insert_before(ancestor.loc.dot, '&')
+
+            break if ancestor == method_chain
+          end
         end
       end
     end

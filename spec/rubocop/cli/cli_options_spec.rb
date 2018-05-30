@@ -88,6 +88,8 @@ RSpec.describe RuboCop::CLI, :isolated_environment do
               Exclude:
                 - Gemfile
               Include:
+                - "**/*.rb"
+                - "**/*.rabl"
                 - "**/*.rabl2"
           YAML
         end
@@ -199,7 +201,7 @@ RSpec.describe RuboCop::CLI, :isolated_environment do
           end
         RUBY
         create_file('redirect.rb', '$stderr = STDOUT')
-        rubocop = "#{RuboCop::ConfigLoader::RUBOCOP_HOME}/bin/rubocop"
+        rubocop = "#{RuboCop::ConfigLoader::RUBOCOP_HOME}/exe/rubocop"
         # Since we define a new cop class, we have to do this in a separate
         # process. Otherwise, the extra cop will affect other specs.
         output =
@@ -1240,7 +1242,7 @@ RSpec.describe RuboCop::CLI, :isolated_environment do
       end
     end
 
-    it 'prints corrected code to stdout if --autocorrect is used' do
+    it 'prints corrected code to stdout if --auto-correct is used' do
       begin
         $stdin = StringIO.new('p $/')
         argv   = ['--auto-correct',
@@ -1292,6 +1294,18 @@ RSpec.describe RuboCop::CLI, :isolated_environment do
       ensure
         $stdin = STDIN
       end
+    end
+  end
+
+  describe 'option is invalid' do
+    it 'suggests to use the --help flag' do
+      invalid_option = '--invalid-option'
+
+      expect(cli.run([invalid_option])).to eq(2)
+      expect($stderr.string).to eq(<<-RESULT.strip_indent)
+        invalid option: #{invalid_option}
+        For usage information, use --help
+      RESULT
     end
   end
 end

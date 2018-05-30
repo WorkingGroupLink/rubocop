@@ -5,22 +5,6 @@ RSpec.describe RuboCop::Cop::Style::TrivialAccessors, :config do
 
   let(:cop_config) { {} }
 
-  let(:trivial_reader) do
-    <<-RUBY.strip_indent
-      def foo
-        @foo
-      end
-    RUBY
-  end
-
-  let(:trivial_writer) do
-    <<-RUBY.strip_indent
-      def foo=(val)
-        @foo = val
-      end
-    RUBY
-  end
-
   it 'registers an offense on instance reader' do
     expect_offense(<<-RUBY.strip_indent)
       def foo
@@ -37,18 +21,6 @@ RSpec.describe RuboCop::Cop::Style::TrivialAccessors, :config do
         @foo = val
       end
     RUBY
-  end
-
-  it 'show correct message on reader' do
-    inspect_source(trivial_reader)
-    expect(cop.messages.first)
-      .to eq('Use `attr_reader` to define trivial reader methods.')
-  end
-
-  it 'show correct message on writer' do
-    inspect_source(trivial_writer)
-    expect(cop.messages.first)
-      .to eq('Use `attr_writer` to define trivial writer methods.')
   end
 
   it 'registers an offense on class reader' do
@@ -101,11 +73,20 @@ RSpec.describe RuboCop::Cop::Style::TrivialAccessors, :config do
     RUBY
   end
 
-  it 'register an offense on DSL-style trivial writer' do
+  it 'registers an offense on DSL-style trivial writer' do
     expect_offense(<<-RUBY.strip_indent)
       def foo(val)
       ^^^ Use `attr_writer` to define trivial writer methods.
-       @foo = val
+        @foo = val
+      end
+    RUBY
+  end
+
+  it 'registers an offense on reader with `private`' do
+    expect_offense(<<-RUBY.strip_indent)
+      private def foo
+              ^^^ Use `attr_reader` to define trivial reader methods.
+        @foo
       end
     RUBY
   end
@@ -373,12 +354,29 @@ RSpec.describe RuboCop::Cop::Style::TrivialAccessors, :config do
 
   describe '#autocorrect' do
     context 'trivial reader' do
-      let(:source) { trivial_reader }
+      let(:source) { <<-RUBY.strip_indent }
+        def foo
+          @foo
+        end
+      RUBY
 
       let(:corrected_source) { "attr_reader :foo\n" }
 
       it 'autocorrects' do
         expect(autocorrect_source(source)).to eq(corrected_source)
+      end
+    end
+
+    context 'with `private`' do
+      let(:source) { <<-RUBY.strip_indent }
+        private def foo
+          @foo
+        end
+      RUBY
+
+      it 'does not autocorrect' do
+        expect(autocorrect_source(source)).to eq(source)
+        expect(cop.offenses.map(&:corrected?)).to eq [false]
       end
     end
 
@@ -416,7 +414,11 @@ RSpec.describe RuboCop::Cop::Style::TrivialAccessors, :config do
     end
 
     context 'trivial writer' do
-      let(:source) { trivial_writer }
+      let(:source) { <<-RUBY.strip_indent }
+        def foo=(val)
+          @foo = val
+        end
+      RUBY
 
       let(:corrected_source) { "attr_writer :foo\n" }
 

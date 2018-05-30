@@ -666,23 +666,63 @@ closing parenthesis means `)` preceded by a line break.
 ### Examples
 
 ```ruby
-# good: when x is on its own line, indent this way
-func(
-  x,
-  y
+# bad
+some_method(
+  a,
+  b
+  )
+
+some_method(
+  a, b
+  )
+
+some_method(a, b, c
+  )
+
+some_method(a,
+            b,
+            c
+  )
+
+some_method(a,
+  x: 1,
+  y: 2
+  )
+
+# Scenario 1: When First Parameter Is On Its Own Line
+
+# good: when first param is on a new line, right paren is *always*
+#       outdented by IndentationWidth
+some_method(
+  a,
+  b
 )
 
-# good: when x follows opening parenthesis, align parentheses
-a = b * (x +
-         y
-        )
+# good
+some_method(
+  a, b
+)
 
-# bad
-def func(
-  x,
-  y
-  )
-end
+# Scenario 2: When First Parameter Is On The Same Line
+
+# good: when all other params are also on the same line, outdent
+#       right paren by IndentationWidth
+some_method(a, b, c
+           )
+
+# good: when all other params are on multiple lines, but are lined
+#       up, align right paren with left paren
+some_method(a,
+            b,
+            c
+           )
+
+# good: when other params are not lined up on multiple lines, outdent
+#       right paren by IndentationWidth
+some_method(a,
+  x: 1,
+  y: 2
+)
 ```
 
 ## Layout/CommentIndentation
@@ -885,6 +925,128 @@ else
 end
 ```
 
+## Layout/EmptyComment
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop checks empty comment.
+
+### Examples
+
+```ruby
+# bad
+
+#
+class Foo
+end
+
+# good
+
+#
+# Description of `Foo` class.
+#
+class Foo
+end
+```
+#### AllowBorderComment: true (default)
+
+```ruby
+# good
+
+def foo
+end
+
+#################
+
+def bar
+end
+```
+#### AllowBorderComment: false
+
+```ruby
+# bad
+
+def foo
+end
+
+#################
+
+def bar
+end
+```
+#### AllowMarginComment: true (default)
+
+```ruby
+# good
+
+#
+# Description of `Foo` class.
+#
+class Foo
+end
+```
+#### AllowMarginComment: false
+
+```ruby
+# bad
+
+#
+# Description of `Foo` class.
+#
+class Foo
+end
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+AllowBorderComment | `true` | Boolean
+AllowMarginComment | `true` | Boolean
+
+## Layout/EmptyLineAfterGuardClause
+
+Enabled by default | Supports autocorrection
+--- | ---
+Disabled | Yes
+
+This cop enforces empty line after guard clause
+
+### Examples
+
+```ruby
+# bad
+def foo
+  return if need_return?
+  bar
+end
+
+# good
+def foo
+  return if need_return?
+
+  bar
+end
+
+# good
+def foo
+  return if something?
+  return if something_different?
+
+  bar
+end
+
+# also good
+def foo
+  if something?
+    do_something
+    return if need_return?
+  end
+end
+```
+
 ## Layout/EmptyLineAfterMagicComment
 
 Enabled by default | Supports autocorrection
@@ -925,12 +1087,12 @@ Enabled | Yes
 This cop checks whether method definitions are
 separated by one empty line.
 
-`NumberOfEmptyLines` can be and integer (e.g. 1 by default) or
-an array (e.g. [1, 2]) to specificy a minimum and a maximum of
-empty lines.
+`NumberOfEmptyLines` can be an integer (default is 1) or
+an array (e.g. [1, 2]) to specify a minimum and maximum
+number of empty lines permitted.
 
-`AllowAdjacentOneLineDefs` can be used to configure is adjacent
-one line methods definitions are an offense
+`AllowAdjacentOneLineDefs` configures whether adjacent
+one-line method definitions are considered an offense.
 
 ### Examples
 
@@ -1184,6 +1346,30 @@ class Foo
 
 end
 ```
+#### Enforcedstyle: beginning_only
+
+```ruby
+# good
+
+class Foo
+
+  def bar
+    # ...
+  end
+end
+```
+#### Enforcedstyle: ending_only
+
+```ruby
+# good
+
+class Foo
+  def bar
+    # ...
+  end
+
+end
+```
 #### EnforcedStyle: no_empty_lines (default)
 
 ```ruby
@@ -1200,7 +1386,7 @@ end
 
 Name | Default value | Configurable values
 --- | --- | ---
-EnforcedStyle | `no_empty_lines` | `empty_lines`, `empty_lines_except_namespace`, `empty_lines_special`, `no_empty_lines`
+EnforcedStyle | `no_empty_lines` | `empty_lines`, `empty_lines_except_namespace`, `empty_lines_special`, `no_empty_lines`, `beginning_only`, `ending_only`
 
 ### References
 
@@ -1407,6 +1593,10 @@ variable = if true
 
 variable = if true
            end
+
+variable =
+  if true
+  end
 ```
 #### EnforcedStyleAlignWith: variable
 
@@ -1420,6 +1610,10 @@ variable = if true
 
 variable = if true
 end
+
+variable =
+  if true
+  end
 ```
 #### EnforcedStyleAlignWith: start_of_line
 
@@ -1429,10 +1623,20 @@ end
 variable = if true
     end
 
+puts(if true
+     end)
+
 # good
+
+variable = if true
+end
 
 puts(if true
 end)
+
+variable =
+  if true
+  end
 ```
 
 ### Configurable attributes
@@ -1450,6 +1654,47 @@ Enabled by default | Supports autocorrection
 Enabled | No
 
 This cop checks for Windows-style line endings in the source code.
+
+### Examples
+
+#### EnforcedStyle: native (default)
+
+```ruby
+# The `native` style means that CR+LF (Carriage Return + Line Feed) is
+# enforced on Windows, and LF is enforced on other platforms.
+
+# bad
+puts 'Hello' # Return character is LF on Windows.
+puts 'Hello' # Return character is CR+LF on other than Windows.
+
+# good
+puts 'Hello' # Return character is CR+LF on Windows.
+puts 'Hello' # Return character is LF on other than Windows.
+```
+#### EnforcedStyle: lf
+
+```ruby
+# The `lf` style means that LF (Line Feed) is enforced on
+# all platforms.
+
+# bad
+puts 'Hello' # Return character is CR+LF on all platfoms.
+
+# good
+puts 'Hello' # Return character is LF on all platfoms.
+```
+#### EnforcedStyle: crlf
+
+```ruby
+# The `crlf` style means that CR+LF (Carriage Return + Line Feed) is
+# enforced on all platforms.
+
+# bad
+puts 'Hello' # Return character is LF on all platfoms.
+
+# good
+puts 'Hello' # Return character is CR+LF on all platfoms.
+```
 
 ### Configurable attributes
 
@@ -1600,8 +1845,8 @@ Enabled by default | Supports autocorrection
 Enabled | Yes
 
 This cop checks the indentation of the first parameter in a method call.
-Parameters after the first one are checked by Style/AlignParameters, not
-by this cop.
+Parameters after the first one are checked by Layout/AlignParameters,
+not by this cop.
 
 ### Examples
 
@@ -1611,17 +1856,125 @@ some_method(
 first_param,
 second_param)
 
+foo = some_method(
+first_param,
+second_param)
+
+foo = some_method(nested_call(
+nested_first_param),
+second_param)
+
+foo = some_method(
+nested_call(
+nested_first_param),
+second_param)
+
+some_method nested_call(
+nested_first_param),
+second_param
+
+# Style: consistent
+
 # good
 some_method(
   first_param,
 second_param)
+
+foo = some_method(
+  first_param,
+second_param)
+
+foo = some_method(nested_call(
+  nested_first_param),
+second_param)
+
+foo = some_method(
+  nested_call(
+    nested_first_param),
+second_param)
+
+some_method nested_call(
+  nested_first_param),
+second_param
+
+# Style: consistent_relative_to_receiver
+
+# good
+some_method(
+  first_param,
+second_param)
+
+foo = some_method(
+        first_param,
+second_param)
+
+foo = some_method(nested_call(
+                    nested_first_param),
+second_param)
+
+foo = some_method(
+        nested_call(
+          nested_first_param),
+second_param)
+
+some_method nested_call(
+              nested_first_param),
+second_params
+
+# Style: special_for_inner_method_call
+
+# good
+some_method(
+  first_param,
+second_param)
+
+foo = some_method(
+  first_param,
+second_param)
+
+foo = some_method(nested_call(
+                    nested_first_param),
+second_param)
+
+foo = some_method(
+  nested_call(
+    nested_first_param),
+second_param)
+
+some_method nested_call(
+              nested_first_param),
+second_param
+
+# Style: special_for_inner_method_call_in_parentheses
+
+# good
+some_method(
+  first_param,
+second_param)
+
+foo = some_method(
+  first_param,
+second_param)
+
+foo = some_method(nested_call(
+                    nested_first_param),
+second_param)
+
+foo = some_method(
+  nested_call(
+    nested_first_param),
+second_param)
+
+some_method nested_call(
+  nested_first_param),
+second_param
 ```
 
 ### Configurable attributes
 
 Name | Default value | Configurable values
 --- | --- | ---
-EnforcedStyle | `special_for_inner_method_call_in_parentheses` | `consistent`, `special_for_inner_method_call`, `special_for_inner_method_call_in_parentheses`
+EnforcedStyle | `special_for_inner_method_call_in_parentheses` | `consistent`, `consistent_relative_to_receiver`, `special_for_inner_method_call`, `special_for_inner_method_call_in_parentheses`
 IndentationWidth | `<none>` | Integer
 
 ## Layout/IndentArray
@@ -1865,11 +2218,13 @@ are indented one step.
 In Ruby 2.3 or newer, squiggly heredocs (`<<~`) should be used. If you
 use the older rubies, you should introduce some library to your project
 (e.g. ActiveSupport, Powerpack or Unindent).
-Note: When `Metrics/LineLength`'s `AllowHeredoc` is false(not default),
+Note: When `Metrics/LineLength`'s `AllowHeredoc` is false (not default),
       this cop does not add any offenses for long here documents to
       avoid `Metrics/LineLength`'s offenses.
 
 ### Examples
+
+#### EnforcedStyle: auto_detection (default)
 
 ```ruby
 # bad
@@ -1878,16 +2233,60 @@ something
 RUBY
 
 # good
-# When EnforcedStyle is squiggly, bad code is auto-corrected to the
-# following code.
+# When using Ruby 2.3 or higher.
 <<~RUBY
   something
 RUBY
 
 # good
+# When using Ruby 2.2 or lower and enabled Rails department.
+# The following is possible to enable Rails department by
+# adding for example:
+#
+# Rails:
+#   Enabled: true
+#
+<<-RUBY.strip_heredoc
+  something
+RUBY
+```
+#### EnforcedStyle: squiggly
+
+```ruby
+# good
+# When EnforcedStyle is squiggly, bad code is auto-corrected to the
+# following code.
+<<~RUBY
+  something
+RUBY
+```
+#### EnforcedStyle: active_support
+
+```ruby
+# good
 # When EnforcedStyle is active_support, bad code is auto-corrected to
 # the following code.
 <<-RUBY.strip_heredoc
+  something
+RUBY
+```
+#### EnforcedStyle: powerpack
+
+```ruby
+# good
+# When EnforcedStyle is powerpack, bad code is auto-corrected to
+# the following code.
+<<-RUBY.strip_indent
+  something
+RUBY
+```
+#### EnforcedStyle: unindent
+
+```ruby
+# good
+# When EnforcedStyle is unindent, bad code is auto-corrected to
+# the following code.
+<<-RUBY.unindent
   something
 RUBY
 ```
@@ -1910,14 +2309,123 @@ Enabled | Yes
 
 This cops checks for inconsistent indentation.
 
+The difference between `rails` and `normal` is that the `rails` style
+prescribes that in classes and modules the `protected` and `private`
+modifier keywords shall be indented the same as public methods and that
+protected and private members shall be indented one step more than the
+modifiers. Other than that, both styles mean that entities on the same
+logical depth shall have the same indentation.
+
 ### Examples
 
+#### EnforcedStyle: normal (default)
+
 ```ruby
+# bad
 class A
   def test
     puts 'hello'
      puts 'world'
   end
+end
+
+# bad
+class A
+  def test
+    puts 'hello'
+    puts 'world'
+  end
+
+  protected
+
+    def foo
+    end
+
+  private
+
+    def bar
+    end
+end
+
+# good
+class A
+  def test
+    puts 'hello'
+    puts 'world'
+  end
+end
+
+# good
+class A
+  def test
+    puts 'hello'
+    puts 'world'
+  end
+
+  protected
+
+  def foo
+  end
+
+  private
+
+  def bar
+  end
+end
+```
+#### EnforcedStyle: rails
+
+```ruby
+# bad
+class A
+  def test
+    puts 'hello'
+     puts 'world'
+  end
+end
+
+# bad
+class A
+  def test
+    puts 'hello'
+    puts 'world'
+  end
+
+  protected
+
+  def foo
+  end
+
+  private
+
+  def bar
+  end
+end
+
+# good
+class A
+  def test
+    puts 'hello'
+    puts 'world'
+  end
+end
+
+# good
+class A
+  def test
+    puts 'hello'
+    puts 'world'
+  end
+
+  protected
+
+    def foo
+    end
+
+  private
+
+    def bar
+    end
 end
 ```
 
@@ -2001,6 +2509,20 @@ Enabled | Yes
 
 This cops checks for indentation of the first non-blank non-comment
 line in a file.
+
+### Examples
+
+```ruby
+# bad
+   class A
+     def foo; end
+   end
+
+# good
+class A
+  def foo; end
+end
+```
 
 ## Layout/LeadingCommentSpace
 
@@ -3444,7 +3966,11 @@ Checks for spaces inside ordinary round parentheses.
 
 ### Examples
 
+#### EnforcedStyle: no_space (default)
+
 ```ruby
+# The `no_space` style enforces that parentheses do not have spaces.
+
 # bad
 f( 3)
 g = (a + 3 )
@@ -3453,6 +3979,29 @@ g = (a + 3 )
 f(3)
 g = (a + 3)
 ```
+#### EnforcedStyle: space
+
+```ruby
+# The `space` style enforces that parentheses have a space at the
+# beginning and end.
+# Note: Empty parentheses should not have spaces.
+
+# bad
+f(3)
+g = (a + 3)
+y( )
+
+# good
+f( 3 )
+g = ( a + 3 )
+y()
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `no_space` | `space`, `no_space`
 
 ### References
 
@@ -3628,6 +4177,22 @@ Enabled | Yes
 
 This cop checks for tabs inside the source code.
 
+### Examples
+
+```ruby
+# bad
+# This example uses a tab to indent bar.
+def foo
+  bar
+end
+
+# good
+# This example uses spaces to indent bar.
+def foo
+  bar
+end
+```
+
 ### Configurable attributes
 
 Name | Default value | Configurable values
@@ -3647,6 +4212,44 @@ Enabled | Yes
 This cop looks for trailing blank lines and a final newline in the
 source code.
 
+### Examples
+
+#### EnforcedStyle: final_blank_line
+
+```ruby
+# `final_blank_line` looks for one blank line followed by a new line
+# at the end of files.
+
+# bad
+class Foo; end
+# EOF
+
+# bad
+class Foo; end # EOF
+
+# good
+class Foo; end
+
+# EOF
+```
+#### EnforcedStyle: final_newline (default)
+
+```ruby
+# `final_newline` looks for one newline at the end of files.
+
+# bad
+class Foo; end
+
+# EOF
+
+# bad
+class Foo; end # EOF
+
+# good
+class Foo; end
+# EOF
+```
+
 ### Configurable attributes
 
 Name | Default value | Configurable values
@@ -3664,6 +4267,24 @@ Enabled by default | Supports autocorrection
 Enabled | Yes
 
 This cop looks for trailing whitespace in the source code.
+
+### Examples
+
+```ruby
+# The line in this example contains spaces after the 0.
+# bad
+x = 0
+
+# The line in this example ends directly after the 0.
+# good
+x = 0
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+AllowInHeredoc | `false` | Boolean
 
 ### References
 

@@ -104,7 +104,14 @@ module RuboCop
           '`Layout/EndAlignment`.',
       'Lint/DefEndAlignment' =>
         'The `Lint/DefEndAlignment` cop has been renamed to ' \
-          '`Layout/DefEndAlignment`.'
+          '`Layout/DefEndAlignment`.',
+      'Performance/HashEachMethods' =>
+        'The `Performance/HashEachMethods` cop has been removed ' \
+          'since it no longer provides performance benefits in ' \
+          'modern rubies.',
+      'Style/MethodMissing' =>
+        'The `Style/MethodMissing` cop has been split into ' \
+          '`Style/MethodMissingSuper` and `Style/MissingRespondToMissing`.'
     }.freeze
 
     OBSOLETE_PARAMETERS = [
@@ -284,6 +291,10 @@ module RuboCop
       @to_s ||= @hash.to_s
     end
 
+    def signature
+      @signature ||= Digest::MD5.hexdigest(to_s)
+    end
+
     def make_excludes_absolute
       each_key do |key|
         validate_section_presence(key)
@@ -421,6 +432,10 @@ module RuboCop
           @target_ruby_version_source = :ruby_version_file
 
           target_ruby_version_from_version_file
+        elsif target_ruby_version_from_bundler_lock_file
+          @target_ruby_version_source = :bundler_lock_file
+
+          target_ruby_version_from_bundler_lock_file
         else
           DEFAULT_RUBY_VERSION
         end
@@ -428,7 +443,13 @@ module RuboCop
 
     def target_rails_version
       @target_rails_version ||=
-        for_all_cops.fetch('TargetRailsVersion', DEFAULT_RAILS_VERSION)
+        if for_all_cops['TargetRailsVersion']
+          for_all_cops['TargetRailsVersion'].to_f
+        elsif target_rails_version_from_bundler_lock_file
+          target_rails_version_from_bundler_lock_file
+        else
+          DEFAULT_RAILS_VERSION
+        end
     end
 
     private
@@ -547,6 +568,8 @@ module RuboCop
       case @target_ruby_version_source
       when :ruby_version_file
         "`#{RUBY_VERSION_FILENAME}`"
+      when :bundler_lock_file
+        "`#{bundler_lock_file_path}`"
       when :rubocop_yml
         "`TargetRubyVersion` parameter (in #{smart_loaded_path})"
       end
@@ -565,6 +588,64 @@ module RuboCop
         File.read(file).match(/\A(ruby-)?(?<version>\d+\.\d+)/) do |md|
           md[:version].to_f
         end
+    end
+
+    def target_ruby_version_from_bundler_lock_file
+      @target_ruby_version_from_bundler_lock_file ||=
+        read_ruby_version_from_bundler_lock_file
+    end
+
+    def read_ruby_version_from_bundler_lock_file
+      lock_file_path = bundler_lock_file_path
+      return nil unless lock_file_path
+
+      in_ruby_section = false
+      File.foreach(lock_file_path) do |line|
+        # If ruby is in Gemfile.lock or gems.lock, there should be two lines
+        # towards the bottom of the file that look like:
+        #     RUBY VERSION
+        #       ruby W.X.YpZ
+        # We ultimately want to match the "ruby W.X.Y.pZ" line, but there's
+        # extra logic to make sure we only start looking once we've seen the
+        # "RUBY VERSION" line.
+        in_ruby_section ||= line.match(/^\s*RUBY\s*VERSION\s*$/)
+        next unless in_ruby_section
+        # We currently only allow this feature to work with MRI ruby.  If jruby
+        # (or something else) is used by the project, it's lock file will have a
+        # line that looks like:
+        #     RUBY VERSION
+        #       ruby W.X.YpZ (jruby x.x.x.x)
+        # The regex won't match in this situation.
+        result = line.match(/^\s*ruby\s+(\d+\.\d+)[p.\d]*\s*$/)
+        return result.captures.first.to_f if result
+      end
+    end
+
+    def target_rails_version_from_bundler_lock_file
+      @target_rails_version_from_bundler_lock_file ||=
+        read_rails_version_from_bundler_lock_file
+    end
+
+    def read_rails_version_from_bundler_lock_file
+      lock_file_path = bundler_lock_file_path
+      return nil unless lock_file_path
+
+      File.foreach(lock_file_path) do |line|
+        # If rails is in Gemfile.lock or gems.lock, there should be a line like:
+        #         rails (X.X.X)
+        result = line.match(/^\s+rails\s+\((\d+\.\d+)/)
+        return result.captures.first.to_f if result
+      end
+    end
+
+    def bundler_lock_file_path
+      return nil unless loaded_path
+      base_path = base_dir_for_path_parameters
+      ['gems.locked', 'Gemfile.lock'].each do |file_name|
+        path = find_file_upwards(file_name, base_path)
+        return path if path
+      end
+      nil
     end
 
     def reject_mutually_exclusive_defaults

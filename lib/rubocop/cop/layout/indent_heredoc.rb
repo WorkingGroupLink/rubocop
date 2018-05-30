@@ -8,17 +8,35 @@ module RuboCop
       # In Ruby 2.3 or newer, squiggly heredocs (`<<~`) should be used. If you
       # use the older rubies, you should introduce some library to your project
       # (e.g. ActiveSupport, Powerpack or Unindent).
-      # Note: When `Metrics/LineLength`'s `AllowHeredoc` is false(not default),
+      # Note: When `Metrics/LineLength`'s `AllowHeredoc` is false (not default),
       #       this cop does not add any offenses for long here documents to
       #       avoid `Metrics/LineLength`'s offenses.
       #
-      # @example
-      #
+      # @example EnforcedStyle: auto_detection (default)
       #   # bad
       #   <<-RUBY
       #   something
       #   RUBY
       #
+      #   # good
+      #   # When using Ruby 2.3 or higher.
+      #   <<~RUBY
+      #     something
+      #   RUBY
+      #
+      #   # good
+      #   # When using Ruby 2.2 or lower and enabled Rails department.
+      #   # The following is possible to enable Rails department by
+      #   # adding for example:
+      #   #
+      #   # Rails:
+      #   #   Enabled: true
+      #   #
+      #   <<-RUBY.strip_heredoc
+      #     something
+      #   RUBY
+      #
+      # @example EnforcedStyle: squiggly
       #   # good
       #   # When EnforcedStyle is squiggly, bad code is auto-corrected to the
       #   # following code.
@@ -26,20 +44,40 @@ module RuboCop
       #     something
       #   RUBY
       #
+      # @example EnforcedStyle: active_support
       #   # good
       #   # When EnforcedStyle is active_support, bad code is auto-corrected to
       #   # the following code.
       #   <<-RUBY.strip_heredoc
       #     something
       #   RUBY
+      #
+      # @example EnforcedStyle: powerpack
+      #   # good
+      #   # When EnforcedStyle is powerpack, bad code is auto-corrected to
+      #   # the following code.
+      #   <<-RUBY.strip_indent
+      #     something
+      #   RUBY
+      #
+      # @example EnforcedStyle: unindent
+      #   # good
+      #   # When EnforcedStyle is unindent, bad code is auto-corrected to
+      #   # the following code.
+      #   <<-RUBY.unindent
+      #     something
+      #   RUBY
+      #
       class IndentHeredoc < Cop
         include Heredoc
         include ConfigurableEnforcedStyle
         include SafeMode
 
-        RUBY23_MSG = 'Use %<indentation_width>d spaces for indentation in a ' \
-                     'heredoc by using `<<~` instead of ' \
-                     '`%<current_indent_type>s`.'.freeze
+        RUBY23_TYPE_MSG = 'Use %<indentation_width>d spaces for indentation ' \
+                          'in a heredoc by using `<<~` instead of ' \
+                          '`%<current_indent_type>s`.'.freeze
+        RUBY23_WIDTH_MSG = 'Use %<indentation_width>d spaces for '\
+                           'indentation in a heredoc.'.freeze
         LIBRARY_MSG = 'Use %<indentation_width>d spaces for indentation in a ' \
                       'heredoc by using %<method>s.'.freeze
         STRIP_METHODS = {
@@ -112,10 +150,25 @@ module RuboCop
         end
 
         def ruby23_message(indentation_width, current_indent_type)
+          if current_indent_type == '<<~'
+            ruby23_width_message(indentation_width)
+          else
+            ruby23_type_message(indentation_width, current_indent_type)
+          end
+        end
+
+        def ruby23_type_message(indentation_width, current_indent_type)
           format(
-            RUBY23_MSG,
+            RUBY23_TYPE_MSG,
             indentation_width: indentation_width,
             current_indent_type: current_indent_type
+          )
+        end
+
+        def ruby23_width_message(indentation_width)
+          format(
+            RUBY23_WIDTH_MSG,
+            indentation_width: indentation_width
           )
         end
 
@@ -140,13 +193,22 @@ module RuboCop
           return if target_ruby_version < 2.3
           lambda do |corrector|
             if heredoc_indent_type(node) == '~'
-              corrector.replace(node.loc.heredoc_body, indented_body(node))
+              adjust_squiggly(corrector, node)
             else
-              heredoc_beginning = node.loc.expression.source
-              corrected = heredoc_beginning.sub(/<<-?/, '<<~')
-              corrector.replace(node.loc.expression, corrected)
+              adjust_minus(corrector, node)
             end
           end
+        end
+
+        def adjust_squiggly(corrector, node)
+          corrector.replace(node.loc.heredoc_body, indented_body(node))
+          corrector.replace(node.loc.heredoc_end, indented_end(node))
+        end
+
+        def adjust_minus(corrector, node)
+          heredoc_beginning = node.loc.expression.source
+          corrected = heredoc_beginning.sub(/<<-?/, '<<~')
+          corrector.replace(node.loc.expression, corrected)
         end
 
         def correct_by_library(node)
@@ -177,6 +239,17 @@ module RuboCop
           body.gsub(/^\s{#{body_indent_level}}/, ' ' * correct_indent_level)
         end
 
+        def indented_end(node)
+          end_ = heredoc_end(node)
+          end_indent_level = indent_level(end_)
+          correct_indent_level = base_indent_level(node)
+          if end_indent_level < correct_indent_level
+            end_.gsub(/^\s{#{end_indent_level}}/, ' ' * correct_indent_level)
+          else
+            end_
+          end
+        end
+
         def base_indent_level(node)
           base_line_num = node.loc.expression.line
           base_line = processed_source.lines[base_line_num - 1]
@@ -201,6 +274,10 @@ module RuboCop
 
         def heredoc_body(node)
           node.loc.heredoc_body.source.scrub
+        end
+
+        def heredoc_end(node)
+          node.loc.heredoc_end.source.scrub
         end
       end
     end

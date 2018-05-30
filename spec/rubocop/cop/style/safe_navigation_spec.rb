@@ -10,7 +10,7 @@ RSpec.describe RuboCop::Cop::Style::SafeNavigation, :config do
       'exists before calling the method.'
   end
 
-  context 'target_ruby_version > 2.3', :ruby23 do
+  context 'target_ruby_version >= 2.3', :ruby23 do
     it 'allows calls to methods not safeguarded by respond_to' do
       expect_no_offenses('foo.bar')
     end
@@ -23,15 +23,6 @@ RSpec.describe RuboCop::Cop::Style::SafeNavigation, :config do
       expect_no_offenses('nil&.bar')
     end
 
-    it 'allows method calls that nil responds to safe guarded by ' \
-      'an object check' do
-      expect_no_offenses('foo.to_i if foo')
-    end
-
-    it 'allows an object check before a method calls that nil responds to ' do
-      expect_no_offenses('foo && foo.to_i')
-    end
-
     it 'allows an object check before hash access' do
       expect_no_offenses('foo && foo[:bar]')
     end
@@ -40,18 +31,81 @@ RSpec.describe RuboCop::Cop::Style::SafeNavigation, :config do
       expect_no_offenses('foo && !foo.bar?')
     end
 
+    it 'allows an object check before a nil check on a short chain' do
+      expect_no_offenses('user && user.thing.nil?')
+    end
+
+    it 'allows an object check before a method chain longer than 2 methods' do
+      expect_no_offenses('user && user.one.two.three')
+    end
+
+    it 'allows an object check before a long chain with a block' do
+      expect_no_offenses('user && user.thing.plus.another { |a| a}.other_thing')
+    end
+
+    it 'allows an object check before a nil check on a long chain' do
+      expect_no_offenses('user && user.thing.plus.some.other_thing.nil?')
+    end
+
+    it 'allows an object check before a blank check' do
+      # The `nil` object doesn't respond to `blank?` in normal Ruby (it's added
+      # by Rails), but it's included in the Whitelist parameter in default
+      # configuration for this cop.
+      expect_no_offenses('user && user.thing.blank?')
+    end
+
     it 'allows an object check before a negated predicate method chain' do
       expect_no_offenses('foo && !foo.bar.baz?')
     end
 
-    it 'allows method call that are used in a comparison safe guarded by ' \
+    it 'allows method call that is used in a comparison safe guarded by ' \
       'an object check' do
       expect_no_offenses('foo.bar > 2 if foo')
     end
 
-    it 'allows an object check before a method call that are used in ' \
+    it 'allows method call that is used in a regex comparison ' \
+      'safe guarded by an object check' do
+      expect_no_offenses('foo.bar =~ /baz/ if foo')
+    end
+
+    it 'allows method call that is used in a negated regex comparison ' \
+      'safe guarded by an object check' do
+      expect_no_offenses('foo.bar !~ /baz/ if foo')
+    end
+
+    it 'allows method call that is used in a spaceship comparison ' \
+      'safe guarded by an object check' do
+      expect_no_offenses('foo.bar <=> baz if foo')
+    end
+
+    it 'allows an object check before a method call that is used in ' \
       'a comparison' do
       expect_no_offenses('foo && foo.bar > 2')
+    end
+
+    it 'allows an object check before a method call that is used in ' \
+      'a regex comparison' do
+      expect_no_offenses('foo && foo.bar =~ /baz/')
+    end
+
+    it 'allows an object check before a method call that is used in ' \
+      'a negated regex comparison' do
+      expect_no_offenses('foo && foo.bar !~ /baz/')
+    end
+
+    it 'allows an object check before a method call that is used in ' \
+      'a spaceship comparison' do
+      expect_no_offenses('foo && foo.bar <=> baz')
+    end
+
+    it 'allows an object check before a method chain that is used in ' \
+      'a comparison' do
+      expect_no_offenses('foo && foo.bar.baz > 2')
+    end
+
+    it 'allows a method chain that is used in a comparison ' \
+      'safe guarded by an object check' do
+      expect_no_offenses('foo.bar.baz > 2 if foo')
     end
 
     it 'allows method calls that do not get called using . safe guarded by ' \
@@ -87,6 +141,13 @@ RSpec.describe RuboCop::Cop::Style::SafeNavigation, :config do
 
     shared_examples 'all variable types' do |variable|
       context 'modifier if' do
+        it 'registers an offense for a method call that nil responds to ' \
+        'safe guarded by an object check' do
+          inspect_source("#{variable}.to_i if #{variable}")
+
+          expect(cop.messages).to eq([message])
+        end
+
         it 'registers an offense for a method call on an accessor ' \
           'safeguarded by a check for the accessed variable' do
           inspect_source("#{variable}[1].bar if #{variable}[1]")
@@ -370,21 +431,37 @@ RSpec.describe RuboCop::Cop::Style::SafeNavigation, :config do
 
           context 'method chaining' do
             it 'registers an offense for an object check followed by ' \
-              'chained method calls' do
-              inspect_source(<<-RUBY.strip_indent)
-                #{variable} && #{variable}.one.two.three(baz) { |e| e.qux }
-              RUBY
-
-              expect(cop.messages).to eq([message])
-            end
-
-            it 'registers an offense for an object check followed by a ' \
               'chained method calls with blocks' do
               inspect_source(<<-RUBY.strip_indent)
                 #{variable} && #{variable}.one { |a| b}.two(baz) { |e| e.qux }
               RUBY
 
               expect(cop.messages).to eq([message])
+            end
+
+            context 'with Lint/SafeNavigationChain disabled' do
+              let(:config) do
+                RuboCop::Config.new('AllCops' => {
+                                      'TargetRubyVersion' => 2.3
+                                    },
+                                    'Lint/SafeNavigationChain' => {
+                                      'Enabled' => false
+                                    },
+                                    'Style/SafeNavigation' => cop_config)
+              end
+
+              it 'allows an object check followed by chained method calls' do
+                expect_no_offenses(<<-RUBY.strip_indent)
+                  #{variable} && #{variable}.one.two.three(baz) { |e| e.qux }
+                RUBY
+              end
+
+              it 'allows an object check followed by chained method calls ' \
+                 'with blocks' do
+                expect_no_offenses(<<-RUBY.strip_indent)
+                  #{variable} && #{variable}.one { |a| b }.two(baz) { |e| e.qux }
+                RUBY
+              end
             end
           end
         end
@@ -413,6 +490,13 @@ RSpec.describe RuboCop::Cop::Style::SafeNavigation, :config do
             expect_no_offenses(<<-RUBY.strip_indent)
               !#{variable}.nil? && #{variable}.bar(baz) { |e| e.qux }
             RUBY
+          end
+
+          it 'registers an offense for an object check followed by ' \
+            'a method calls that nil responds to ' do
+            inspect_source("#{variable} && #{variable}.to_i")
+
+            expect(cop.messages).to eq([message])
           end
 
           it 'registers an offense for an object check followed by ' \
@@ -694,7 +778,7 @@ RSpec.describe RuboCop::Cop::Style::SafeNavigation, :config do
             RUBY
 
             expect(new_source).to eq(<<-RUBY.strip_indent)
-              #{variable}&.one.two(baz) { |e| e.qux }
+              #{variable}&.one&.two(baz) { |e| e.qux }
             RUBY
           end
 
@@ -705,7 +789,7 @@ RSpec.describe RuboCop::Cop::Style::SafeNavigation, :config do
             RUBY
 
             expect(new_source).to eq(<<-RUBY.strip_indent)
-              #{variable}&.one.two(baz) { |e| e.qux }
+              #{variable}&.one&.two(baz) { |e| e.qux }
             RUBY
           end
 
@@ -716,7 +800,7 @@ RSpec.describe RuboCop::Cop::Style::SafeNavigation, :config do
             RUBY
 
             expect(new_source).to eq(<<-RUBY.strip_indent)
-              #{variable}&.one.two(baz) { |e| e.qux }
+              #{variable}&.one&.two(baz) { |e| e.qux }
             RUBY
           end
         end
@@ -985,24 +1069,47 @@ RSpec.describe RuboCop::Cop::Style::SafeNavigation, :config do
           end
 
           context 'method chaining' do
-            it 'corrects an object check followed by a chained method call' do
+            it 'corrects an object check followed by ' \
+              'a chained method call' do
+              new_source = autocorrect_source(<<-RUBY.strip_indent)
+                #{variable} && #{variable}.one.two
+              RUBY
+
+              expect(new_source).to eq(<<-RUBY.strip_indent)
+                #{variable}&.one&.two
+              RUBY
+            end
+
+            it 'corrects an object check followed by ' \
+              'a chained method call with params' do
+              new_source = autocorrect_source(<<-RUBY.strip_indent)
+                #{variable} && #{variable}.one.two(baz)
+              RUBY
+
+              expect(new_source).to eq(<<-RUBY.strip_indent)
+                #{variable}&.one&.two(baz)
+              RUBY
+            end
+
+            it 'corrects an object check followed by ' \
+              'a chained method call with a symbol proc' do
+              new_source = autocorrect_source(<<-RUBY.strip_indent)
+                #{variable} && #{variable}.one.two(&:baz)
+              RUBY
+
+              expect(new_source).to eq(<<-RUBY.strip_indent)
+                #{variable}&.one&.two(&:baz)
+              RUBY
+            end
+
+            it 'corrects an object check followed by ' \
+              'a chained method call with a block' do
               new_source = autocorrect_source(<<-RUBY.strip_indent)
                 #{variable} && #{variable}.one.two(baz) { |e| e.qux }
               RUBY
 
               expect(new_source).to eq(<<-RUBY.strip_indent)
-                #{variable}&.one.two(baz) { |e| e.qux }
-              RUBY
-            end
-
-            it 'corrects an object check followed by ' \
-              'multiple chained method call' do
-              new_source = autocorrect_source(<<-RUBY.strip_indent)
-                #{variable} && #{variable}.one.two.three(baz) { |e| e.qux }
-              RUBY
-
-              expect(new_source).to eq(<<-RUBY.strip_indent)
-                #{variable}&.one.two.three(baz) { |e| e.qux }
+                #{variable}&.one&.two(baz) { |e| e.qux }
               RUBY
             end
 
@@ -1013,7 +1120,7 @@ RSpec.describe RuboCop::Cop::Style::SafeNavigation, :config do
               RUBY
 
               expect(new_source).to eq(<<-RUBY.strip_indent)
-                #{variable}&.one { |a| b}.two(baz) { |e| e.qux }
+                #{variable}&.one { |a| b}&.two(baz) { |e| e.qux }
               RUBY
             end
           end

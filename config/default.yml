@@ -7,8 +7,17 @@ inherit_from:
 
 # Common configuration.
 AllCops:
+  RubyInterpreters:
+    - ruby
+    - macruby
+    - rake
+    - jruby
+    - rbx
   # Include common Ruby source files.
   Include:
+    - '**/*.rb'
+    - '**/*.arb'
+    - '**/*.axlsx'
     - '**/*.builder'
     - '**/*.fcgi'
     - '**/*.gemfile'
@@ -58,6 +67,7 @@ AllCops:
   Exclude:
     - 'node_modules/**/*'
     - 'vendor/**/*'
+    - '.git/**/*'
   # Default formatter will be used if no `-f/--format` option is given.
   DefaultFormatter: progress
   # Cop names are displayed in offense messages by default. Change behavior
@@ -112,11 +122,24 @@ AllCops:
   AllowSymlinksInCacheRootDirectory: false
   # What MRI version of the Ruby interpreter is the inspected code intended to
   # run on? (If there is more than one, set this to the lowest version.)
-  # If a value is specified for TargetRubyVersion then it is used.
-  # Else if .ruby-version exists and it contains an MRI version it is used.
-  # Otherwise we fallback to the oldest officially supported Ruby version (2.1).
+  # If a value is specified for TargetRubyVersion then it is used. Acceptable
+  # values are specificed as a float (i.e. 2.5); the teeny version of Ruby
+  # should not be included. If the project specifies a Ruby version in the
+  # .ruby-version file, Gemfile or gems.rb file, RuboCop will try to determine
+  # the desired version of Ruby by inspecting the .ruby-version file first,
+  # followed by the Gemfile.lock or gems.locked file. (Although the Ruby version
+  # is specified in the Gemfile or gems.rb file, RuboCop reads the final value
+  # from the lock file.) If the Ruby version is still unresolved, RuboCop will
+  # use the oldest officially supported Ruby version (currently Ruby 2.1).
   TargetRubyVersion: ~
-  TargetRailsVersion: 5.0
+  # What version of Rails is the inspected code using?  If a value is specified
+  # for TargetRailsVersion then it is used.  Acceptable values are specificed
+  # as a float (i.e. 5.1); the patch version of Rails should not be included.
+  # If TargetRailsVersion is not set, RuboCop will parse the Gemfile.lock or
+  # gems.locked file to find the version of Rails that has been bound to the
+  # application.  If neither of those files exist, RuboCop will use Rails 5.0
+  # as the default.
+  TargetRailsVersion: ~
 
 #################### Layout ###########################
 
@@ -268,6 +291,10 @@ Layout/DotPosition:
     - leading
     - trailing
 
+Layout/EmptyComment:
+  AllowBorderComment: true
+  AllowMarginComment: true
+
 # Use empty lines between defs.
 Layout/EmptyLineBetweenDefs:
   # If `true`, this parameter means that single line method definitions don't
@@ -289,6 +316,8 @@ Layout/EmptyLinesAroundClassBody:
     - empty_lines_except_namespace
     - empty_lines_special
     - no_empty_lines
+    - beginning_only
+    - ending_only
 
 Layout/EmptyLinesAroundModuleBody:
   EnforcedStyle: no_empty_lines
@@ -339,6 +368,9 @@ Layout/FirstParameterIndentation:
     # The first parameter should always be indented one step more than the
     # preceding line.
     - consistent
+    # The first parameter should always be indented one level relative to the
+    # parent that is receiving the parameter
+    - consistent_relative_to_receiver
     # The first parameter should normally be indented one step more than the
     # preceding line, but if it's a parameter for a method call that is itself
     # a parameter in a method call, then the inner parameter should be indented
@@ -582,6 +614,12 @@ Layout/SpaceInsideHashLiteralBraces:
     - space
     - no_space
 
+Layout/SpaceInsideParens:
+  EnforcedStyle: no_space
+  SupportedStyles:
+    - space
+    - no_space
+
 Layout/SpaceInsideReferenceBrackets:
   EnforcedStyle: no_space
   SupportedStyles:
@@ -625,6 +663,9 @@ Layout/TrailingBlankLines:
   SupportedStyles:
     - final_newline
     - final_blank_line
+
+Layout/TrailingWhitespace:
+  AllowInHeredoc: false
 
 #################### Naming ##########################
 
@@ -690,8 +731,7 @@ Naming/FileName:
 
 Naming/HeredocDelimiterNaming:
   Blacklist:
-    - END
-    - !ruby/regexp '/EO[A-Z]{1}/'
+    - !ruby/regexp '/(^|\s)(EO[A-Z]{1}|END)(\s|$)/'
 
 Naming/HeredocDelimiterCase:
   EnforcedStyle: uppercase
@@ -738,12 +778,19 @@ Naming/UncommunicativeBlockParamName:
   # Blacklisted names that will register an offense
   ForbiddenNames: []
 
-Naming/UncommunicativeMethodArgName:
-  # Argrument names may be equal to or greater than this value
+Naming/UncommunicativeMethodParamName:
+  # Parameter names may be equal to or greater than this value
   MinNameLength: 3
   AllowNamesEndingInNumbers: true
   # Whitelisted names that will not register an offense
-  AllowedNames: []
+  AllowedNames:
+    - io
+    - id
+    - to
+    - by
+    - 'on'
+    - in
+    - at
   # Blacklisted names that will register an offense
   ForbiddenNames: []
 
@@ -1096,6 +1143,9 @@ Style/MethodCallWithArgsParentheses:
   IgnoreMacros: true
   IgnoredMethods: []
 
+Style/MethodCallWithoutArgsParentheses:
+  IgnoredMethods: []
+
 Style/MethodDefParentheses:
   EnforcedStyle: require_parentheses
   SupportedStyles:
@@ -1218,6 +1268,7 @@ Style/OptionHash:
 # Allow safe assignment in conditions.
 Style/ParenthesesAroundCondition:
   AllowSafeAssignment: true
+  AllowInMultilineConditions: false
 
 Style/PercentLiteralDelimiters:
   # Specify the default preferred delimiter for all types with the 'default' key
@@ -1285,6 +1336,12 @@ Style/SafeNavigation:
   # Safe navigation may cause a statement to start returning `nil` in addition
   # to whatever it used to return.
   ConvertCodeThatCanStartToReturnNil: false
+  Whitelist:
+    - present?
+    - blank?
+    - presence
+    - try
+    - try!
 
 Style/Semicolon:
   # Allow `;` to separate several expressions on the same line.
@@ -1348,7 +1405,7 @@ Style/StringMethods:
 
 Style/SymbolArray:
   EnforcedStyle: percent
-  MinSize: 0
+  MinSize: 2
   SupportedStyles:
     - percent
     - brackets
@@ -1454,7 +1511,7 @@ Style/WordArray:
   # The `MinSize` option causes the `WordArray` rule to be ignored for arrays
   # smaller than a certain size.  The rule is only applied to arrays
   # whose element count is greater than or equal to `MinSize`.
-  MinSize: 0
+  MinSize: 2
   # The regular expression `WordRegex` decides what is considered a word.
   WordRegex: !ruby/regexp '/\A[\p{Word}\n\t]+\z/'
 
@@ -1551,6 +1608,15 @@ Lint/SafeNavigationChain:
     - blank?
     - presence
     - try
+    - try!
+
+Lint/SafeNavigationConsistency:
+  Whitelist:
+    - present?
+    - blank?
+    - presence
+    - try
+    - try!
 
 # Checks for shadowed arguments
 Lint/ShadowedArgument:
@@ -1565,6 +1631,9 @@ Lint/UnusedBlockArgument:
 Lint/UnusedMethodArgument:
   AllowUnusedKeywordArguments: false
   IgnoreEmptyMethods: true
+
+Lint/Void:
+  CheckForMethodsWithNoSideEffects: false
 
 #################### Performance ###########################
 
@@ -1586,6 +1655,18 @@ Rails/ActionFilter:
     - filter
   Include:
     - app/controllers/**/*.rb
+
+Rails/AssertNot:
+  Include:
+    - '**/test/**/*'
+
+Rails/Blank:
+  # Convert usages of `nil? || empty?` to `blank?`
+  NilOrEmpty: true
+  # Convert usages of `!present?` to `blank?`
+  NotPresent: true
+  # Convert usages of `unless present?` to `if blank?`
+  UnlessPresent: true
 
 Rails/CreateTableWithTimestamps:
   Include:
@@ -1640,6 +1721,12 @@ Rails/HasManyOrHasOneDependent:
   Include:
     - app/models/**/*.rb
 
+Rails/HttpStatus:
+  EnforcedStyle: symbolic
+  SupportedStyles:
+    - numeric
+    - symbolic
+
 Rails/InverseOf:
   Include:
     - app/models/**/*.rb
@@ -1659,9 +1746,21 @@ Rails/Output:
     - db/**/*.rb
     - lib/**/*.rb
 
+Rails/Present:
+  # Convert usages of `!nil? && !empty?` to `present?`
+  NotNilAndNotEmpty: true
+  # Convert usages of `!blank?` to `present?`
+  NotBlank: true
+  # Convert usages of `unless blank?` to `if present?`
+  UnlessBlank: true
+
 Rails/ReadWriteAttribute:
   Include:
     - app/models/**/*.rb
+
+Rails/RefuteMethods:
+  Include:
+    - '**/test/**/*'
 
 Rails/RequestReferer:
   EnforcedStyle: referer

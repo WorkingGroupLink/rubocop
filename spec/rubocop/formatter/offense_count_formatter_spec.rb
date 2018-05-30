@@ -6,7 +6,7 @@ RSpec.describe RuboCop::Formatter::OffenseCountFormatter do
   let(:output) { StringIO.new }
 
   let(:files) do
-    %w[lib/rubocop.rb spec/spec_helper.rb bin/rubocop].map do |path|
+    %w[lib/rubocop.rb spec/spec_helper.rb exe/rubocop].map do |path|
       File.expand_path(path)
     end
   end
@@ -20,7 +20,7 @@ RSpec.describe RuboCop::Formatter::OffenseCountFormatter do
       let(:offenses) { [] }
 
       it 'does not add to offense_counts' do
-        expect { finish }.not_to change { formatter.offense_counts }
+        expect { finish }.not_to change(formatter, :offense_counts)
       end
     end
 
@@ -28,7 +28,7 @@ RSpec.describe RuboCop::Formatter::OffenseCountFormatter do
       let(:offenses) { [double('offense', cop_name: 'OffendedCop')] }
 
       it 'increments the count for the cop in offense_counts' do
-        expect { finish }.to change { formatter.offense_counts }
+        expect { finish }.to change(formatter, :offense_counts)
       end
     end
   end
@@ -53,6 +53,7 @@ RSpec.describe RuboCop::Formatter::OffenseCountFormatter do
       end
 
       before do
+        allow(output).to receive(:tty?).and_return(false)
         formatter.started(files)
         finish
       end
@@ -68,6 +69,23 @@ RSpec.describe RuboCop::Formatter::OffenseCountFormatter do
           4  Total
 
         OUTPUT
+      end
+    end
+
+    context 'when output tty is true' do
+      let(:offenses) do
+        %w[CopB CopA CopC CopC].map { |c| double('offense', cop_name: c) }
+      end
+
+      before do
+        allow(output).to receive(:tty?).and_return(true)
+        formatter.started(files)
+        finish
+      end
+
+      it 'has a progresbar' do
+        formatter.finished(files)
+        expect(formatter.instance_variable_get(:@progressbar).progress).to eq 1
       end
     end
   end

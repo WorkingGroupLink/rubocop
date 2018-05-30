@@ -106,10 +106,6 @@ module RuboCop
       comment_lines.include?(source_range.line)
     end
 
-    def comment_on_line?(line)
-      comments.any? { |c| c.loc.line == line }
-    end
-
     def comments_before_line(line)
       comments.select { |c| c.location.line <= line }
     end
@@ -125,6 +121,13 @@ module RuboCop
 
     def following_line(token)
       lines[token.line]
+    end
+
+    def line_indentation(line_number)
+      lines[line_number - 1]
+        .match(/^(\s*)/)[1]
+        .to_s
+        .length
     end
 
     private
@@ -160,7 +163,7 @@ module RuboCop
       [ast, comments, tokens]
     end
 
-    # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength
     def parser_class(ruby_version)
       case ruby_version
       when 2.1
@@ -178,11 +181,14 @@ module RuboCop
       when 2.5
         require 'parser/ruby25'
         Parser::Ruby25
+      when 2.6
+        require 'parser/ruby26'
+        Parser::Ruby26
       else
         raise ArgumentError, "Unknown Ruby version: #{ruby_version.inspect}"
       end
     end
-    # rubocop:enable Metrics/MethodLength
+    # rubocop:enable Metrics/CyclomaticComplexity, Metrics/MethodLength
 
     def create_parser(ruby_version)
       builder = RuboCop::AST::Builder.new

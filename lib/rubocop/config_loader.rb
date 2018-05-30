@@ -35,7 +35,6 @@ module RuboCop
       end
 
       def load_file(file)
-        return if file.nil?
         path = File.absolute_path(file.is_a?(RemoteConfig) ? file.file : file)
 
         hash = load_yaml_configuration(path)
@@ -47,14 +46,13 @@ module RuboCop
         target_ruby_version_to_f!(hash)
 
         resolver.resolve_inheritance_from_gems(hash, hash.delete('inherit_gem'))
-        resolver.resolve_inheritance(path, hash, file)
+        resolver.resolve_inheritance(path, hash, file, debug?)
 
         hash.delete('inherit_from')
 
         Config.create(hash, path)
       end
 
-      # rubocop:disable Performance/HashEachMethods
       def add_missing_namespaces(path, hash)
         hash.keys.each do |key|
           q = Cop::Cop.qualified_cop_name(key, path)
@@ -63,7 +61,6 @@ module RuboCop
           hash[q] = hash.delete(key)
         end
       end
-      # rubocop:enable Performance/HashEachMethods
 
       # Return a recursive merge of two hashes. That is, a normal hash merge,
       # with the addition that any value that is a hash, and occurs in both
@@ -146,8 +143,8 @@ module RuboCop
 
       def write_dotfile(file_string, rubocop_yml_contents)
         File.open(DOTFILE, 'w') do |f|
-          f.write "inherit_from:#{file_string}\n\n"
-          f.write rubocop_yml_contents if rubocop_yml_contents
+          f.write "inherit_from:#{file_string}\n"
+          f.write "\n#{rubocop_yml_contents}" if rubocop_yml_contents
         end
       end
 

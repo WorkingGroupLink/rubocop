@@ -50,6 +50,25 @@ Name | Default value | Configurable values
 EnforcedStyle | `action` | `action`, `filter`
 Include | `app/controllers/**/*.rb` | Array
 
+## Rails/ActiveRecordAliases
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+Checks that ActiveRecord aliases are not used. The direct method names
+are more clear and easier to read.
+
+### Examples
+
+```ruby
+#bad
+Book.update_attributes!(author: 'Alice')
+
+#good
+Book.update!(author: 'Alice')
+```
+
 ## Rails/ActiveSupportAliases
 
 Enabled by default | Supports autocorrection
@@ -119,48 +138,84 @@ class Rails4Model < ActiveRecord::Base
 end
 ```
 
+## Rails/AssertNot
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+Use `assert_not` instead of `assert !`.
+
+### Examples
+
+```ruby
+# bad
+assert !x
+
+# good
+assert_not x
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `**/test/**/*` | Array
+
 ## Rails/Blank
 
 Enabled by default | Supports autocorrection
 --- | ---
 Enabled | Yes
 
-This cops checks for code that can be changed to `blank?`.
-Settings:
-  NilOrEmpty: Convert checks for `nil` or `empty?` to `blank?`
-  NotPresent: Convert usages of not `present?` to `blank?`
-  UnlessPresent: Convert usages of `unless` `present?` to `blank?`
+This cop checks for code that can be written with simpler conditionals
+using `Object#blank?` defined by Active Support.
 
 ### Examples
 
+#### NilOrEmpty: true (default)
+
 ```ruby
-# NilOrEmpty: true
-  # bad
-  foo.nil? || foo.empty?
-  foo == nil || foo.empty?
+# Converts usages of `nil? || empty?` to `blank?`
 
-  # good
-  foo.blank?
+# bad
+foo.nil? || foo.empty?
+foo == nil || foo.empty?
 
-# NotPresent: true
-  # bad
-  !foo.present?
+# good
+foo.blank?
+```
+#### NotPresent: true (default)
 
-  # good
-  foo.blank?
+```ruby
+# Converts usages of `!present?` to `blank?`
 
-# UnlessPresent: true
-  # bad
-  something unless foo.present?
-  unless foo.present?
-    something
-  end
+# bad
+!foo.present?
 
-  # good
-  something if foo.blank?
-  if foo.blank?
-    something
-  end
+# good
+foo.blank?
+```
+#### UnlessPresent: true (default)
+
+```ruby
+# Converts usages of `unless present?` to `if blank?`
+
+# bad
+something unless foo.present?
+
+# good
+something if foo.blank?
+
+# bad
+unless foo.present?
+  something
+end
+
+# good
+if foo.blank?
+  something
+end
 ```
 
 ### Configurable attributes
@@ -507,7 +562,8 @@ Enabled by default | Supports autocorrection
 Enabled | No
 
 This cop is used to identify usages of file path joining process
-to use `Rails.root.join` clause.
+to use `Rails.root.join` clause. This is to avoid bugs on operating
+system that don't use '/' as the path separator.
 
 ### Examples
 
@@ -674,6 +730,53 @@ Name | Default value | Configurable values
 --- | --- | ---
 Include | `spec/**/*`, `test/**/*` | Array
 
+## Rails/HttpStatus
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+Enforces use of symbolic or numeric value to define HTTP status.
+
+### Examples
+
+#### EnforcedStyle: symbolic (default)
+
+```ruby
+# bad
+render :foo, status: 200
+render json: { foo: 'bar' }, status: 200
+render plain: 'foo/bar', status: 304
+redirect_to root_url, status: 301
+
+# good
+render :foo, status: :ok
+render json: { foo: 'bar' }, status: :ok
+render plain: 'foo/bar', status: :not_modified
+redirect_to root_url, status: :moved_permanently
+```
+#### EnforcedStyle: numeric
+
+```ruby
+# bad
+render :foo, status: :ok
+render json: { foo: 'bar' }, status: :not_found
+render plain: 'foo/bar', status: :not_modified
+redirect_to root_url, status: :moved_permanently
+
+# good
+render :foo, status: 200
+render json: { foo: 'bar' }, status: 404
+render plain: 'foo/bar', status: 304
+redirect_to root_url, status: 301
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+EnforcedStyle | `symbolic` | `numeric`, `symbolic`
+
 ## Rails/InverseOf
 
 Enabled by default | Supports autocorrection
@@ -681,10 +784,16 @@ Enabled by default | Supports autocorrection
 Enabled | No
 
 This cop looks for has_(one|many) and belongs_to associations where
-ActiveRecord can't automatically determine the inverse association
-because of a scope or the options used. This can result in unnecessary
-queries in some circumstances. `:inverse_of` must be manually specified
-for associations to work in both ways, or set to `false` to opt-out.
+Active Record can't automatically determine the inverse association
+because of a scope or the options used. Using the blog with order scope
+example below, traversing the a Blog's association in both directions
+with `blog.posts.first.blog` would cause the `blog` to be loaded from
+the database twice.
+
+`:inverse_of` must be manually specified for Active Record to use the
+associated object in memory, or set to `false` to opt-out. Note that
+setting `nil` does not stop Active Record from trying to determine the
+inverse automatically, and is not considered a valid value for this.
 
 ### Examples
 
@@ -729,6 +838,15 @@ end
 
 class Post < ApplicationRecord
   belongs_to :blog
+end
+
+# good
+# When you don't want to use the inverse association.
+class Blog < ApplicationRecord
+  has_many(:posts,
+    -> { order(published_at: :desc) },
+    inverse_of: false
+  )
 end
 ```
 ```ruby
@@ -806,12 +924,12 @@ Enabled by default | Supports autocorrection
 Enabled | No
 
 This cop checks that methods specified in the filter's `only`
-or `except` options are explicitly defined in the controller.
+or `except` options are explicitly defined in the class or module.
 
 You can specify methods of superclass or methods added by mixins
 on the filter, but these confuse developers. If you specify methods
-where are defined on another controller, you should define the filter
-in that controller.
+where are defined on another classes or modules, you should define
+the filter in that class or module.
 
 ### Examples
 
@@ -835,6 +953,29 @@ class LoginController < ApplicationController
   end
 
   def logout
+  end
+end
+```
+```ruby
+# bad
+module FooMixin
+  extend ActiveSupport::Concern
+
+  included do
+    before_action proc { authenticate }, only: :foo
+  end
+end
+
+# good
+module FooMixin
+  extend ActiveSupport::Concern
+
+  included do
+    before_action proc { authenticate }, only: :foo
+  end
+
+  def foo
+    # something
   end
 end
 ```
@@ -1044,39 +1185,51 @@ Enabled by default | Supports autocorrection
 --- | ---
 Enabled | Yes
 
-This cops checks for code that can be changed to `blank?`.
-Settings:
-  NotNilAndNotEmpty: Convert checks for not `nil` and `not empty?`
-                     to `present?`
-  NotBlank: Convert usages of not `blank?` to `present?`
-  UnlessBlank: Convert usages of `unless` `blank?` to `if` `present?`
+This cop checks for code that can be written with simpler conditionals
+using `Object#present?` defined by Active Support.
+
+simpler conditionals.
 
 ### Examples
 
+#### NotNilAndNotEmpty: true (default)
+
 ```ruby
-# NotNilAndNotEmpty: true
-  # bad
-  !foo.nil? && !foo.empty?
-  foo != nil && !foo.empty?
-  !foo.blank?
+# Converts usages of `!nil? && !empty?` to `present?`
 
-  # good
-  foo.present?
+# bad
+!foo.nil? && !foo.empty?
 
-# NotBlank: true
-  # bad
-  !foo.blank?
-  not foo.blank?
+# bad
+foo != nil && !foo.empty?
 
-  # good
-  foo.present?
+# good
+foo.present?
+```
+#### NotBlank: true (default)
 
-# UnlessBlank: true
-  # bad
-  something unless foo.blank?
+```ruby
+# Converts usages of `!blank?` to `present?`
 
-  # good
-  something if  foo.present?
+# bad
+!foo.blank?
+
+# bad
+not foo.blank?
+
+# good
+foo.present?
+```
+#### UnlessBlank: true (default)
+
+```ruby
+# Converts usages of `unless blank?` to `if present?`
+
+# bad
+something unless foo.blank?
+
+# good
+something if foo.present?
 ```
 
 ### Configurable attributes
@@ -1093,8 +1246,15 @@ Enabled by default | Supports autocorrection
 --- | ---
 Enabled | Yes
 
-This cop checks for the use of the read_attribute or
-write_attribute methods.
+This cop checks for the use of the read_attribute or write_attribute
+methods, and recommends square brackets instead.
+
+If an attribute is missing from the instance (for example, when
+initialized by a partial `select`) then read_attribute will return nil,
+but square brackets will raise an ActiveModel::MissingAttributeError.
+
+Explicitly raising an error in this situation is preferable, and that
+is why rubocop recommends using square brackets.
 
 ### Examples
 
@@ -1178,6 +1338,34 @@ with_options options: false do |merger|
   end
 end
 ```
+
+## Rails/RefuteMethods
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+Use `assert_not` methods instead of `refute` methods.
+
+### Examples
+
+```ruby
+# bad
+refute false
+refute_empty [1, 2, 3]
+refute_equal true, false
+
+# good
+assert_not false
+assert_not_empty [1, 2, 3]
+assert_not_equal true, false
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+Include | `**/test/**/*` | Array
 
 ## Rails/RelativeDateConstant
 
@@ -1523,12 +1711,12 @@ DiscussionBoard.increment_counter(:post_count, 5)
 person.toggle :active
 product.touch
 Billing.update_all("category = 'authorized', author = 'David'")
-user.update_attribute(website: 'example.com')
+user.update_attribute(:website, 'example.com')
 user.update_columns(last_request_at: Time.current)
 Post.update_counters 5, comment_count: -1, action_count: 1
 
 # good
-user.update_attributes(website: 'example.com')
+user.update(website: 'example.com')
 FileUtils.touch('file')
 ```
 
@@ -1632,6 +1820,8 @@ false positives.
 
 ### Examples
 
+#### EnforcedStyle: conservative (default)
+
 ```ruby
 # bad
 Model.pluck(:id).uniq
@@ -1639,12 +1829,22 @@ Model.pluck(:id).uniq
 # good
 Model.uniq.pluck(:id)
 ```
+#### EnforcedStyle: aggressive
+
 ```ruby
+# bad
 # this will return a Relation that pluck is called on
 Model.where(cond: true).pluck(:id).uniq
 
+# bad
 # an association on an instance will return a CollectionProxy
 instance.assoc.pluck(:id).uniq
+
+# bad
+Model.pluck(:id).uniq
+
+# good
+Model.uniq.pluck(:id)
 ```
 
 ### Configurable attributes

@@ -322,33 +322,42 @@ definitions.
 ```ruby
 # bad
 
-def duplicated
+def foo
   1
 end
 
-def duplicated
+def foo
   2
 end
 ```
 ```ruby
 # bad
 
-def duplicated
+def foo
   1
 end
 
-alias duplicated other_duplicated
+alias foo bar
 ```
 ```ruby
 # good
 
-def duplicated
+def foo
   1
 end
 
-def other_duplicated
+def bar
   2
 end
+```
+```ruby
+# good
+
+def foo
+  1
+end
+
+alias bar foo
 ```
 
 ## Lint/DuplicatedKey
@@ -622,6 +631,70 @@ end
 ### References
 
 * [https://github.com/bbatsov/ruby-style-guide#no-return-ensure](https://github.com/bbatsov/ruby-style-guide#no-return-ensure)
+
+## Lint/ErbNewArguments
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | No
+
+This cop emulates the following Ruby warnings in Ruby 2.6.
+
+% cat example.rb
+ERB.new('hi', nil, '-', '@output_buffer')
+% ruby -rerb example.rb
+example.rb:1: warning: Passing safe_level with the 2nd argument of
+ERB.new is deprecated. Do not use it, and specify other arguments as
+keyword arguments.
+example.rb:1: warning: Passing trim_mode with the 3rd argument of
+ERB.new is deprecated. Use keyword argument like
+ERB.new(str, trim_mode:...) instead.
+example.rb:1: warning: Passing eoutvar with the 4th argument of ERB.new
+is deprecated. Use keyword argument like ERB.new(str, eoutvar: ...)
+instead.
+
+Now non-keyword arguments other than first one are softly deprecated
+and will be removed when Ruby 2.5 becomes EOL.
+`ERB.new` with non-keyword arguments is deprecated since ERB 2.2.0.
+Use `:trim_mode` and `:eoutvar` keyword arguments to `ERB.new`.
+This cop identifies places where `ERB.new(str, trim_mode, eoutvar)` can
+be replaced by `ERB.new(str, :trim_mode: trim_mode, eoutvar: eoutvar)`.
+
+### Examples
+
+```ruby
+# Target codes supports Ruby 2.6 and higher only
+# bad
+ERB.new(str, nil, '-', '@output_buffer')
+
+# good
+ERB.new(str, trim_mode: '-', eoutvar: '@output_buffer')
+
+# Target codes supports Ruby 2.5 and lower only
+# good
+ERB.new(str, nil, '-', '@output_buffer')
+
+# Target codes supports Ruby 2.6, 2.5 and lower
+# bad
+ERB.new(str, nil, '-', '@output_buffer')
+
+# good
+# Ruby standard library style
+# https://github.com/ruby/ruby/commit/3406c5d
+if ERB.instance_method(:initialize).parameters.assoc(:key) # Ruby 2.6+
+  ERB.new(str, trim_mode: '-', eoutvar: '@output_buffer')
+else
+  ERB.new(str, nil, '-', '@output_buffer')
+end
+
+# good
+# Use `RUBY_VERSION` style
+if RUBY_VERSION >= '2.6'
+  ERB.new(str, trim_mode: '-', eoutvar: '@output_buffer')
+else
+  ERB.new(str, nil, '-', '@output_buffer')
+end
+```
 
 ## Lint/FloatOutOfRange
 
@@ -1213,9 +1286,41 @@ fails. Cop prefer parsing with number class instead.
 
 # good
 
-Integer('10')
+Integer('10', 10)
 Float('10.2')
 Complex('10')
+```
+
+## Lint/OrderedMagicComments
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+Checks the proper ordering of magic comments and whether
+a magic comment is not placed before a shebang.
+
+### Examples
+
+```ruby
+# bad
+
+# frozen_string_literal: true
+# encoding: ascii
+p [''.frozen?, ''.encoding] #=> [true, #<Encoding:UTF-8>]
+
+# good
+
+# encoding: ascii
+# frozen_string_literal: true
+p [''.frozen?, ''.encoding] #=> [true, #<Encoding:US-ASCII>]
+
+# good
+
+#!/usr/bin/env ruby
+# encoding: ascii
+# frozen_string_literal: true
+p [''.frozen?, ''.encoding] #=> [true, #<Encoding:US-ASCII>]
 ```
 
 ## Lint/ParenthesesAsGroupedExpression
@@ -1552,7 +1657,7 @@ end
 
 Enabled by default | Supports autocorrection
 --- | ---
-Enabled | Yes
+Enabled | No
 
 The safe navigation operator returns nil if the receiver is
 nil.  If you chain an ordinary method call after a safe
@@ -1580,7 +1685,45 @@ x&.foo || bar
 
 Name | Default value | Configurable values
 --- | --- | ---
-Whitelist | `present?`, `blank?`, `presence`, `try` | Array
+Whitelist | `present?`, `blank?`, `presence`, `try`, `try!` | Array
+
+## Lint/SafeNavigationConsistency
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop check to make sure that if safe navigation is used for a method
+call in an `&&` or `||` condition that safe navigation is used for all
+method calls on that same object.
+
+### Examples
+
+```ruby
+# bad
+foo&.bar && foo.baz
+
+# bad
+foo.bar || foo&.baz
+
+# bad
+foo&.bar && (foobar.baz || foo.baz)
+
+# good
+foo.bar && foo.baz
+
+# good
+foo&.bar || foo&.baz
+
+# good
+foo&.bar && (foobar.baz || foo&.baz)
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+Whitelist | `present?`, `blank?`, `presence`, `try`, `try!` | Array
 
 ## Lint/ScriptPermission
 
@@ -1590,6 +1733,33 @@ Enabled | Yes
 
 This cop checks if a file which has a shebang line as
 its first line is granted execute permission.
+
+### Examples
+
+```ruby
+# bad
+
+# A file which has a shebang line as its first line is not
+# granted execute permission.
+
+#!/usr/bin/env ruby
+puts 'hello, world'
+
+# good
+
+# A file which has a shebang line as its first line is
+# granted execute permission.
+
+#!/usr/bin/env ruby
+puts 'hello, world'
+
+# good
+
+# A file which has not a shebang line as its first line is not
+# granted execute permission.
+
+puts 'hello, world'
+```
 
 ## Lint/ShadowedArgument
 
@@ -1849,6 +2019,9 @@ Enabled | Yes
 This cop detects instances of rubocop:enable comments that can be
 removed.
 
+When comment enables all cops at once `rubocop:enable all`
+that cop checks whether any cop was actually enabled.
+
 ### Examples
 
 ```ruby
@@ -1858,6 +2031,20 @@ foo = 1
 
 # good
 foo = 1
+```
+```ruby
+# bad
+# rubocop:disable Metrics/LineLength
+baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaarrrrrrrrrrrrr
+# rubocop:enable Metrics/LineLength
+baz
+# rubocop:enable all
+
+# good
+# rubocop:disable Metrics/LineLength
+baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaarrrrrrrrrrrrr
+# rubocop:enable all
+baz
 ```
 
 ## Lint/UnneededRequireStatement
@@ -2347,8 +2534,8 @@ Enabled by default | Supports autocorrection
 --- | ---
 Enabled | No
 
-This cop checks for operators, variables and literals used
-in void context.
+This cop checks for operators, variables, literals, and nonmutating
+methods used in void context.
 
 ### Examples
 
@@ -2369,6 +2556,14 @@ def some_method(some_var)
 end
 ```
 ```ruby
+# bad, when CheckForMethodsWithNoSideEffects is set true
+
+def some_method(some_array)
+  some_array.sort
+  do_something(some_array)
+end
+```
+```ruby
 # good
 
 def some_method
@@ -2384,3 +2579,17 @@ def some_method(some_var)
   some_var
 end
 ```
+```ruby
+# good, when CheckForMethodsWithNoSideEffects is set true
+
+def some_method(some_array)
+  some_array.sort!
+  do_something(some_array)
+end
+```
+
+### Configurable attributes
+
+Name | Default value | Configurable values
+--- | --- | ---
+CheckForMethodsWithNoSideEffects | `false` | Boolean

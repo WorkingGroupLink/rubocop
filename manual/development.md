@@ -69,7 +69,7 @@ $ ruby-parse -e '!array.empty?'
 Now, it's time to debug our expression using the REPL from RuboCop:
 
 ```sh
-$ rake repl
+$ bin/console
 ```
 
 First we need to declare the code that we want to match, and use the
@@ -168,6 +168,7 @@ cop scaffold already suggested:
 ```ruby
 def on_send(node)
   return unless not_empty_call?(node)
+
   add_offense(node)
 end
 ```
@@ -195,6 +196,7 @@ module RuboCop
 
         def on_send(node)
           return unless not_empty_call?(node)
+
           add_offense(node)
         end
       end
@@ -302,48 +304,48 @@ module Department
   # configs with these value types.
   #
   # @example EnforcedStyle: bar
-  #    # Description about this particular option
+  #   # Description about this particular option
   #
-  #    # bad
-  #    bad_example1
-  #    bad_example2
+  #   # bad
+  #   bad_example1
+  #   bad_example2
   #
-  #    # good
-  #    good_example1
-  #    good_example2
+  #   # good
+  #   good_example1
+  #   good_example2
   #
   # @example EnforcedStyle: foo (default)
-  #    # Description about this particular option
+  #   # Description about this particular option
   #
-  #    # bad
-  #    bad_example1
-  #    bad_example2
+  #   # bad
+  #   bad_example1
+  #   bad_example2
   #
-  #    # good
-  #    good_example1
-  #    good_example2
+  #   # good
+  #   good_example1
+  #   good_example2
   #
   # @example AnyUniqueConfigKeyThatIsAString: qux (default)
-  #    # Description about this particular option
+  #   # Description about this particular option
   #
-  #    # bad
-  #    bad_example1
-  #    bad_example2
+  #   # bad
+  #   bad_example1
+  #   bad_example2
   #
-  #    # good
-  #    good_example1
-  #    good_example2
+  #   # good
+  #   good_example1
+  #   good_example2
   #
   # @example AnyUniqueConfigKeyThatIsAString: thud
-  #    # Description about this particular option
+  #   # Description about this particular option
   #
-  #    # bad
-  #    bad_example1
-  #    bad_example2
+  #   # bad
+  #   bad_example1
+  #   bad_example2
   #
-  #    # good
-  #    good_example1
-  #    good_example2
+  #   # good
+  #   good_example1
+  #   good_example2
   #
   class YourCop
     # ...

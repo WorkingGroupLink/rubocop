@@ -1,5 +1,4 @@
 [![Gem Version](https://badge.fury.io/rb/rubocop.svg)](http://badge.fury.io/rb/rubocop)
-[![Dependency Status](https://gemnasium.com/bbatsov/rubocop.svg)](https://gemnasium.com/bbatsov/rubocop)
 [![Travis Status](https://travis-ci.org/bbatsov/rubocop.svg?branch=master)](https://travis-ci.org/bbatsov/rubocop)
 [![Appveyor status](https://ci.appveyor.com/api/projects/status/e5jdwocv30oqm4sm?svg=true)](https://ci.appveyor.com/project/bbatsov/rubocop)
 [![Coverage Status](https://img.shields.io/codeclimate/coverage/github/bbatsov/rubocop.svg)](https://codeclimate.com/github/bbatsov/rubocop)
@@ -52,7 +51,7 @@ haven't reached version 1.0 yet). To prevent an unwanted RuboCop update you
 might want to use a conservative version locking in your `Gemfile`:
 
 ```rb
-gem 'rubocop', '~> 0.52.1', require: false
+gem 'rubocop', '~> 0.56.0', require: false
 ```
 
 ## Quickstart
@@ -74,6 +73,10 @@ RuboCop supports the following Ruby implementations:
 
 * MRI 2.1+
 * JRuby 9.0+
+
+The Rails cops support the following versions:
+
+* Rails 4.0+
 
 ## Team
 

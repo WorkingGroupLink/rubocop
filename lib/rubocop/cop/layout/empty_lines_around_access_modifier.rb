@@ -25,9 +25,9 @@ module RuboCop
       class EmptyLinesAroundAccessModifier < Cop
         include RangeHelp
 
-        MSG_AFTER = 'Keep a blank line after `%s`.'.freeze
-        MSG_BEFORE_AND_AFTER = 'Keep a blank line before and after `%<node>s`.'
-                               .freeze
+        MSG_AFTER = 'Keep a blank line after `%<modifier>s`.'.freeze
+        MSG_BEFORE_AND_AFTER = 'Keep a blank line before and after ' \
+                               '`%<modifier>s`.'.freeze
 
         def on_send(node)
           return unless node.access_modifier?
@@ -90,7 +90,7 @@ module RuboCop
         end
 
         def body_end?(line)
-          line =~ /^\s*end/
+          line =~ /^\s*end\b/
         end
 
         def message(node)
@@ -98,9 +98,9 @@ module RuboCop
 
           if block_start?(previous_line) ||
              class_def?(previous_line)
-            format(MSG_AFTER, node.loc.selector.source)
+            format(MSG_AFTER, modifier: node.loc.selector.source)
           else
-            format(MSG_BEFORE_AND_AFTER, node: node.loc.selector.source)
+            format(MSG_BEFORE_AND_AFTER, modifier: node.loc.selector.source)
           end
         end
       end

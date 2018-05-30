@@ -22,7 +22,7 @@ module RuboCop
         MSG = 'Use keyword arguments instead of ' \
               'positional arguments for http call: `%<verb>s`.'.freeze
         KEYWORD_ARGS = %i[
-          headers env params body flash as xhr session method
+          method params session body flash xhr as headers env
         ].freeze
         HTTP_METHODS = %i[get post put patch delete head].freeze
 
@@ -41,11 +41,11 @@ module RuboCop
           end
         end
 
-        # given a pre Rails 5 method: get :new, user_id: @user.id, {}
+        # given a pre Rails 5 method: get :new, {user_id: @user.id}, {}
         #
         # @return lambda of auto correct procedure
         # the result should look like:
-        #     get :new, params: { user_id: @user.id }, headers: {}
+        #     get :new, params: { user_id: @user.id }, session: {}
         # the http_method is the method used to call the controller
         # the controller node can be a symbol, method, object or string
         # that represents the path/action on the Rails controller
@@ -56,15 +56,18 @@ module RuboCop
 
           controller_action = http_path.source
           params = convert_hash_data(data.first, 'params')
-          headers = convert_hash_data(data.last, 'headers') if data.size > 1
+          session = convert_hash_data(data.last, 'session') if data.size > 1
           # the range of the text to replace, which is the whole line
           code_to_replace = node.loc.expression
           # what to replace with
-          format = parentheses?(node) ? '%s(%s%s%s)' : '%s %s%s%s'
-          new_code = format(format, node.method_name, controller_action,
-                            params, headers)
+          format = parentheses_format(node)
+          new_code = format(format, name: node.method_name,
+                                    action: controller_action,
+                                    params: params, session: session)
           ->(corrector) { corrector.replace(code_to_replace, new_code) }
         end
+
+        private
 
         def needs_conversion?(data)
           return true unless data.hash_type?
@@ -87,14 +90,23 @@ module RuboCop
           return '' if data.hash_type? && data.empty?
 
           hash_data = if data.hash_type?
-                        format('{ %s }', data.pairs.map(&:source).join(', '))
+                        format('{ %<data>s }',
+                               data: data.pairs.map(&:source).join(', '))
                       else
                         # user supplies an object,
                         # no need to surround with braces
                         data.source
                       end
 
-          format(', %s: %s', type, hash_data)
+          format(', %<type>s: %<hash_data>s', type: type, hash_data: hash_data)
+        end
+
+        def parentheses_format(node)
+          if parentheses?(node)
+            '%<name>s(%<action>s%<params>s%<session>s)'
+          else
+            '%<name>s %<action>s%<params>s%<session>s'
+          end
         end
       end
     end

@@ -100,7 +100,8 @@ module RuboCop
       # part of it is changed.
       def updated(type = nil, children = nil, properties = {})
         properties[:location] ||= @location
-        self.class.new(type || @type, children || @children, properties)
+        klass = RuboCop::AST::Builder::NODE_MAP[type || @type] || Node
+        klass.new(type || @type, children || @children, properties)
       end
 
       # Returns the index of the receiver node in its siblings. (Sibling index
@@ -109,6 +110,16 @@ module RuboCop
       # @return [Integer] the index of the receiver node in its siblings
       def sibling_index
         parent.children.index { |sibling| sibling.equal?(self) }
+      end
+
+      # Common destructuring method. This can be used to normalize
+      # destructuring for different variations of the node.
+      # Some node types override this with their own custom
+      # destructuring method.
+      #
+      # @return [Array<Node>] the different parts of the ndde
+      def node_parts
+        to_a
       end
 
       # Calls the given block for each ancestor node from parent to root.

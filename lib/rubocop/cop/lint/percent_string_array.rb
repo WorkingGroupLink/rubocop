@@ -40,7 +40,6 @@ module RuboCop
           add_offense(node)
         end
 
-        # rubocop:disable Performance/HashEachMethods
         def autocorrect(node)
           lambda do |corrector|
             node.values.each do |value|
@@ -55,7 +54,6 @@ module RuboCop
             end
           end
         end
-        # rubocop:enable Performance/HashEachMethods
 
         private
 
@@ -64,7 +62,7 @@ module RuboCop
             literal = value.children.first.to_s.scrub
 
             # To avoid likely false positives (e.g. a single ' or ")
-            next if literal.gsub(/[^\p{Alnum}]/, '').empty?
+            next if literal.gsub(/[^[[:alnum:]]]/, '').empty?
 
             QUOTES_AND_COMMAS.any? { |pat| literal =~ pat }
           end

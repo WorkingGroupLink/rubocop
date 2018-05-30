@@ -5,6 +5,38 @@ module RuboCop
     module Layout
       # This cop looks for trailing blank lines and a final newline in the
       # source code.
+      #
+      # @example EnforcedStyle: final_blank_line
+      #   # `final_blank_line` looks for one blank line followed by a new line
+      #   # at the end of files.
+      #
+      #   # bad
+      #   class Foo; end
+      #   # EOF
+      #
+      #   # bad
+      #   class Foo; end # EOF
+      #
+      #   # good
+      #   class Foo; end
+      #
+      #   # EOF
+      #
+      # @example EnforcedStyle: final_newline (default)
+      #   # `final_newline` looks for one newline at the end of files.
+      #
+      #   # bad
+      #   class Foo; end
+      #
+      #   # EOF
+      #
+      #   # bad
+      #   class Foo; end # EOF
+      #
+      #   # good
+      #   class Foo; end
+      #   # EOF
+      #
       class TrailingBlankLines < Cop
         include ConfigurableEnforcedStyle
         include RangeHelp
@@ -71,8 +103,8 @@ module RuboCop
                          else
                            "instead of #{wanted_blank_lines} "
                          end
-            format('%d trailing blank lines %sdetected.', blank_lines,
-                   instead_of)
+            format('%<current>d trailing blank lines %<prefer>sdetected.',
+                   current: blank_lines, prefer: instead_of)
           end
         end
       end

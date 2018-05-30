@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 RSpec.describe RuboCop::Cop::Generator do
-  subject(:generator) { described_class.new(cop_identifier, output: stdout) }
+  subject(:generator) do
+    described_class.new(cop_identifier, 'your_id', output: stdout)
+  end
 
   let(:stdout) { StringIO.new }
   let(:cop_identifier) { 'Style/FakeCop' }
@@ -11,6 +13,8 @@ RSpec.describe RuboCop::Cop::Generator do
   end
 
   describe '#write_source' do
+    include_context 'cli spec behavior'
+
     it 'generates a helpful source file with the name filled in' do
       generated_source = <<-RUBY.strip_indent
         # frozen_string_literal: true
@@ -68,6 +72,7 @@ RSpec.describe RuboCop::Cop::Generator do
 
                 def on_send(node)
                   return unless bad_method?(node)
+
                   add_offense(node)
                 end
               end
@@ -86,7 +91,7 @@ RSpec.describe RuboCop::Cop::Generator do
     end
 
     it 'refuses to overwrite existing files' do
-      new_cop = described_class.new('Layout/Tab')
+      new_cop = described_class.new('Layout/Tab', 'your_id')
 
       expect(new_cop).to receive(:exit!)
       expect { new_cop.write_source }
@@ -97,6 +102,8 @@ RSpec.describe RuboCop::Cop::Generator do
   end
 
   describe '#write_spec' do
+    include_context 'cli spec behavior'
+
     it 'generates a helpful starting spec file with the class filled in' do
       generated_source = <<-SPEC.strip_indent
         # frozen_string_literal: true
@@ -132,7 +139,7 @@ RSpec.describe RuboCop::Cop::Generator do
     end
 
     it 'refuses to overwrite existing files' do
-      new_cop = described_class.new('Layout/Tab')
+      new_cop = described_class.new('Layout/Tab', 'your_id')
 
       expect(new_cop).to receive(:exit!)
       expect { new_cop.write_spec }
@@ -156,7 +163,7 @@ RSpec.describe RuboCop::Cop::Generator do
 
   describe '.new' do
     it 'does not accept an unqualified cop' do
-      expect { described_class.new('FakeCop') }
+      expect { described_class.new('FakeCop', 'your_id') }
         .to raise_error(ArgumentError)
         .with_message('Specify a cop name with Department/Name style')
     end

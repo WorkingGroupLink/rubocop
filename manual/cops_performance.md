@@ -272,6 +272,7 @@ would suffice.
 
 ```ruby
 # bad
+'abc'.match?(/bc\Z/)
 'abc' =~ /bc\Z/
 'abc'.match(/bc\Z/)
 
@@ -296,6 +297,49 @@ Enabled by default | Supports autocorrection
 Enabled | No
 
 Do not compute the size of statically sized objects.
+
+### Examples
+
+```ruby
+# String methods
+# bad
+'foo'.size
+%q[bar].count
+%(qux).length
+
+# Symbol methods
+# bad
+:fred.size
+:'baz'.length
+
+# Array methods
+# bad
+[1, 2, thud].count
+%W(1, 2, bar).size
+
+# Hash methods
+# bad
+{ a: corge, b: grault }.length
+
+# good
+foo.size
+bar.count
+qux.length
+
+# good
+:"#{fred}".size
+CONST = :baz.length
+
+# good
+[1, 2, *thud].count
+garply = [1, 2, 3]
+garly.size
+
+# good
+{ a: corge, **grault }.length
+waldo = { a: corge, b: grault }
+waldo.size
+```
 
 ## Performance/FlatMap
 
@@ -328,41 +372,51 @@ EnabledForFlattenWithoutParams | `false` | Boolean
 
 * [https://github.com/JuanitoFatas/fast-ruby#enumerablemaparrayflatten-vs-enumerableflat_map-code](https://github.com/JuanitoFatas/fast-ruby#enumerablemaparrayflatten-vs-enumerableflat_map-code)
 
-## Performance/HashEachMethods
+## Performance/InefficientHashSearch
 
 Enabled by default | Supports autocorrection
 --- | ---
 Enabled | Yes
 
-This cop checks for uses of `each_key` and `each_value` Hash methods.
+This cop checks for inefficient searching of keys and values within
+hashes.
 
-Note: If you have an array of two-element arrays, you can put
-  parentheses around the block arguments to indicate that you're not
-  working with a hash, and suppress RuboCop offenses.
+`Hash#keys.include?` is less efficient than `Hash#key?` because
+the former allocates a new array and then performs an O(n) search
+through that array, while `Hash#key?` does not allocate any array and
+performs a faster O(1) search for the key.
+
+`Hash#values.include?` is less efficient than `Hash#value?`. While they
+both perform an O(n) search through all of the values, calling `values`
+allocates a new array while using `value?` does not.
 
 ### Examples
 
 ```ruby
 # bad
-hash.keys.each { |k| p k }
-hash.values.each { |v| p v }
-hash.each { |k, _v| p k }
-hash.each { |_k, v| p v }
+{ a: 1, b: 2 }.keys.include?(:a)
+{ a: 1, b: 2 }.keys.include?(:z)
+h = { a: 1, b: 2 }; h.keys.include?(100)
 
 # good
-hash.each_key { |k| p k }
-hash.each_value { |v| p v }
+{ a: 1, b: 2 }.key?(:a)
+{ a: 1, b: 2 }.has_key?(:z)
+h = { a: 1, b: 2 }; h.key?(100)
+
+# bad
+{ a: 1, b: 2 }.values.include?(2)
+{ a: 1, b: 2 }.values.include?('garbage')
+h = { a: 1, b: 2 }; h.values.include?(nil)
+
+# good
+{ a: 1, b: 2 }.value?(2)
+{ a: 1, b: 2 }.has_value?('garbage')
+h = { a: 1, b: 2 }; h.value?(nil)
 ```
-
-### Configurable attributes
-
-Name | Default value | Configurable values
---- | --- | ---
-AutoCorrect | `false` | Boolean
 
 ### References
 
-* [https://github.com/bbatsov/ruby-style-guide#hash-each](https://github.com/bbatsov/ruby-style-guide#hash-each)
+* [https://github.com/JuanitoFatas/fast-ruby#hashkey-instead-of-hashkeysinclude-code](https://github.com/JuanitoFatas/fast-ruby#hashkey-instead-of-hashkeysinclude-code)
 
 ## Performance/LstripRstrip
 
@@ -535,6 +589,13 @@ end
 
 # bad
 def foo
+  if x !~ /re/
+    do_something
+  end
+end
+
+# bad
+def foo
   if x.match(/re/)
     do_something
   end
@@ -550,6 +611,13 @@ end
 # good
 def foo
   if x.match?(/re/)
+    do_something
+  end
+end
+
+# good
+def foo
+  if !x.match?(/re/)
     do_something
   end
 end
@@ -682,6 +750,7 @@ This cop identifies unnecessary use of a regex where
 
 ```ruby
 # bad
+'abc'.match?(/\Aab/)
 'abc' =~ /\Aab/
 'abc'.match(/\Aab/)
 
@@ -786,6 +855,61 @@ String.new('something')
 # good
 +'something'
 +''
+```
+
+## Performance/UnneededSort
+
+Enabled by default | Supports autocorrection
+--- | ---
+Enabled | Yes
+
+This cop is used to identify instances of sorting and then
+taking only the first or last element. The same behavior can
+be accomplished without a relatively expensive sort by using
+`Enumerable#min` instead of sorting and taking the first
+element and `Enumerable#max` instead of sorting and taking the
+last element. Similarly, `Enumerable#min_by` and
+`Enumerable#max_by` can replace `Enumerable#sort_by` calls
+after which only the first or last element is used.
+
+### Examples
+
+```ruby
+# bad
+[2, 1, 3].sort.first
+[2, 1, 3].sort[0]
+[2, 1, 3].sort.at(0)
+[2, 1, 3].sort.slice(0)
+
+# good
+[2, 1, 3].min
+
+# bad
+[2, 1, 3].sort.last
+[2, 1, 3].sort[-1]
+[2, 1, 3].sort.at(-1)
+[2, 1, 3].sort.slice(-1)
+
+# good
+[2, 1, 3].max
+
+# bad
+arr.sort_by(&:foo).first
+arr.sort_by(&:foo)[0]
+arr.sort_by(&:foo).at(0)
+arr.sort_by(&:foo).slice(0)
+
+# good
+arr.min_by(&:foo)
+
+# bad
+arr.sort_by(&:foo).last
+arr.sort_by(&:foo)[-1]
+arr.sort_by(&:foo).at(-1)
+arr.sort_by(&:foo).slice(-1)
+
+# good
+arr.max_by(&:foo)
 ```
 
 ## Performance/UriDefaultParser

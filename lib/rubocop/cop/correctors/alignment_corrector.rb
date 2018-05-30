@@ -45,7 +45,8 @@ module RuboCop
 
           if column_delta > 0
             unless range.source == "\n"
-              corrector.insert_before(range, ' ' * column_delta)
+              # TODO: Fix ranges instead of using `begin`
+              corrector.insert_before(range.begin, ' ' * column_delta)
             end
           elsif range.source =~ /\A[ \t]+\z/
             remove(range, corrector)
@@ -56,7 +57,7 @@ module RuboCop
           return [] unless node.is_a?(Parser::AST::Node)
 
           node.each_node(:dstr)
-              .select { |n| n.loc.respond_to?(:heredoc_body) }
+              .select(&:heredoc?)
               .map { |n| n.loc.heredoc_body.join(n.loc.heredoc_end) }
         end
 
